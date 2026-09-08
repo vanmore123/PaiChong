@@ -1,0 +1,41 @@
+(() => {
+  'use strict';
+  const escape = (v = '') => String(v).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
+  const money = (v) => new Intl.NumberFormat('zh-CN', { style: 'currency', currency: 'CNY', maximumFractionDigits: 2 }).format(v);
+  const date = (v) => v ? new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(v)) : '—';
+  const states = {
+    awaiting_payment: ['请确认验宠费用', '司机已出具确认总价，扣除保证金后再模拟支付尾款。', 'orange'],
+    ready: ['费用已确认', '模拟费用已付清，完成合作点离点交接后由司机确认出发。', 'green'],
+    in_transit: ['毛孩子在路上', '以下为司机手动登记的模拟运输记录，不是实时定位。', 'green'],
+    arrived: ['已到目的城市，待签收', '司机将核对签收人并登记宠物交接情况。', 'green'],
+    exception: ['履约异常，处理中', '经营者处理后才能继续出发、付款或签收。', 'red'],
+    delivered: ['已完成模拟签收', '签收与费用记录已保留，本次虚拟行程结束。', 'green']
+  };
+  function markup(order, role = 'user') {
+    const f = order.fulfillment;
+    if (!f) return '';
+    const invoice = f.invoice, issue = f.exception;
+    return `<section class="fulfillment-panel" aria-label="履约与尾款"><div class="fulfillment-heading"><h3>验宠与费用确认</h3><span class="fulfillment-chip">${invoice.status === 'paid' ? '已确认 · 模拟' : '待用户确认'}</span></div>
+      <dl class="fulfillment-prices"><div><dt>司机确认总价</dt><dd>${money(invoice.total)}</dd></div><div><dt>已付保证金抵扣</dt><dd>− ${money(invoice.deposit)}</dd></div><div class="fulfillment-total"><dt>${invoice.status === 'paid' ? '已付尾款（模拟）' : '待付尾款'}</dt><dd>${money(invoice.amount)}</dd></div></dl>
+      <p class="fulfillment-note">验宠说明：${escape(f.inspection.note)}</p>
+      ${role === 'user' && invoice.status !== 'paid' && f.stage === 'awaiting_payment' ? `<form data-fulfillment-form="balance"><label class="fulfillment-check"><input name="consent" type="checkbox" required />我已核对确认总价 ${money(invoice.total)}，同意保证金抵扣及本次虚拟支付。</label><button class="primary-button" type="submit">${invoice.amount === 0 ? '确认费用，无需补款' : `确认并模拟支付 ${money(invoice.amount)}`}</button><p class="form-message" role="alert" hidden></p></form>` : ''}
+      ${issue ? `<div class="fulfillment-issue"><strong>${issue.status === 'open' ? '待处理异常' : '异常已处理'}</strong><p>${escape(issue.note)}</p>${issue.resolution ? `<p>处理结果：${escape(issue.resolution)}</p>` : ''}${role === 'ops' && issue.status === 'open' ? `<form data-fulfillment-form="resolve"><label>处理说明<textarea name="resolution" rows="3" maxlength="300" required placeholder="说明处理结果及为何可以继续履约"></textarea></label><label class="fulfillment-check"><input type="checkbox" name="consent" required />已核实处理结果，可以恢复原流程（不代表签收）。</label><button class="primary-button" type="submit">确认处理并恢复流程</button><p class="form-message" role="alert" hidden></p></form>` : ''}</div>` : ''}
+      ${f.receipt ? `<div class="fulfillment-receipt"><strong>已模拟签收</strong><p>签收人：${escape(f.receipt.receiverName)} · ${date(f.receipt.signedAt)}</p><small>司机登记的虚拟签收，不是电子签名或真实收货凭证。</small></div>` : ''}
+      <details class="fulfillment-events" ${['in_transit', 'arrived', 'delivered', 'exception'].includes(f.stage) ? 'open' : ''}><summary>查看履约记录 · ${f.events.length} 条</summary><ol>${f.events.slice().reverse().map((item) => `<li><strong>${escape(item.label)}</strong><small>${date(item.recordedAt)} 登记 · ${escape(item.operator)}</small>${item.city ? `<small>模拟节点：${escape(item.city)} · ${date(item.occurredAt)}</small>` : ''}${item.note ? `<p>${escape(item.note)}</p>` : ''}</li>`).join('')}</ol></details>
+      <p class="fulfillment-footnote">仅用于评审：不扣款、不定位、不产生真实运输。运输节点时间按计划推演，登记时间为操作时间。</p></section>`;
+  }
+  function bind(root, order, { api, reload, toast }) {
+    root.querySelectorAll('[data-fulfillment-form]').forEach((form) => form.addEventListener('submit', async (event) => {
+      event.preventDefault(); if (form.dataset.busy) return;
+      const button = form.querySelector('button'), error = form.querySelector('[role="alert"]'), kind = form.dataset.fulfillmentForm;
+      const fields = new FormData(form); if (!fields.get('consent')) return;
+      form.dataset.busy = 'true'; button.disabled = true; error.hidden = true;
+      const path = kind === 'balance' ? `/api/user/orders/${encodeURIComponent(order.id)}/balance/pay` : `/api/ops/orders/${encodeURIComponent(order.id)}/exception/resolve`;
+      const body = kind === 'balance' ? { invoiceId: order.fulfillment.invoice.id, acceptedTotal: order.fulfillment.invoice.total } : { exceptionId: order.fulfillment.exception.id, note: fields.get('resolution') };
+      try { await api(path, { method: 'POST', body }); toast(kind === 'balance' ? '费用已模拟确认，请等待司机出发' : '异常已处理，恢复原履约流程'); if (kind === 'resolve') window.dispatchEvent(new CustomEvent('paichong:data-changed')); await reload(); }
+      catch (e) { error.textContent = e.message; error.hidden = false; }
+      finally { delete form.dataset.busy; button.disabled = false; }
+    }));
+  }
+  window.PaichongFulfillment = { markup, bind, meta: (order) => states[order.fulfillment?.stage], escape, money };
+})();

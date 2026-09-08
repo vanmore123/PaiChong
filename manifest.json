@@ -1,0 +1,509 @@
+{
+  "application": "paichong-h5-review",
+  "mode": "static-demo",
+  "createdAt": "2026-09-07T09:49:06.879Z",
+  "apiBase": "",
+  "simulated": true,
+  "portals": {
+    "client": {
+      "directory": "client",
+      "entry": "client/index.html",
+      "files": 56,
+      "allowedRoles": [
+        "user"
+      ]
+    },
+    "workbench": {
+      "directory": "workbench",
+      "entry": "workbench/index.html",
+      "files": 62,
+      "allowedRoles": [
+        "ops",
+        "driver",
+        "partner"
+      ]
+    }
+  },
+  "files": {
+    "client/login.html": {
+      "bytes": 7488,
+      "sha256": "e120ea2350ae7e634724e9b6a8051daae9272ee26087c3ceb5ba26379f865b9d"
+    },
+    "client/login.css": {
+      "bytes": 14135,
+      "sha256": "f98bc0f244d686b5edb4701f754982a2c9f8410b3180d752a978cf32f529d7d2"
+    },
+    "client/login.js": {
+      "bytes": 10951,
+      "sha256": "1224166be2361deb435cffe302d4af9deaa5d7009687f6d89054c0bd436cbd62"
+    },
+    "client/miniapp-login.css": {
+      "bytes": 7515,
+      "sha256": "e7bb8f271be2595db50c7d0db2b5e15ff85e83922352e53f8ac60c2c0808bc87"
+    },
+    "client/client-review.html": {
+      "bytes": 29809,
+      "sha256": "1d8df37959b7adf0a09652f2fe6605cbc72279c71d58a618f295ff2bdd44ef1b"
+    },
+    "client/client-review.css": {
+      "bytes": 39611,
+      "sha256": "52e22fba23eb02f7f737482c4f52d1806b300bee746186daf118a1656468e28b"
+    },
+    "client/client-review.js": {
+      "bytes": 81598,
+      "sha256": "50c10226d90fade5e76e1ecd4a5737ef0c10349f14bc1a3d08a03e9a9bb9e7e8"
+    },
+    "client/ops-workbench.js": {
+      "bytes": 47219,
+      "sha256": "9a5f8c1d54e714d89471c5c7b91a2b2ded0da75a782649cd4ad5d927fb218a72"
+    },
+    "client/ops-workbench.css": {
+      "bytes": 28757,
+      "sha256": "fd26e1f1c207897c71893e36b911b2c0d5b5b2261e6d738e49208e60e695cc8b"
+    },
+    "client/miniapp.js": {
+      "bytes": 20978,
+      "sha256": "57ff181c1675bff2eb8d9c9d73e29977a9ea984eed0a7f899942ae41288879ff"
+    },
+    "client/miniapp.css": {
+      "bytes": 39494,
+      "sha256": "3be564cad6b3944ad92043e91d29143ae009b994256dadfb67ea0a084edc1ebd"
+    },
+    "client/fulfillment-ui.js": {
+      "bytes": 5917,
+      "sha256": "a8ced5e1dcbcd2aa9050be7b6887f637ef45108d0151b02fa2a6e7d7926cdd6a"
+    },
+    "client/web-session.js": {
+      "bytes": 5445,
+      "sha256": "5250f5dd2db25af8d5892f71a590b2354a8657779ec2f30d6ead3667fee066ce"
+    },
+    "client/h5-api.js": {
+      "bytes": 2235,
+      "sha256": "1befeb8b3ec77db5924c9e5c4d1fd60c9877a3bd6b7318e9ab232a36cc36585b"
+    },
+    "client/static-demo.js": {
+      "bytes": 101793,
+      "sha256": "7c15de33af7076c59172120e750e9530005f294063a2c7f2a91e8d99417c9614"
+    },
+    "client/assets/brand/paichong-logo.png": {
+      "bytes": 1107621,
+      "sha256": "89ec03d68faeebde04a89ef89d574aee52dcf1f13488391a9d9334c9e6acd497"
+    },
+    "client/assets/ui-icons.svg": {
+      "bytes": 6481,
+      "sha256": "9a2be2d4b18a83e127d9bd617137a5d4f060d3eb41d19bf935fcd961a47300fb"
+    },
+    "client/assets/v5/brand/paichong-logo.png": {
+      "bytes": 1107621,
+      "sha256": "89ec03d68faeebde04a89ef89d574aee52dcf1f13488391a9d9334c9e6acd497"
+    },
+    "client/assets/v5/decor/hero-mint-field.svg": {
+      "bytes": 620,
+      "sha256": "ca243f72d82e109869329a2f626d728fe9634f6393ccb7cc31106acac08a54ab"
+    },
+    "client/assets/v5/decor/route-trail.svg": {
+      "bytes": 523,
+      "sha256": "784983f88ebf202d24b48eeb6f596b4f68524409e40d68352e6ccfab29f8fe44"
+    },
+    "client/assets/v5/decor/soft-mint-wash.svg": {
+      "bytes": 356,
+      "sha256": "2690dbb9794329b22634e383d96d6a23d8b47fded51b395a1f9554f92dff1e8f"
+    },
+    "client/assets/v5/icons/alert-circle.svg": {
+      "bytes": 335,
+      "sha256": "ac3d45e349d7b5f18060d9490deee22ac89f85a10ac7e0dfc7d66acd4da385b3"
+    },
+    "client/assets/v5/icons/app-sprite.svg": {
+      "bytes": 14925,
+      "sha256": "d6cacc1b208fc7434afadb0e77fcf1687ff8d7be257b8d29fdbc9dca6aa39267"
+    },
+    "client/assets/v5/icons/arrow-right.svg": {
+      "bytes": 258,
+      "sha256": "97e62de7ef9004e27ed0259d505a34f1923a050e7bdbe4142f95df60c0e2c969"
+    },
+    "client/assets/v5/icons/calendar.svg": {
+      "bytes": 344,
+      "sha256": "75fe00d5818c4b5b60548bbc49ddedaf0daa91e9b799b4238a8f90c2d0b53a43"
+    },
+    "client/assets/v5/icons/camera.svg": {
+      "bytes": 479,
+      "sha256": "b44231a4d2264ed28ff2c1d7ae01224eef61755080ab65331dfa90c186908d39"
+    },
+    "client/assets/v5/icons/cat.svg": {
+      "bytes": 727,
+      "sha256": "a0d85f81aeb1b4e741c946096c78f4c4b618f4143b073f294947e54d94374c94"
+    },
+    "client/assets/v5/icons/check-circle.svg": {
+      "bytes": 297,
+      "sha256": "e74c3a7474eeb0df04610888860de8d1465f8eae2212105095c7075581ca6a6b"
+    },
+    "client/assets/v5/icons/chevron-left.svg": {
+      "bytes": 245,
+      "sha256": "019709fa558aca11be784c14cf0a66aa58bb6772c1288ced501d8f1bc03c90be"
+    },
+    "client/assets/v5/icons/chevron-right.svg": {
+      "bytes": 244,
+      "sha256": "348e116e33fdacd71a662cd28d7de5269f43bf004d47905b418e16751b2fa67f"
+    },
+    "client/assets/v5/icons/close.svg": {
+      "bytes": 248,
+      "sha256": "e3b713087c08384afe5365dabfd30395f1367a8f59862241a6f793e005fa0384"
+    },
+    "client/assets/v5/icons/dog.svg": {
+      "bytes": 876,
+      "sha256": "09f86d3ee3c252263b39fcf3bcc61408360f8bd4c7e9472cf7e5a1300eadd57b"
+    },
+    "client/assets/v5/icons/file-check.svg": {
+      "bytes": 369,
+      "sha256": "3f00098b4fd186311e526506465905f20e70477a5813ef67f4d9ec0440631f51"
+    },
+    "client/assets/v5/icons/home.svg": {
+      "bytes": 724,
+      "sha256": "33ba41c0f61046f9e79619a768065eaba3fc8ed6506ce5758043170a20be0921"
+    },
+    "client/assets/v5/icons/info.svg": {
+      "bytes": 359,
+      "sha256": "ddf52f67c46d1c51d05d8b70eb8d7d247105163cf22589d8bde4e6988bbc876b"
+    },
+    "client/assets/v5/icons/logout.svg": {
+      "bytes": 296,
+      "sha256": "3b2b9f498953cc73bfcdb9d5a3fef1f28361b64d6a51e40067185ece5e8ebf08"
+    },
+    "client/assets/v5/icons/minus.svg": {
+      "bytes": 233,
+      "sha256": "6d39861ff41c09257ba64198d53aafe67156f5833a24627b18389dbca154c20d"
+    },
+    "client/assets/v5/icons/node.svg": {
+      "bytes": 401,
+      "sha256": "c16300b332a1fdff4111517470465c0d9c895754e1398a2771e2acb9ce212673"
+    },
+    "client/assets/v5/icons/order.svg": {
+      "bytes": 461,
+      "sha256": "c182843b9909dac554e1b35b699ab0a90778e3a85d61d3c6dfad08c202492e0c"
+    },
+    "client/assets/v5/icons/paw.svg": {
+      "bytes": 687,
+      "sha256": "bb1e1d0ef558151d1b1cb8e9bdc8f7ff28eee2744bc88882c315873be2352e2f"
+    },
+    "client/assets/v5/icons/plus.svg": {
+      "bytes": 245,
+      "sha256": "e745f14197763e5c4d32db19e5c5b404fdb4d2c4f870f1ebb2a20e4b7d95368b"
+    },
+    "client/assets/v5/icons/price-tag.svg": {
+      "bytes": 487,
+      "sha256": "475eaf014bc9016be00404119105b35c8136dd70e6e0a29baa249d03274f03f4"
+    },
+    "client/assets/v5/icons/refresh.svg": {
+      "bytes": 327,
+      "sha256": "0401e737c2b26c06fd81d15852eff45f706531bd4e116b47d25be271924cee59"
+    },
+    "client/assets/v5/icons/route.svg": {
+      "bytes": 371,
+      "sha256": "20964455ab44b0867a9f4a48065c043a870a4268754d80e2c06a74180f0bb248"
+    },
+    "client/assets/v5/icons/settings.svg": {
+      "bytes": 440,
+      "sha256": "53bd1e0d37da8484c6b8972033db28f811d29391c3c2e1e2a25f26eac8439897"
+    },
+    "client/assets/v5/icons/shield.svg": {
+      "bytes": 344,
+      "sha256": "38091e8b9de32576293bfa59b83e4202b08515eb8a5ae02d02f23b979f7f0e1b"
+    },
+    "client/assets/v5/icons/sprite.svg": {
+      "bytes": 10454,
+      "sha256": "85893cb38a3e53b27cf879f00186854f410522fe59bb2fa975e2de8c8295c8a0"
+    },
+    "client/assets/v5/icons/swap.svg": {
+      "bytes": 290,
+      "sha256": "aed7a9ba91f0583d64b4281d3ed8bc490aab24948bf22649d19d8ca9b43b8b2e"
+    },
+    "client/assets/v5/icons/upload.svg": {
+      "bytes": 358,
+      "sha256": "eb5a79a97baed0d61822cad5126976ca9ac3a4fa6855d559d448ba87ef85a321"
+    },
+    "client/assets/v5/icons/van.svg": {
+      "bytes": 586,
+      "sha256": "c186f20fd13b3db4940cc7a19ec7a449f5e9da840eee1c0f9ed7f2a3d7300552"
+    },
+    "client/assets/v5/icons/workbench.svg": {
+      "bytes": 531,
+      "sha256": "5b682268b5e1f16d3fdaee1da353811ba388891737a056bbc9b34cb382ea26ba"
+    },
+    "client/assets/v5/illustrations/empty-orders.png": {
+      "bytes": 1319072,
+      "sha256": "c182a911eb7b7e29bfe2afb4f209628e9769c08ecb27cf5e59d52a7250ef1d6f"
+    },
+    "client/assets/v5/illustrations/request-received.png": {
+      "bytes": 1155966,
+      "sha256": "f257e85be795669801ed8d1fea3ef0de15f2da824cb4ee2f9a5c1caca8de3c9e"
+    },
+    "client/assets/v5/illustrations/review-pending.png": {
+      "bytes": 1150270,
+      "sha256": "8d29eb8f1b00cf2f94bc262ed4ad6ce2fd6108dd8bd01806683c27a9b939bace"
+    },
+    "client/index.html": {
+      "bytes": 7488,
+      "sha256": "e120ea2350ae7e634724e9b6a8051daae9272ee26087c3ceb5ba26379f865b9d"
+    },
+    "client/portal-config.js": {
+      "bytes": 119,
+      "sha256": "b8243d907a7e9cb5ad4d1bd01854aa0cd4f1df40be4406cd270ebdce1fa4a9f9"
+    },
+    "workbench/login.html": {
+      "bytes": 7488,
+      "sha256": "e120ea2350ae7e634724e9b6a8051daae9272ee26087c3ceb5ba26379f865b9d"
+    },
+    "workbench/login.css": {
+      "bytes": 14135,
+      "sha256": "f98bc0f244d686b5edb4701f754982a2c9f8410b3180d752a978cf32f529d7d2"
+    },
+    "workbench/login.js": {
+      "bytes": 10951,
+      "sha256": "1224166be2361deb435cffe302d4af9deaa5d7009687f6d89054c0bd436cbd62"
+    },
+    "workbench/miniapp-login.css": {
+      "bytes": 7515,
+      "sha256": "e7bb8f271be2595db50c7d0db2b5e15ff85e83922352e53f8ac60c2c0808bc87"
+    },
+    "workbench/client-review.html": {
+      "bytes": 29809,
+      "sha256": "1d8df37959b7adf0a09652f2fe6605cbc72279c71d58a618f295ff2bdd44ef1b"
+    },
+    "workbench/client-review.css": {
+      "bytes": 39611,
+      "sha256": "52e22fba23eb02f7f737482c4f52d1806b300bee746186daf118a1656468e28b"
+    },
+    "workbench/client-review.js": {
+      "bytes": 81598,
+      "sha256": "50c10226d90fade5e76e1ecd4a5737ef0c10349f14bc1a3d08a03e9a9bb9e7e8"
+    },
+    "workbench/ops-workbench.js": {
+      "bytes": 47219,
+      "sha256": "9a5f8c1d54e714d89471c5c7b91a2b2ded0da75a782649cd4ad5d927fb218a72"
+    },
+    "workbench/ops-workbench.css": {
+      "bytes": 28757,
+      "sha256": "fd26e1f1c207897c71893e36b911b2c0d5b5b2261e6d738e49208e60e695cc8b"
+    },
+    "workbench/miniapp.js": {
+      "bytes": 20978,
+      "sha256": "57ff181c1675bff2eb8d9c9d73e29977a9ea984eed0a7f899942ae41288879ff"
+    },
+    "workbench/miniapp.css": {
+      "bytes": 39494,
+      "sha256": "3be564cad6b3944ad92043e91d29143ae009b994256dadfb67ea0a084edc1ebd"
+    },
+    "workbench/fulfillment-ui.js": {
+      "bytes": 5917,
+      "sha256": "a8ced5e1dcbcd2aa9050be7b6887f637ef45108d0151b02fa2a6e7d7926cdd6a"
+    },
+    "workbench/web-session.js": {
+      "bytes": 5445,
+      "sha256": "5250f5dd2db25af8d5892f71a590b2354a8657779ec2f30d6ead3667fee066ce"
+    },
+    "workbench/h5-api.js": {
+      "bytes": 2235,
+      "sha256": "1befeb8b3ec77db5924c9e5c4d1fd60c9877a3bd6b7318e9ab232a36cc36585b"
+    },
+    "workbench/static-demo.js": {
+      "bytes": 101793,
+      "sha256": "7c15de33af7076c59172120e750e9530005f294063a2c7f2a91e8d99417c9614"
+    },
+    "workbench/driver.html": {
+      "bytes": 1482,
+      "sha256": "f3435c231b4b5f75d768f2917e1f3c597642dd87f32c4a43efd88eb422e42b82"
+    },
+    "workbench/driver.js": {
+      "bytes": 15580,
+      "sha256": "4ea98edbb30fd4ed6f32b799b4efc916195ff2298a20f7b92740de135fa3a436"
+    },
+    "workbench/driver.css": {
+      "bytes": 4776,
+      "sha256": "30a30e050d0e97df7e939788a61dc1bd9817b16ef36a47079f82d752459435c6"
+    },
+    "workbench/partner.html": {
+      "bytes": 1385,
+      "sha256": "3204ad1fe7012a3a743b96cbfb3b2c03a309d7d7a4ae4a5502b64ec5bbb3312d"
+    },
+    "workbench/partner.js": {
+      "bytes": 26432,
+      "sha256": "9c3bd12ba85d3c8823ad27b5ec31afef47a12b3112e2f16f4476171c05700389"
+    },
+    "workbench/partner.css": {
+      "bytes": 8082,
+      "sha256": "4e26de132bde5baeb558851ab52292ceb834094e4277e961ce63750e35b12611"
+    },
+    "workbench/assets/brand/paichong-logo.png": {
+      "bytes": 1107621,
+      "sha256": "89ec03d68faeebde04a89ef89d574aee52dcf1f13488391a9d9334c9e6acd497"
+    },
+    "workbench/assets/ui-icons.svg": {
+      "bytes": 6481,
+      "sha256": "9a2be2d4b18a83e127d9bd617137a5d4f060d3eb41d19bf935fcd961a47300fb"
+    },
+    "workbench/assets/v5/brand/paichong-logo.png": {
+      "bytes": 1107621,
+      "sha256": "89ec03d68faeebde04a89ef89d574aee52dcf1f13488391a9d9334c9e6acd497"
+    },
+    "workbench/assets/v5/decor/hero-mint-field.svg": {
+      "bytes": 620,
+      "sha256": "ca243f72d82e109869329a2f626d728fe9634f6393ccb7cc31106acac08a54ab"
+    },
+    "workbench/assets/v5/decor/route-trail.svg": {
+      "bytes": 523,
+      "sha256": "784983f88ebf202d24b48eeb6f596b4f68524409e40d68352e6ccfab29f8fe44"
+    },
+    "workbench/assets/v5/decor/soft-mint-wash.svg": {
+      "bytes": 356,
+      "sha256": "2690dbb9794329b22634e383d96d6a23d8b47fded51b395a1f9554f92dff1e8f"
+    },
+    "workbench/assets/v5/icons/alert-circle.svg": {
+      "bytes": 335,
+      "sha256": "ac3d45e349d7b5f18060d9490deee22ac89f85a10ac7e0dfc7d66acd4da385b3"
+    },
+    "workbench/assets/v5/icons/app-sprite.svg": {
+      "bytes": 14925,
+      "sha256": "d6cacc1b208fc7434afadb0e77fcf1687ff8d7be257b8d29fdbc9dca6aa39267"
+    },
+    "workbench/assets/v5/icons/arrow-right.svg": {
+      "bytes": 258,
+      "sha256": "97e62de7ef9004e27ed0259d505a34f1923a050e7bdbe4142f95df60c0e2c969"
+    },
+    "workbench/assets/v5/icons/calendar.svg": {
+      "bytes": 344,
+      "sha256": "75fe00d5818c4b5b60548bbc49ddedaf0daa91e9b799b4238a8f90c2d0b53a43"
+    },
+    "workbench/assets/v5/icons/camera.svg": {
+      "bytes": 479,
+      "sha256": "b44231a4d2264ed28ff2c1d7ae01224eef61755080ab65331dfa90c186908d39"
+    },
+    "workbench/assets/v5/icons/cat.svg": {
+      "bytes": 727,
+      "sha256": "a0d85f81aeb1b4e741c946096c78f4c4b618f4143b073f294947e54d94374c94"
+    },
+    "workbench/assets/v5/icons/check-circle.svg": {
+      "bytes": 297,
+      "sha256": "e74c3a7474eeb0df04610888860de8d1465f8eae2212105095c7075581ca6a6b"
+    },
+    "workbench/assets/v5/icons/chevron-left.svg": {
+      "bytes": 245,
+      "sha256": "019709fa558aca11be784c14cf0a66aa58bb6772c1288ced501d8f1bc03c90be"
+    },
+    "workbench/assets/v5/icons/chevron-right.svg": {
+      "bytes": 244,
+      "sha256": "348e116e33fdacd71a662cd28d7de5269f43bf004d47905b418e16751b2fa67f"
+    },
+    "workbench/assets/v5/icons/close.svg": {
+      "bytes": 248,
+      "sha256": "e3b713087c08384afe5365dabfd30395f1367a8f59862241a6f793e005fa0384"
+    },
+    "workbench/assets/v5/icons/dog.svg": {
+      "bytes": 876,
+      "sha256": "09f86d3ee3c252263b39fcf3bcc61408360f8bd4c7e9472cf7e5a1300eadd57b"
+    },
+    "workbench/assets/v5/icons/file-check.svg": {
+      "bytes": 369,
+      "sha256": "3f00098b4fd186311e526506465905f20e70477a5813ef67f4d9ec0440631f51"
+    },
+    "workbench/assets/v5/icons/home.svg": {
+      "bytes": 724,
+      "sha256": "33ba41c0f61046f9e79619a768065eaba3fc8ed6506ce5758043170a20be0921"
+    },
+    "workbench/assets/v5/icons/info.svg": {
+      "bytes": 359,
+      "sha256": "ddf52f67c46d1c51d05d8b70eb8d7d247105163cf22589d8bde4e6988bbc876b"
+    },
+    "workbench/assets/v5/icons/logout.svg": {
+      "bytes": 296,
+      "sha256": "3b2b9f498953cc73bfcdb9d5a3fef1f28361b64d6a51e40067185ece5e8ebf08"
+    },
+    "workbench/assets/v5/icons/minus.svg": {
+      "bytes": 233,
+      "sha256": "6d39861ff41c09257ba64198d53aafe67156f5833a24627b18389dbca154c20d"
+    },
+    "workbench/assets/v5/icons/node.svg": {
+      "bytes": 401,
+      "sha256": "c16300b332a1fdff4111517470465c0d9c895754e1398a2771e2acb9ce212673"
+    },
+    "workbench/assets/v5/icons/order.svg": {
+      "bytes": 461,
+      "sha256": "c182843b9909dac554e1b35b699ab0a90778e3a85d61d3c6dfad08c202492e0c"
+    },
+    "workbench/assets/v5/icons/paw.svg": {
+      "bytes": 687,
+      "sha256": "bb1e1d0ef558151d1b1cb8e9bdc8f7ff28eee2744bc88882c315873be2352e2f"
+    },
+    "workbench/assets/v5/icons/plus.svg": {
+      "bytes": 245,
+      "sha256": "e745f14197763e5c4d32db19e5c5b404fdb4d2c4f870f1ebb2a20e4b7d95368b"
+    },
+    "workbench/assets/v5/icons/price-tag.svg": {
+      "bytes": 487,
+      "sha256": "475eaf014bc9016be00404119105b35c8136dd70e6e0a29baa249d03274f03f4"
+    },
+    "workbench/assets/v5/icons/refresh.svg": {
+      "bytes": 327,
+      "sha256": "0401e737c2b26c06fd81d15852eff45f706531bd4e116b47d25be271924cee59"
+    },
+    "workbench/assets/v5/icons/route.svg": {
+      "bytes": 371,
+      "sha256": "20964455ab44b0867a9f4a48065c043a870a4268754d80e2c06a74180f0bb248"
+    },
+    "workbench/assets/v5/icons/settings.svg": {
+      "bytes": 440,
+      "sha256": "53bd1e0d37da8484c6b8972033db28f811d29391c3c2e1e2a25f26eac8439897"
+    },
+    "workbench/assets/v5/icons/shield.svg": {
+      "bytes": 344,
+      "sha256": "38091e8b9de32576293bfa59b83e4202b08515eb8a5ae02d02f23b979f7f0e1b"
+    },
+    "workbench/assets/v5/icons/sprite.svg": {
+      "bytes": 10454,
+      "sha256": "85893cb38a3e53b27cf879f00186854f410522fe59bb2fa975e2de8c8295c8a0"
+    },
+    "workbench/assets/v5/icons/swap.svg": {
+      "bytes": 290,
+      "sha256": "aed7a9ba91f0583d64b4281d3ed8bc490aab24948bf22649d19d8ca9b43b8b2e"
+    },
+    "workbench/assets/v5/icons/upload.svg": {
+      "bytes": 358,
+      "sha256": "eb5a79a97baed0d61822cad5126976ca9ac3a4fa6855d559d448ba87ef85a321"
+    },
+    "workbench/assets/v5/icons/van.svg": {
+      "bytes": 586,
+      "sha256": "c186f20fd13b3db4940cc7a19ec7a449f5e9da840eee1c0f9ed7f2a3d7300552"
+    },
+    "workbench/assets/v5/icons/workbench.svg": {
+      "bytes": 531,
+      "sha256": "5b682268b5e1f16d3fdaee1da353811ba388891737a056bbc9b34cb382ea26ba"
+    },
+    "workbench/assets/v5/illustrations/empty-orders.png": {
+      "bytes": 1319072,
+      "sha256": "c182a911eb7b7e29bfe2afb4f209628e9769c08ecb27cf5e59d52a7250ef1d6f"
+    },
+    "workbench/assets/v5/illustrations/request-received.png": {
+      "bytes": 1155966,
+      "sha256": "f257e85be795669801ed8d1fea3ef0de15f2da824cb4ee2f9a5c1caca8de3c9e"
+    },
+    "workbench/assets/v5/illustrations/review-pending.png": {
+      "bytes": 1150270,
+      "sha256": "8d29eb8f1b00cf2f94bc262ed4ad6ce2fd6108dd8bd01806683c27a9b939bace"
+    },
+    "workbench/index.html": {
+      "bytes": 7488,
+      "sha256": "e120ea2350ae7e634724e9b6a8051daae9272ee26087c3ceb5ba26379f865b9d"
+    },
+    "workbench/portal-config.js": {
+      "bytes": 122,
+      "sha256": "d996f76c5e6646e3a15a7cfe612946114289903afcb0f3f9ef3d5ae51c29e706"
+    },
+    "index.html": {
+      "bytes": 1509,
+      "sha256": "bf23f725c91e647a8e3e737cf106da14fb572566b31daf7d1123109d874c710b"
+    },
+    ".nojekyll": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  }
+}

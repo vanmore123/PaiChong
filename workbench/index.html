@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <script src="./portal-config.js"></script>
+    <script src="./h5-api.js"></script>
+    <script src="./static-demo.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#F7FBF9" />
+    <meta name="color-scheme" content="light" />
+    <title>登录｜派宠一号</title>
+    <link rel="icon" type="image/png" href="./assets/brand/paichong-logo.png" />
+    <link rel="stylesheet" href="./login.css" />
+    <link rel="stylesheet" href="./miniapp.css" />
+    <link rel="stylesheet" href="./miniapp-login.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#login-form">跳到登录表单</a>
+
+    <main class="login-page">
+      <header class="mini-login-nav">
+        <span class="mini-nav-tag">安心专车</span>
+        <strong>派宠一号</strong>
+        <span class="mini-nav-capsule" aria-hidden="true"><span>•••</span><i></i><span>◉</span></span>
+      </header>
+      <section class="brand-panel" aria-labelledby="brand-title">
+        <div class="mini-login-logo" aria-hidden="true">
+          <img src="./assets/brand/paichong-logo.png" alt="" />
+        </div>
+        <h1 id="brand-title">让毛孩子，安心出发</h1>
+        <p class="mini-login-tagline">猫狗专车 · 一路被好好照顾</p>
+        <p class="mini-login-location"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-map-pin"></use></svg>总部 · 安徽合肥</p>
+      </section>
+
+      <section class="login-panel" aria-labelledby="login-title">
+        <div class="demo-notice" role="note">
+          <span aria-hidden="true">演示</span>
+          <p>评审体验版，账号、订单与支付均为虚拟数据，不产生真实交易。</p>
+        </div>
+
+        <div class="login-card">
+          <header class="card-heading">
+            <h2 id="login-title">欢迎回来</h2>
+            <p id="entry-description">查看宠物行程，提交材料并确认运输方案。</p>
+          </header>
+
+          <div class="entry-switch" role="tablist" aria-label="选择登录入口">
+            <button class="entry-tab is-active" id="user-entry" type="button" role="tab" aria-label="宠物主人" aria-selected="true" data-entry="user">
+              <span class="entry-icon" aria-hidden="true"><svg class="ui-icon"><use href="./assets/v5/icons/app-sprite.svg#icon-paw"></use></svg></span>
+              <span><strong>宠物主人</strong></span>
+            </button>
+            <button class="entry-tab" id="ops-entry" type="button" role="tab" aria-label="经营者" aria-selected="false" data-entry="ops">
+              <span class="entry-icon" aria-hidden="true"><svg class="ui-icon"><use href="./assets/v5/icons/app-sprite.svg#icon-clipboard-check"></use></svg></span>
+              <span><strong>经营者</strong></span>
+            </button>
+            <button class="entry-tab" id="driver-entry" type="button" role="tab" aria-label="司机" aria-selected="false" data-entry="driver">
+              <span class="entry-icon" aria-hidden="true"><svg class="ui-icon"><use href="./assets/v5/icons/app-sprite.svg#icon-van"></use></svg></span>
+              <span><strong>司机</strong></span>
+            </button>
+            <button class="entry-tab" id="partner-entry" type="button" role="tab" aria-label="合作机构" aria-selected="false" data-entry="partner">
+              <span class="entry-icon" aria-hidden="true"><svg class="ui-icon"><use href="./assets/v5/icons/app-sprite.svg#icon-node"></use></svg></span>
+              <span><strong>合作机构</strong></span>
+            </button>
+          </div>
+
+          <div class="identity-tip">
+            <span class="tip-icon" aria-hidden="true"><svg class="ui-icon"><use href="./assets/v5/icons/app-sprite.svg#icon-info"></use></svg></span>
+            <p>身份由账号验证，权限按角色分开。</p>
+          </div>
+
+          <section class="current-session" id="current-session" hidden aria-label="当前登录身份">
+            <p id="current-session-copy"></p>
+            <div><a id="continue-session" href="./client-review.html" hidden>继续当前身份</a><button id="logout-session" type="button">退出当前账号</button></div>
+            <small>选择上方入口只切换登录说明；成功登录后才会替换当前账号。</small>
+          </section>
+
+          <form id="login-form" novalidate>
+            <label class="form-field" for="account">
+              <span id="account-label">手机号</span>
+              <span class="input-wrap">
+                <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 8c0-3.3-3.1-6-7-6s-7 2.7-7 6" /></svg>
+                <input id="account" name="account" type="text" autocomplete="username" inputmode="tel" placeholder="请输入手机号" required />
+              </span>
+            </label>
+
+            <label class="form-field" for="password">
+              <span>密码</span>
+              <span class="input-wrap">
+                <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 10V8a5 5 0 0 1 10 0v2m-11 0h12v10H6V10Zm6 4v2" /></svg>
+                <input id="password" name="password" type="password" autocomplete="current-password" placeholder="请输入登录密码" required />
+                <button class="password-toggle" id="password-toggle" type="button" aria-label="显示密码" aria-pressed="false">
+                  <svg class="eye-open" aria-hidden="true" viewBox="0 0 24 24"><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6Z" /><circle cx="12" cy="12" r="2.5" /></svg>
+                  <svg class="eye-closed" aria-hidden="true" viewBox="0 0 24 24"><path d="m4 4 16 16M10.7 6.1A8.3 8.3 0 0 1 12 6c5.5 0 9 6 9 6a15 15 0 0 1-2.1 2.8M7.1 7.2C4.5 8.8 3 12 3 12s3.5 6 9 6a8 8 0 0 0 3-.6" /></svg>
+                </button>
+              </span>
+            </label>
+
+            <div class="form-error" id="login-error" role="alert" aria-live="polite" hidden></div>
+
+            <button class="login-button" id="submit-login" type="submit">
+              <span id="submit-label">登录用户端</span>
+              <span class="button-arrow" aria-hidden="true"><svg class="ui-icon"><use href="./assets/v5/icons/app-sprite.svg#icon-arrow-right"></use></svg></span>
+            </button>
+
+            <div class="form-meta">
+              <button class="sample-button" id="fill-sample" type="button">
+                <svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-sparkles"></use></svg><span class="sample-label">填入用户演示账号</span>
+              </button>
+              <span id="sample-account">13800138000 / user123</span>
+            </div>
+
+            <button class="sample-button second-user-sample" id="fill-second-user" type="button"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-paw"></use></svg><span>切换用户二 · 13800138001 / user123</span></button>
+          </form>
+
+          <footer class="card-footer">
+            <span id="login-environment"><i aria-hidden="true"></i> 虚拟演示服务 · 不产生真实交易</span>
+            <span>评审版 · 虚拟体验</span>
+          </footer>
+        </div>
+      </section>
+    </main>
+
+    <script src="./web-session.js"></script>
+    <script src="./login.js"></script>
+  </body>
+</html>

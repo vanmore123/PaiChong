@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <script src="./portal-config.js"></script>
+    <script src="./h5-api.js"></script>
+    <script src="./static-demo.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#F7FBF9" />
+    <title>派宠一号｜甲方评审联调版</title>
+    <link rel="icon" type="image/png" href="./assets/brand/paichong-logo.png" />
+    <link rel="stylesheet" href="./client-review.css" />
+    <link rel="stylesheet" href="./ops-workbench.css" />
+    <link rel="stylesheet" href="./miniapp.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#review-main">跳到主要内容</a>
+
+    <div class="review-shell">
+      <header class="review-header">
+        <a class="review-brand" href="./client-review.html" aria-label="派宠一号评审首页">
+          <span class="review-brand-art" aria-hidden="true">
+            <img src="./assets/brand/paichong-logo.png" alt="" />
+          </span>
+          <span class="review-brand-copy"><strong>派宠一号</strong><small>猫狗专车 · 甲方评审版</small></span>
+        </a>
+
+        <div class="portal-session" aria-label="当前登录信息">
+          <span class="role-badge" id="header-role-badge" data-role="user">用户端</span>
+          <span class="account-summary"><small>当前账号</small><strong id="header-account">—</strong></span>
+          <button class="quiet-button session-logout" id="portal-logout" type="button"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-log-out"></use></svg><span>退出登录</span></button>
+        </div>
+
+        <div class="header-actions">
+          <span class="demo-chip"><i></i> 虚拟联调环境</span>
+          <button class="reset-button" id="reset-demo" type="button" hidden><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-reset"></use></svg><span>重置演示数据</span></button>
+        </div>
+      </header>
+
+      <div class="review-note" role="note">
+        <span class="note-icon" aria-hidden="true"><svg class="ui-icon"><use href="./assets/v5/icons/app-sprite.svg#icon-info"></use></svg></span>
+        <p id="review-note-copy"><strong>评审提示</strong>　所有订单、材料与支付均为虚拟数据，不产生真实交易。</p>
+      </div>
+
+      <main id="review-main">
+        <section class="role-view" id="user-view" aria-label="宠物主人端" hidden>
+          <div class="view-heading">
+            <div>
+              <p class="eyebrow">宠物主人端</p>
+              <h1>毛孩子的安心出发计划</h1>
+              <p>先确认路线与适运材料，再由运营安排合作交接点。</p>
+            </div>
+            <div class="user-identity">
+              <span class="user-avatar" aria-hidden="true"><svg class="ui-icon"><use href="./assets/v5/icons/app-sprite.svg#icon-paw"></use></svg></span>
+              <span><small>演示用户</small><strong id="current-user-phone">138 0013 8000</strong></span>
+            </div>
+          </div>
+
+          <div class="user-order-toolbar">
+            <label class="field-label" for="user-order-select">我的订单<select id="user-order-select"><option value="">暂无订单</option></select></label>
+            <button class="outline-button" id="view-my-orders" type="button"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-clipboard-check"></use></svg><span>查看订单</span></button>
+            <button class="primary-button" id="new-order" type="button"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-route"></use></svg><span>新建一单</span></button>
+          </div>
+          <nav class="wizard-nav" aria-label="下单进度">
+            <ol>
+              <li><button class="wizard-step is-current" type="button" data-step="1" aria-current="step"><b>1</b><span>快速询价<small>路线与宠物</small></span></button></li>
+              <li><button class="wizard-step" type="button" data-step="2" disabled><b>2</b><span>适运材料<small>虚拟上传</small></span></button></li>
+              <li><button class="wizard-step" type="button" data-step="3" disabled><b>3</b><span>接宠时段<small>容量预约</small></span></button></li>
+              <li><button class="wizard-step" type="button" data-step="4" disabled><b>4</b><span>预订保证金<small>模拟支付</small></span></button></li>
+              <li><button class="wizard-step" type="button" data-step="5"><b>5</b><span>订单状态<small>刷新同步</small></span></button></li>
+            </ol>
+          </nav>
+
+          <div class="user-layout">
+            <section class="workflow-panel">
+              <div class="wizard-pane is-active" data-pane="1">
+                <div class="panel-heading">
+                  <div><p class="eyebrow">Step 01</p><h2>这次要从哪里出发？</h2></div>
+                  <span class="soft-badge">约 1 分钟</span>
+                </div>
+                <form id="quote-form" novalidate>
+                  <div class="route-fields">
+                    <label class="field-label" for="from-city">起运城市
+                      <select id="from-city" name="fromCity" required>
+                        <option value="广州">广州</option><option value="武汉">武汉</option><option value="郑州">郑州</option><option value="北京">北京</option>
+                      </select>
+                    </label>
+                    <button class="swap-route" id="swap-route" type="button" aria-label="交换起运与目的城市"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-swap"></use></svg></button>
+                    <label class="field-label" for="to-city">目的城市
+                      <select id="to-city" name="toCity" required>
+                        <option value="武汉">武汉</option><option value="郑州">郑州</option><option value="北京">北京</option><option value="广州">广州</option>
+                      </select>
+                    </label>
+                  </div>
+                  <div class="form-grid">
+                    <label class="field-label" for="pet-name">宠物昵称<input id="pet-name" name="petName" maxlength="16" value="豆包" required /></label>
+                    <label class="field-label" for="pet-type">宠物类型<select id="pet-type" name="petType"><option value="猫">猫</option><option value="犬">犬</option></select></label>
+                    <label class="field-label" for="pet-breed">品种<input id="pet-breed" name="breed" maxlength="24" value="中华田园猫" required /></label>
+                    <label class="field-label" for="pet-weight">体重（kg）<input id="pet-weight" name="weight" type="number" min="0.5" max="60" step="0.1" value="5" required /></label>
+                    <label class="field-label" for="travel-date">希望出发日<input id="travel-date" name="travelDate" type="date" required /><small id="booking-date-hint">正在查询可预约日期…</small></label>
+                    <label class="field-label" for="service-type">接送方式<select id="service-type" name="serviceType"><option value="door-to-door">上门接宠 + 上门送达</option><option value="node-to-door">送至合作点 + 上门送达</option></select></label>
+                  </div>
+                  <div class="form-message" id="quote-error" role="alert" hidden></div>
+                  <button class="primary-button" type="submit"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-route"></use></svg><span>获取预估方案</span></button>
+                </form>
+              </div>
+
+              <div class="wizard-pane" data-pane="2">
+                <div class="panel-heading">
+                  <div><p class="eyebrow">Step 02</p><h2>补齐适运核验材料</h2></div>
+                  <span class="soft-badge">仅作演示</span>
+                </div>
+                <p class="panel-intro">运营会根据宠物近照、疫苗记录与健康声明判断是否需要补充材料。</p>
+                <div class="mini-quote-summary" id="mini-quote-summary" aria-live="polite" hidden></div>
+                <form id="materials-form" novalidate>
+                  <div class="contact-heading"><h3>接送联系信息</h3><button class="text-button" id="fill-sample-address" type="button"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-sparkles"></use></svg><span>填入虚拟地址</span></button></div>
+                  <div class="form-grid contact-fields">
+                    <label class="field-label" for="contact-name">寄件联系人<input id="contact-name" maxlength="30" required autocomplete="name" /></label>
+                    <label class="field-label" for="contact-phone">寄件联系电话<input id="contact-phone" type="tel" inputmode="tel" pattern="1[0-9]{10}" maxlength="11" required autocomplete="tel" /></label>
+                    <label class="field-label full-width" for="pickup-address">接宠详细地址<input id="pickup-address" maxlength="160" required placeholder="区县、街道、小区及门牌号" /></label>
+                    <label class="field-label" for="recipient-name">收件联系人<input id="recipient-name" maxlength="30" required /></label>
+                    <label class="field-label" for="recipient-phone">收件联系电话<input id="recipient-phone" type="tel" inputmode="tel" pattern="1[0-9]{10}" maxlength="11" required /></label>
+                    <label class="field-label full-width" for="recipient-address">送达详细地址<input id="recipient-address" maxlength="160" required placeholder="区县、街道、小区及门牌号" /></label>
+                  </div>
+                  <div class="upload-grid">
+                    <div class="upload-box" data-upload="petPhoto">
+                      <span class="upload-art cat-face" aria-hidden="true"><svg class="ui-icon"><use href="./assets/v5/icons/app-sprite.svg#icon-image"></use></svg></span>
+                      <strong>宠物近期全身照 <em>必填</em></strong>
+                      <small>正面站立、光线清晰</small>
+                      <input class="sr-file" id="pet-photo" type="file" accept="image/*" />
+                      <div class="upload-actions"><label class="outline-button" for="pet-photo"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-upload"></use></svg><span>选择文件</span></label><button class="text-button sample-file" type="button" data-target="petPhoto" data-filename="豆包-近期全身照.jpg"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-sparkles"></use></svg><span>使用示例</span></button></div>
+                      <span class="file-result" id="petPhoto-result">尚未添加</span>
+                    </div>
+                    <div class="upload-box" data-upload="vaccineProof">
+                      <span class="upload-art paper-art" aria-hidden="true"><svg class="ui-icon"><use href="./assets/v5/icons/app-sprite.svg#icon-file-check"></use></svg></span>
+                      <strong>疫苗记录 <em>必填</em></strong>
+                      <small>清晰完整、在有效期内</small>
+                      <input class="sr-file" id="vaccine-proof" type="file" accept="image/*,.pdf" />
+                      <div class="upload-actions"><label class="outline-button" for="vaccine-proof"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-upload"></use></svg><span>选择文件</span></label><button class="text-button sample-file" type="button" data-target="vaccineProof" data-filename="豆包-疫苗记录.pdf"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-sparkles"></use></svg><span>使用示例</span></button></div>
+                      <span class="file-result" id="vaccineProof-result">尚未添加</span>
+                    </div>
+                  </div>
+                  <fieldset class="health-checks">
+                    <legend>健康与行为声明</legend>
+                    <label class="check-row"><input name="healthDeclaration" type="checkbox" value="noDisease" /> <span><strong>近期无传染性疾病症状</strong><small>无持续咳嗽、呕吐、腹泻等情况</small></span></label>
+                    <label class="check-row"><input name="healthDeclaration" type="checkbox" value="notPregnant" /> <span><strong>非孕期、非术后恢复期</strong><small>没有医生建议暂缓长途出行的情况</small></span></label>
+                    <label class="check-row"><input name="healthDeclaration" type="checkbox" value="safeHandling" /> <span><strong>可进行安全交接</strong><small>无未披露的攻击、应激或特殊用药风险</small></span></label>
+                  </fieldset>
+                  <label class="field-label" for="care-note">特殊照护说明（选填）<textarea id="care-note" rows="3" maxlength="200" placeholder="如容易晕车、喂水习惯、特殊用药等"></textarea></label>
+                  <div class="form-message" id="materials-error" role="alert" hidden></div>
+                  <div class="form-actions"><button class="quiet-button back-step" type="button" data-back="1"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-chevron-left"></use></svg><span>返回</span></button><button class="primary-button" type="submit"><span>下一步，选择时段</span><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-arrow-right"></use></svg></button></div>
+                </form>
+              </div>
+
+              <div class="wizard-pane" data-pane="3">
+                <div class="panel-heading">
+                  <div><p class="eyebrow">Step 03</p><h2>预约接宠时间</h2></div>
+                  <span class="soft-badge">实时虚拟容量</span>
+                </div>
+                <div class="assignment-note"><span aria-hidden="true"><svg class="ui-icon"><use href="./assets/v5/icons/app-sprite.svg#icon-map-pin"></use></svg></span><p><strong>合作交接点无需用户选择</strong><br />支付保证金并审核通过后，由运营结合接宠地址、线路与容量统一分配。</p></div>
+                <div class="slot-list" id="availability-list" aria-live="polite">
+                  <div class="loading-state"><span class="loader" aria-hidden="true"></span>正在获取可预约时段…</div>
+                </div>
+                <div class="form-message" id="slot-error" role="alert" hidden></div>
+                <div class="form-actions"><button class="quiet-button back-step" type="button" data-back="2"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-chevron-left"></use></svg><span>返回</span></button><button class="primary-button" id="create-order" type="button" disabled><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-calendar-check"></use></svg><span>确认时段并生成订单</span></button></div>
+              </div>
+
+              <div class="wizard-pane" data-pane="4">
+                <div class="panel-heading">
+                  <div><p class="eyebrow">Step 04</p><h2>支付预订保证金</h2></div>
+                  <span class="simulation-badge">模拟支付</span>
+                </div>
+                <div class="deposit-hero">
+                  <p>本次需付</p><div><span>¥</span><strong id="deposit-amount">—</strong></div><small>按预估基础服务费的 <b id="deposit-rate">20%</b> 计算</small>
+                </div>
+                <dl class="cost-breakdown">
+                  <div><dt>预估基础服务费</dt><dd id="deposit-estimate">—</dd></div>
+                  <div><dt>本次预订保证金</dt><dd id="deposit-line">—</dd></div>
+                  <div><dt>预计剩余费用（待验宠锁价）</dt><dd id="deposit-balance">—</dd></div>
+                </dl>
+                <div class="terms-box">
+                  <strong>保证金说明</strong>
+                  <p>用于启动人工审核、锁定运力与预约容量；成功承运时全额抵扣服务费。最终费用以司机上门验宠后确认的报价为准。</p>
+                </div>
+                <label class="agreement-row"><input id="deposit-agreement" type="checkbox" /> <span>我已阅读并同意虚拟演示中的服务及取消规则</span></label>
+                <div class="form-message" id="deposit-error" role="alert" hidden></div>
+                <div class="form-actions"><button class="quiet-button" id="back-to-order" type="button"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-chevron-left"></use></svg><span>返回订单详情</span></button><button class="pay-button" id="pay-deposit" type="button"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-credit-card"></use></svg><span>模拟支付保证金</span></button></div>
+              </div>
+
+              <div class="wizard-pane" data-pane="5">
+                <div class="panel-heading">
+                  <div><p class="eyebrow">Step 05</p><h2>订单审核进度</h2></div>
+                  <button class="outline-button" id="refresh-user-orders" type="button"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-refresh"></use></svg><span>刷新状态</span></button>
+                </div>
+                <div class="order-status-area" id="user-order-area" aria-live="polite">
+                  <div class="empty-state"><span class="empty-icon" aria-hidden="true"><svg class="ui-icon"><use href="./assets/v5/icons/app-sprite.svg#icon-paw"></use></svg></span><h3>还没有演示订单</h3><p>完成前四步后，这里会显示运营审核结果。</p><button class="primary-button" type="button" data-jump-step="1"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-route"></use></svg><span>从询价开始</span></button></div>
+                </div>
+              </div>
+            </section>
+
+            <aside class="summary-panel" id="journey-summary">
+              <div class="summary-mascot" aria-hidden="true">
+                <img src="./assets/brand/paichong-logo.png" alt="" />
+              </div>
+              <p class="eyebrow">本次行程</p>
+              <h2 id="summary-route">广州 → 武汉</h2>
+              <div class="summary-pet"><span aria-hidden="true"><svg class="ui-icon"><use href="./assets/v5/icons/app-sprite.svg#icon-paw"></use></svg></span><div><strong id="summary-pet-name">豆包 · 猫</strong><small id="summary-pet-detail">中华田园猫 · 5kg</small></div></div>
+              <dl class="summary-list">
+                <div><dt>预估服务费</dt><dd id="summary-price">待询价</dd></div>
+                <div><dt>预订保证金</dt><dd id="summary-deposit">—</dd></div>
+                <div><dt>预计时效</dt><dd id="summary-duration">—</dd></div>
+                <div><dt>接宠时段</dt><dd id="summary-slot">待选择</dd></div>
+              </dl>
+              <p class="summary-footnote"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-shield-check"></use></svg><span>专车通风 · 独立笼位 · 节点留痕</span></p>
+            </aside>
+          </div>
+        </section>
+
+        <section class="role-view" id="ops-view" aria-label="运营审核台" hidden>
+          <div class="view-heading ops-heading">
+            <div><p class="eyebrow">运营审核台</p><h1>让每一单都清楚、可追踪</h1><p>核验材料、处理补件、分配合作交接点，再反馈给用户确认。</p></div>
+            <div class="ops-session" id="ops-session" hidden><span><small>当前账号</small><strong id="ops-name">运营演示账号</strong></span><button class="quiet-button" id="ops-logout" type="button"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-log-out"></use></svg><span>退出</span></button></div>
+          </div>
+
+          <section class="ops-workbench" id="ops-workbench" hidden>
+            <nav class="operations-tabs" role="tablist" aria-label="经营者工作台" id="operations-tabs" hidden>
+              <button class="operations-tab is-active" id="operations-review-tab" role="tab" aria-selected="true" aria-controls="operations-review-panel" data-operations-tab="review" type="button"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-clipboard-check"></use></svg><span>订单审核</span></button>
+              <button class="operations-tab" id="operations-nodes-tab" role="tab" aria-selected="false" aria-controls="operations-nodes-panel" data-operations-tab="nodes" tabindex="-1" type="button"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-map-pin"></use></svg><span>合作点容量</span></button>
+              <button class="operations-tab" id="operations-routes-tab" role="tab" aria-selected="false" aria-controls="operations-routes-panel" data-operations-tab="routes" tabindex="-1" type="button"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-truck"></use></svg><span>线路与派车</span></button>
+            </nav>
+            <section id="operations-review-panel" role="tabpanel" aria-labelledby="operations-review-tab">
+            <div class="ops-toolbar">
+              <div class="ops-metrics" id="ops-metrics" aria-live="polite">
+                <div><span>待审核</span><strong id="metric-review">0</strong></div><div><span>待补件</span><strong id="metric-supplement">0</strong></div><div><span>已通过</span><strong id="metric-approved">0</strong></div>
+              </div>
+              <button class="outline-button" id="refresh-ops-orders" type="button"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-refresh"></use></svg><span>刷新订单</span></button>
+            </div>
+            <div class="ops-grid">
+              <section class="order-pool" aria-labelledby="order-pool-title">
+                <div class="subheading"><div><p class="eyebrow">订单池</p><h2 id="order-pool-title">待办与全部订单</h2></div><span class="count-badge" id="ops-order-count">0 单</span></div>
+                <div class="filter-tabs" role="group" aria-label="筛选订单状态">
+                  <button class="filter-tab is-active" type="button" data-filter="all">全部</button>
+                  <button class="filter-tab" type="button" data-filter="待审核">待审核</button>
+                  <button class="filter-tab" type="button" data-filter="待补件">待补件</button>
+                  <button class="filter-tab" type="button" data-filter="审核通过">已通过</button>
+                  <button class="filter-tab" type="button" data-filter="cancelled">已取消</button>
+                  <button class="filter-tab" type="button" data-filter="rejected">已拒绝</button>
+                  <button class="filter-tab" type="button" data-filter="refund">退款</button>
+                </div>
+                <div class="ops-order-list" id="ops-order-list" aria-live="polite"><div class="loading-state"><span class="loader" aria-hidden="true"></span>正在加载订单…</div></div>
+              </section>
+
+              <section class="review-drawer" id="review-drawer" aria-labelledby="review-drawer-title">
+                <div class="empty-state review-empty"><span class="empty-icon" aria-hidden="true"><svg class="ui-icon"><use href="./assets/v5/icons/app-sprite.svg#icon-clipboard-check"></use></svg></span><h3 id="review-drawer-title">选择一笔订单开始审核</h3><p>可查看用户材料、风险声明与预约时段。</p></div>
+              </section>
+            </div>
+            </section>
+            <section class="operations-panel" id="operations-nodes-panel" role="tabpanel" aria-labelledby="operations-nodes-tab" hidden>
+              <div class="workbench-heading"><div><p class="eyebrow">合作交接点 · 容量管理</p><h2>每个笼位，都有清楚的去向</h2><p>按交接日期和上午 / 下午时段预留；到点与离点单独留痕。</p></div><button class="outline-button" type="button" data-workbench-refresh><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-refresh"></use></svg><span>刷新工作台</span></button></div>
+              <p class="workbench-demo-note"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-info"></use></svg><span>虚拟交接演示：可按预约时间模拟未来到点、离点，不代表已经实际接到宠物。</span></p>
+              <div class="form-message" id="nodes-workbench-error" role="alert" hidden></div>
+              <div class="node-summary" id="node-summary" aria-live="polite"></div>
+              <div class="capacity-layout">
+                <section class="workbench-card" aria-labelledby="calendar-title">
+                  <div class="workbench-card-heading"><div><p class="eyebrow">预约日历</p><h3 id="calendar-title">未来 7 天容量</h3></div><span class="soft-badge">每单 1 个笼位</span></div>
+                  <div class="workbench-controls"><label class="field-label" for="capacity-node">合作交接点<select id="capacity-node"></select></label><label class="field-label" for="capacity-date">开始日期<input type="date" id="capacity-date" required /></label></div>
+                  <div id="capacity-calendar" aria-live="polite"></div>
+                  <p class="workbench-helper">预留 = 审核通过待用户确认；已确认 = 用户确认待到点。离点会释放合作点容量，线路区段笼位仍保留。</p>
+                </section>
+                <section class="workbench-card" aria-labelledby="node-settings-title"><div class="workbench-card-heading"><div><p class="eyebrow">营业与笼位</p><h3 id="node-settings-title">合作点设置</h3></div></div><div id="node-settings"></div></section>
+              </div>
+              <section class="workbench-card node-handoffs" aria-labelledby="handoff-title"><div class="workbench-card-heading"><div><p class="eyebrow">交接留痕</p><h3 id="handoff-title">预约与在点订单</h3></div><span class="count-badge" id="node-order-count">0 单</span></div><div id="node-handoff-list"></div></section>
+            </section>
+            <section class="operations-panel" id="operations-routes-panel" role="tabpanel" aria-labelledby="operations-routes-tab" hidden>
+              <div class="workbench-heading"><div><p class="eyebrow">干线 · 调度管理</p><h2>先编好线路，再安心出发</h2><p>核对途经方向与笼位，绑定司机车辆，达到发车条件后派车。</p></div><button class="outline-button" type="button" data-workbench-refresh><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-refresh"></use></svg><span>刷新工作台</span></button></div>
+              <p class="workbench-demo-note"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-info"></use></svg><span>派车后任务进入对应司机账号；所有编线、支付和履约均为模拟，不发送真实通知。</span></p>
+              <div class="form-message" id="routes-workbench-error" role="alert" hidden></div>
+              <div class="route-summary" id="route-summary" aria-live="polite"></div>
+              <div class="dispatch-layout"><section class="workbench-card route-pool" aria-labelledby="route-pool-title"><div class="workbench-card-heading"><div><p class="eyebrow">线路计划</p><h3 id="route-pool-title">全部线路</h3></div><button class="text-button" type="button" id="toggle-route-create"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-route"></use></svg><span>新建线路</span></button></div><div id="route-list"></div></section><section class="workbench-card" id="route-workbench-detail" aria-live="polite"></section></div>
+            </section>
+          </section>
+        </section>
+      </main>
+
+      <footer class="review-footer"><span>派宠一号 · 产品评审联调版</span><span>数据为虚拟演示，不代表正式服务承诺</span></footer>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <div class="dialog-backdrop" id="confirm-dialog" hidden>
+      <section class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title" aria-describedby="dialog-description">
+        <span class="dialog-mark" aria-hidden="true"><svg class="ui-icon"><use href="./assets/v5/icons/app-sprite.svg#icon-alert"></use></svg></span><h2 id="dialog-title">确认操作</h2><p id="dialog-description"></p>
+        <div class="dialog-actions"><button class="quiet-button" id="dialog-cancel" type="button">取消</button><button class="danger-button" id="dialog-confirm" type="button"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-alert"></use></svg><span>确认</span></button></div>
+      </section>
+    </div>
+
+    <script src="./web-session.js"></script>
+    <script src="./fulfillment-ui.js"></script>
+    <script src="./client-review.js"></script>
+    <script src="./ops-workbench.js"></script>
+    <script src="./miniapp.js"></script>
+  </body>
+</html>

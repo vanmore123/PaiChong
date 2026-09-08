@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <script src="./portal-config.js"></script>
+    <script src="./h5-api.js"></script>
+    <script src="./static-demo.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#F7FBF9" />
+  <title>合作机构｜派宠一号</title>
+  <link rel="icon" type="image/png" href="./assets/v5/brand/paichong-logo.png" />
+  <link rel="stylesheet" href="./miniapp.css" />
+  <link rel="stylesheet" href="./partner.css" />
+</head>
+<body class="miniapp partner-app">
+  <a class="partner-skip" href="#partner-main">跳到页面内容</a>
+  <div class="review-shell">
+    <header class="mini-nav"><a id="partner-back" href="./client-review.html" aria-label="返回工作台" hidden>‹</a><strong id="partner-title">合作机构</strong><button type="button" id="partner-refresh">刷新</button></header>
+    <main id="partner-main" class="partner-main" aria-busy="true"><p class="partner-loading" role="status">正在验证工作端身份…</p></main>
+    <nav id="partner-nav" class="partner-nav" aria-label="合作机构导航" hidden></nav>
+  </div>
+  <div id="partner-toast" class="partner-toast" role="status" aria-live="polite"></div>
+  <script src="./web-session.js"></script>
+  <script src="./partner.js"></script>
+</body>
+</html>
