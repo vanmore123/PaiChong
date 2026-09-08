@@ -1,17 +1,18 @@
 <!doctype html>
 <html lang="zh-CN">
   <head>
-    <script src="./portal-config.js"></script>
-    <script src="./h5-api.js"></script>
-    <script src="./static-demo.js"></script>
+    <script src="./portal-config.js?v=d996f76c5e66"></script>
+    <script src="./h5-api.js?v=1befeb8b3ec7"></script>
+    <script src="./static-demo.js?v=aa5b318b4645"></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#F7FBF9" />
     <title>派宠一号｜猫狗专车</title>
     <link rel="icon" type="image/png" href="./assets/brand/paichong-logo.png" />
-    <link rel="stylesheet" href="./client-review.css" />
-    <link rel="stylesheet" href="./ops-workbench.css" />
-    <link rel="stylesheet" href="./miniapp.css" />
+    <link rel="stylesheet" href="./client-review.css?v=52e22fba23eb" />
+    <link rel="stylesheet" href="./ops-workbench.css?v=ee628a08ee28" />
+    <link rel="stylesheet" href="./miniapp.css?v=181a1343eafa" />
+    <link rel="stylesheet" href="./profile-assets.css?v=b0998d1ee6d2" />
   </head>
   <body>
     <a class="skip-link" href="#review-main">跳到主要内容</a>
@@ -82,21 +83,21 @@
                   <div class="route-fields">
                     <label class="field-label" for="from-city">起运城市
                       <select id="from-city" name="fromCity" required>
-                        <option value="广州">广州</option><option value="武汉">武汉</option><option value="郑州">郑州</option><option value="北京">北京</option>
+                        <option value="合肥">合肥</option><option value="武汉">武汉</option><option value="广州">广州</option><option value="郑州">郑州</option><option value="北京">北京</option>
                       </select>
                     </label>
                     <button class="swap-route" id="swap-route" type="button" aria-label="交换起运与目的城市"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-swap"></use></svg></button>
                     <label class="field-label" for="to-city">目的城市
                       <select id="to-city" name="toCity" required>
-                        <option value="武汉">武汉</option><option value="郑州">郑州</option><option value="北京">北京</option><option value="广州">广州</option>
+                        <option value="武汉">武汉</option><option value="广州">广州</option><option value="郑州">郑州</option><option value="北京">北京</option><option value="合肥">合肥</option>
                       </select>
                     </label>
                   </div>
                   <div class="form-grid">
-                    <label class="field-label" for="pet-name">宠物昵称<input id="pet-name" name="petName" maxlength="16" value="豆包" required /></label>
+                    <label class="field-label" for="pet-name">宠物昵称<input id="pet-name" name="petName" maxlength="16" value="团子" required /></label>
                     <label class="field-label" for="pet-type">宠物类型<select id="pet-type" name="petType"><option value="猫">猫</option><option value="犬">犬</option></select></label>
-                    <label class="field-label" for="pet-breed">品种<input id="pet-breed" name="breed" maxlength="24" value="中华田园猫" required /></label>
-                    <label class="field-label" for="pet-weight">体重（kg）<input id="pet-weight" name="weight" type="number" min="0.5" max="60" step="0.1" value="5" required /></label>
+                    <label class="field-label" for="pet-breed">品种<input id="pet-breed" name="breed" maxlength="24" value="英国短毛猫" required /></label>
+                    <label class="field-label" for="pet-weight">体重（kg）<input id="pet-weight" name="weight" type="number" min="0.5" max="60" step="0.1" value="4.2" required /></label>
                     <label class="field-label" for="travel-date">希望出发日<input id="travel-date" name="travelDate" type="date" required /><small id="booking-date-hint">正在查询可预约日期…</small></label>
                     <label class="field-label" for="service-type">接送方式<select id="service-type" name="serviceType"><option value="door-to-door">上门接宠 + 上门送达</option><option value="node-to-door">送至合作点 + 上门送达</option></select></label>
                   </div>
@@ -203,8 +204,8 @@
                 <img src="./assets/brand/paichong-logo.png" alt="" />
               </div>
               <p class="eyebrow">本次行程</p>
-              <h2 id="summary-route">广州 → 武汉</h2>
-              <div class="summary-pet"><span aria-hidden="true"><svg class="ui-icon"><use href="./assets/v5/icons/app-sprite.svg#icon-paw"></use></svg></span><div><strong id="summary-pet-name">豆包 · 猫</strong><small id="summary-pet-detail">中华田园猫 · 5kg</small></div></div>
+              <h2 id="summary-route">合肥 → 武汉</h2>
+              <div class="summary-pet"><span aria-hidden="true"><svg class="ui-icon"><use href="./assets/v5/icons/app-sprite.svg#icon-paw"></use></svg></span><div><strong id="summary-pet-name">团子 · 猫</strong><small id="summary-pet-detail">英国短毛猫 · 4.2kg</small></div></div>
               <dl class="summary-list">
                 <div><dt>预估服务费</dt><dd id="summary-price">待询价</dd></div>
                 <div><dt>预订保证金</dt><dd id="summary-deposit">—</dd></div>
@@ -293,13 +294,14 @@
       </section>
     </div>
 
-    <script src="./product-copy.js"></script>
-    <script src="./web-session.js"></script>
-    <link rel="stylesheet" href="./cabin-monitor.css" />
-    <script src="./cabin-monitor.js"></script>
-    <script src="./fulfillment-ui.js"></script>
-    <script src="./client-review.js"></script>
-    <script src="./ops-workbench.js"></script>
-    <script src="./miniapp.js"></script>
+    <script src="./product-copy.js?v=b527e136a21f"></script>
+    <script src="./profile-assets.js?v=cd160b0cfd85"></script>
+    <script src="./web-session.js?v=5250f5dd2db2"></script>
+    <link rel="stylesheet" href="./cabin-monitor.css?v=8308efacb1d5" />
+    <script src="./cabin-monitor.js?v=41760498c8e5"></script>
+    <script src="./fulfillment-ui.js?v=cc5cc919d7f0"></script>
+    <script src="./client-review.js?v=b7679c0d602c"></script>
+    <script src="./ops-workbench.js?v=2a5e1b1185f9"></script>
+    <script src="./miniapp.js?v=f2fecba6e1c6"></script>
   </body>
 </html>

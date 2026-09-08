@@ -46,22 +46,25 @@ body.miniapp .review-shell { width: 100%; max-width: 430px; min-height: 100dvh; 
 .miniapp .role-view > .view-heading, .miniapp .user-order-toolbar, .miniapp .wizard-nav,
 .miniapp .summary-panel, .miniapp .ops-navigation, .miniapp [aria-label="经营者工作台"],
 .miniapp .mini-screen-back { display: none !important; }
-.miniapp .ui-icon { width: 22px; height: 22px; flex: 0 0 auto; }
+.miniapp .ui-icon { display: block; width: 22px; height: 22px; flex: 0 0 auto; }
 .miniapp button, .miniapp label.outline-button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 .miniapp button:focus-visible, .miniapp a:focus-visible { outline: 3px solid #18887b80; outline-offset: 3px; }
 .miniapp button:disabled { opacity: .48; transform: none; }
 .miniapp button:hover { transform: none; }
 .miniapp button:active:not(:disabled) { transform: scale(.985); }
-.miniapp .mini-nav { position: sticky; top: 0; z-index: 65; display: grid; grid-template-columns: 76px minmax(0,1fr) 76px; align-items: center; min-height: 58px; padding: calc(env(safe-area-inset-top) + 4px) 14px 4px; background: #ffffffed; backdrop-filter: blur(16px); border-bottom: 1px solid #e6efea80; }
+.miniapp .mini-nav { position: sticky; top: 0; z-index: 65; display: grid; grid-template-columns: 90px minmax(0,1fr) 90px; align-items: center; min-height: 58px; padding: calc(env(safe-area-inset-top) + 4px) 14px 4px; background: #ffffffed; backdrop-filter: blur(16px); border-bottom: 1px solid #e6efea80; }
 .mini-nav > strong { text-align: center; font-size: 16px; font-weight: 650; white-space: nowrap; color: var(--pc-ink); }
-.mini-back { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; background: none; color: var(--pc-ink); }
-.mini-capsule { display: flex; align-items: center; justify-content: space-around; height: 30px; border: 1px solid #e3eae6; border-radius: 20px; background: #fff; color: var(--pc-ink); }
-.mini-capsule button { display: grid; place-items: center; width: 36px; min-height: 30px; border: 0; border-radius: 20px; background: transparent; color: inherit; font-size: 16px; font-weight: 600; }
-.mini-capsule > span { width: 1px; height: 14px; background: #e3eae6; }
+.mini-back { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; background: none; color: var(--pc-ink); line-height: 1; }
+/* Keep the compact capsule silhouette; each action owns a full 44px hit area. */
+.mini-capsule { position: relative; isolation: isolate; display: grid; grid-template-columns: repeat(2,44px); align-items: center; justify-self: end; width: 90px; height: 44px; padding: 0 1px; color: var(--pc-ink); }
+.mini-capsule::before { content: ''; position: absolute; z-index: -1; inset: 6px 0; border: 1px solid #e3eae6; border-radius: 20px; background: #fff; }
+.mini-capsule button { display: grid; place-items: center; width: 44px; height: 44px; min-height: 44px; padding: 0; border: 0; border-radius: 20px; background: transparent; color: inherit; font-size: 16px; font-weight: 600; line-height: 1; }
+.mini-capsule > span { position: absolute; left: 50%; top: 50%; width: 1px; height: 14px; transform: translate(-50%,-50%); background: #e3eae6; pointer-events: none; }
 .mini-capsule .ui-icon { width: 17px; height: 17px; }
 .mini-tabs { position: fixed; z-index: 64; bottom: 0; left: 50%; transform: translateX(-50%); display: flex; width: min(430px,100%); padding: 7px 8px calc(8px + env(safe-area-inset-bottom)); border-top: 1px solid var(--pc-line); background: #ffffffed; backdrop-filter: blur(16px); }
-.mini-tabs button { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-width: 0; min-height: 55px; padding: 0; border: 0; border-radius: 12px; color: #627a73; background: none; font-size: 12px; font-weight: 500; }
-.mini-tab-icon { display: grid; place-items: center; width: 54px; height: 32px; border-radius: 18px; }
+.mini-tabs button { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-width: 0; min-height: 55px; padding: 0; border: 0; border-radius: 12px; color: #627a73; background: none; font-size: 12px; font-weight: 500; line-height: 1.4; }
+.mini-tab-icon { display: grid; flex: 0 0 32px; place-items: center; width: 54px; height: 32px; border-radius: 18px; }
+.mini-tabs button > span:last-child { min-height: 17px; white-space: nowrap; }
 .mini-tabs .ui-icon { width: 26px; height: 26px; }
 .mini-tabs .is-active { color: var(--pc-green); font-weight: 650; }
 .mini-tabs .is-active .mini-tab-icon { background: var(--pc-green-soft); }
@@ -78,7 +81,7 @@ body.miniapp .review-shell { width: 100%; max-width: 430px; min-height: 100dvh; 
 .mini-booking-card { position: relative; width: 100%; margin-top: 0; padding: 20px 18px 15px; border: 1px solid var(--pc-line); border-radius: 20px; background: #fff; box-shadow: var(--pc-shadow); }
 .mini-booking-card h2 { margin: 0 0 5px; color: var(--pc-ink); font-size: 22px; line-height: 1.35; }
 .mini-booking-card > p { margin: 0; color: var(--pc-muted); font-size: 14px; }
-.mini-home-route { display: grid; grid-template-columns: minmax(0,1fr) 44px minmax(0,1fr); align-items: center; gap: 8px; margin: 23px 0 18px; }
+.mini-home-route { display: grid; grid-template-columns: minmax(0,1fr) 44px minmax(0,1fr); align-items: end; gap: 8px; margin: 23px 0 18px; }
 .mini-home-route label { min-width: 0; color: var(--pc-muted); font-size: 13px; }
 .mini-home-route label:last-child { text-align: right; }
 .mini-home-route select { display: block; width: 100%; min-width: 0; min-height: 44px; margin-top: 2px; padding: 0 17px 0 0; border: 0; border-radius: 6px; color: var(--pc-ink); background: #fff; font-size: 25px; font-weight: 650; }
@@ -119,7 +122,7 @@ body.miniapp .review-shell { width: 100%; max-width: 430px; min-height: 100dvh; 
 .mini-guide-card strong, .mini-guide-card small { display: block; }
 .mini-guide-card strong { color: var(--pc-ink); font-size: 14px; font-weight: 550; }
 .mini-guide-card small { margin-top: 4px; color: var(--pc-muted); font-size: 12px; }
-.mini-guide-card > .ui-icon:last-child { width: 17px; }
+.mini-guide-card > .ui-icon:last-child { width: 17px; height: 17px; }
 .mini-demo-note { margin: 20px 0 8px; font-size: 12px; text-align: center; color: var(--pc-muted); line-height: 1.65; }
 .mini-ops-welcome { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 23px 20px 5px; }
 .mini-ops-welcome h1 { margin: 5px 0; font-size: 24px; letter-spacing: -.04em; }
@@ -147,9 +150,10 @@ body.miniapp .review-shell { width: 100%; max-width: 430px; min-height: 100dvh; 
 .mini-profile-card p { margin: 0 0 5px; color: var(--pc-muted); font-size: 15px; }
 .mini-profile-card small { color: var(--pc-muted); font-size: 12px; }
 .mini-menu-card { padding: 0 15px; border: 1px solid var(--pc-line); border-radius: 20px; background: #fff; }
-.mini-menu-card button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 63px; border: 0; border-bottom: 1px solid var(--pc-line); background: none; color: var(--pc-green); }
+.mini-menu-card button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 63px; padding: 12px 0; border: 0; border-bottom: 1px solid var(--pc-line); background: none; color: var(--pc-green); }
 .mini-menu-card button > span { flex: 1; text-align: left; font-size: 14px; color: var(--pc-ink); }
 .mini-menu-card .ui-icon { width: 20px; height: 20px; }
+.mini-menu-card button > .ui-icon:last-child { width: 17px; height: 17px; margin-left: auto; color: #91a89d; }
 .mini-version { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 20px 0; font-size: 12px; color: var(--pc-muted); }
 .mini-security-note { display: flex; gap: 8px; align-items: center; padding: 23px 2px 8px; font-size: 12px; color: var(--pc-muted); line-height: 1.6; }
 .mini-guide { padding: 18px; }
@@ -164,7 +168,7 @@ body.miniapp .review-shell { width: 100%; max-width: 430px; min-height: 100dvh; 
 .mini-progress small { display: block; margin-top: 9px; color: var(--pc-muted); font-size: 12px; }
 
 /* Shared working controls: no raised plastic rims or textured surfaces. */
-.miniapp .quiet-button, .miniapp .outline-button, .miniapp .primary-button, .miniapp .pay-button, .miniapp .danger-button, .miniapp .reset-button, .miniapp .text-button { min-height: 44px; gap: 8px; border-radius: 14px; padding: 10px 14px; font-size: 14px; font-weight: 550; box-shadow: none; background-image: none; }
+.miniapp .quiet-button, .miniapp .outline-button, .miniapp .primary-button, .miniapp .pay-button, .miniapp .danger-button, .miniapp .reset-button, .miniapp .text-button { min-width: 44px; min-height: 44px; gap: 8px; border-radius: 14px; padding: 10px 14px; font-size: 14px; font-weight: 550; line-height: 1.45; box-shadow: none; background-image: none; }
 .miniapp .primary-button, .miniapp .pay-button { min-height: 50px; border: 1px solid transparent; border-radius: 16px; color: var(--pc-ink); background: var(--pc-orange); box-shadow: 0 2px 6px #173e3907; }
 .miniapp .primary-button:hover:not(:disabled), .miniapp .pay-button:hover:not(:disabled) { color: var(--pc-ink); background: #ff8c49; box-shadow: none; }
 .miniapp .quiet-button, .miniapp .outline-button { border: 1px solid #dce9e1; background: #fff; color: var(--pc-green); }
@@ -193,7 +197,8 @@ body.miniapp .review-shell { width: 100%; max-width: 430px; min-height: 100dvh; 
 .miniapp input:not([type=checkbox]):not([type=file]), .miniapp select, .miniapp textarea { min-width: 0; min-height: 50px; padding: 12px; font-size: 16px; border: 1px solid #dce8e1; border-radius: 14px; color: var(--pc-ink); background: #fff; }
 .miniapp input:focus, .miniapp select:focus, .miniapp textarea:focus { outline: 0; border-color: #4e9378; box-shadow: 0 0 0 3px #e7f5ed; }
 .miniapp .mini-home-route select { min-height: 44px; padding: 0 16px 0 0; border: 0; border-radius: 5px; font-size: 25px; }
-.miniapp .swap-route { width: 44px; height: 44px; min-height: 44px; justify-self: center; padding: 0; border: 0; border-radius: 50%; background: var(--pc-green-soft); transform: rotate(90deg); }
+.miniapp .swap-route { width: 44px; height: 44px; min-height: 44px; justify-self: center; padding: 0; border: 0; border-radius: 50%; background: var(--pc-green-soft); transform: none; }
+.miniapp .swap-route .ui-icon { transform: rotate(90deg); }
 .miniapp .contact-fields { padding: 16px; background: #fff; border-color: var(--pc-line); border-radius: 20px; }
 .miniapp .contact-heading { flex-direction: row; align-items: center; gap: 8px; }
 .miniapp .contact-heading h3 { font-size: 17px; }
@@ -395,7 +400,7 @@ body.miniapp .review-shell { width: 100%; max-width: 430px; min-height: 100dvh; 
 .miniapp .dialog-actions > button { flex: 1; min-width: 0; }
 @media (min-width: 600px) { .miniapp .review-shell { border-inline: 1px solid #e4ece7; } }
 @media (max-width: 360px) {
-  .miniapp .mini-nav { grid-template-columns: 62px minmax(0,1fr) 76px; padding-inline: 10px; }
+  .miniapp .mini-nav { grid-template-columns: 90px minmax(0,1fr) 90px; padding-inline: 10px; }
   .mini-nav > strong { font-size: 14px; }
   .mini-hero { min-height: 197px; padding: 22px 16px 28px; }
   .mini-hero h1 { font-size: 24px; }

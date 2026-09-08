@@ -2,7 +2,7 @@
   'use strict';
   const copy = (value) => window.PaichongProductCopy?.text(value) ?? value;
 
-  const CITIES = ['广州', '武汉', '郑州', '北京'];
+  const CITIES = ['合肥', '武汉', '广州', '郑州', '北京'];
   const RESERVATION_LABELS = { reserved: '待用户确认', confirmed: '已确认 · 待到点', arrived: '已到合作点', departed: '已离点交接', released: '已释放' };
   const state = { ready: false, activeTab: 'review', nodeScreen: 'overview', nodeTab: 'calendar', handoffOrderId: '', routeScreen: 'list', pendingOpen: '', nodes: [], orders: [], routes: [], resources: { drivers: [], vehicles: [] }, calendar: [], date: '', nodeId: '', routeId: '', creatingRoute: false, loading: false, busy: false, requestId: 0, dataReady: false };
   const byId = (id) => document.getElementById(id);
@@ -311,8 +311,8 @@
     const departureDate = addDays(today(), 1), arrivalDate = addDays(today(), 2);
     const citySelect = (id, label, value, optional = false) => `<label class="field-label" for="${id}">${label}<select id="${id}"${optional ? '' : ' required'}>${optional ? '<option value="">不途经</option>' : ''}${CITIES.map((city) => `<option value="${city}"${city === value ? ' selected' : ''}>${city}</option>`).join('')}</select></label>`;
     byId('route-workbench-detail').innerHTML = `<div class="workbench-card-heading"><div><p class="eyebrow">新建线路</p><h3>安排一趟专车</h3></div><span class="simulation-badge">行程计划</span></div><p class="route-plan-intro">途经城市从前往后排列；订单起终点必须顺向经过。发车需晚于接宠时段结束，且不能超过最大等待时间。</p>
-      <form class="route-create-form" id="route-create-form"><label class="field-label" for="route-name">线路名称<input id="route-name" maxlength="60" value="广州—武汉—郑州—北京" required /></label>
-      <div class="route-city-fields">${citySelect('route-city-start', '起点', '广州')}${citySelect('route-city-via-one', '途经 1', '武汉', true)}${citySelect('route-city-via-two', '途经 2', '郑州', true)}${citySelect('route-city-end', '终点', '北京')}</div>
+      <form class="route-create-form" id="route-create-form"><label class="field-label" for="route-name">线路名称<input id="route-name" maxlength="60" value="合肥—武汉—广州" required /></label>
+      <div class="route-city-fields">${citySelect('route-city-start', '起点', '合肥')}${citySelect('route-city-via-one', '途经 1', '武汉', true)}${citySelect('route-city-via-two', '途经 2', '', true)}${citySelect('route-city-end', '终点', '广州')}</div>
       <div class="form-grid"><label class="field-label" for="route-departure">计划发车（北京时间）<input type="datetime-local" id="route-departure" value="${departureDate}T15:30" required /></label><label class="field-label" for="route-arrival">预计到达（北京时间）<input type="datetime-local" id="route-arrival" value="${arrivalDate}T18:00" required /></label><label class="field-label" for="route-capacity">整车笼位容量<input type="number" id="route-capacity" min="1" max="100" step="1" value="8" required /></label><label class="field-label" for="route-min-orders">最低发车订单数<input type="number" id="route-min-orders" min="1" max="100" step="1" value="1" required /></label><label class="field-label" for="route-max-wait">预约后最大等待（小时）<input type="number" id="route-max-wait" min="1" max="168" step="1" value="36" required /></label></div>
       <div class="form-actions"><button class="quiet-button" id="cancel-route-create" type="button">返回线路</button><button class="primary-button" type="submit">${icon('route')}<span>创建线路</span></button></div></form>`;
     byId('cancel-route-create').addEventListener('click', back);

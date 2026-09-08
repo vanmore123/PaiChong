@@ -1,12 +1,14 @@
 (() => {
   'use strict';
   const app = window.PaichongReview;
-  const state = { role: '', page: 'home', step: 1, orders: [], filter: 'all', request: 0, opsDetail: false, opsCanBack: false, homeRoute: { fromCity: '广州', toCity: '武汉' } };
+  const state = { role: '', page: 'home', step: 1, orders: [], filter: 'all', request: 0, opsDetail: false, opsCanBack: false, homeRoute: { fromCity: '合肥', toCity: '武汉' } };
   const byId = (id) => document.getElementById(id);
   const escape = (value = '') => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
   const icon = (name) => `<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-${name}"></use></svg>`;
   const closed = (order) => ['cancelled', 'rejected'].includes(order.reviewStatus);
   const completed = (order) => order.fulfillment?.stage === 'delivered';
+  const hefeiRank = (order) => order.fromCity === '合肥' ? 0 : order.toCity === '合肥' || order.transport?.cities?.includes('合肥') ? 1 : 2;
+  const prioritizeOrders = (orders = []) => [...orders].sort((a,b) => hefeiRank(a)-hefeiRank(b));
   const unpaid = (order) => order.reviewStatus === 'not_submitted' || order.fulfillment?.stage === 'awaiting_payment';
   const money = (value) => new Intl.NumberFormat('zh-CN', { style: 'currency', currency: 'CNY', maximumFractionDigits: 2 }).format(Number(value || 0));
   const labels = ['确认出行路线', '接送资料与材料', '选择接宠时段', '支付预订保证金', '订单详情'];
@@ -100,7 +102,9 @@
 
   function hero(ops = false) {
     if (ops) return `<div class="mini-ops-welcome"><div><span class="mini-eyebrow">合肥总部 · 经营者端</span><h1>你好，派宠经营者</h1><p>先审核订单，再安排接送。</p></div>${icon('workbench')}</div>`;
-    return '<div class="mini-hero"><div><span class="mini-eyebrow">猫狗专车 · 安心到家</span><h1>毛孩子出远门<br>每一程都安心</h1><p>独立笼位 · 专车接送</p></div><img src="./assets/v5/brand/paichong-logo.png" width="1536" height="1024" alt="猫狗乘坐派宠专车" fetchpriority="high" /></div>';
+    const profile = window.PaichongProfiles?.user(app.session());
+    const greeting = profile ? `<div class="pc-home-greeting">${window.PaichongProfiles.avatar(profile)}<div><strong>你好，${escape(profile.name)}</strong><small>今天，也要好好照顾毛孩子</small></div><span class="pc-city-chip">${icon('map-pin')}合肥</span></div>` : '';
+    return greeting + '<div class="mini-hero"><div><span class="mini-eyebrow">合肥出发 · 安心到家</span><h1>毛孩子出远门<br>每一程都安心</h1><p>独立笼位 · 专车接送</p></div><img src="./assets/v5/brand/paichong-logo.png" width="1536" height="1024" alt="猫狗乘坐派宠专车" fetchpriority="high" /></div>';
   }
 
   function emptyOrders(heading, detail) {
@@ -144,8 +148,9 @@
       } else {
         const result = await app.api('/api/user/orders');
         if (request !== state.request) return;
-        state.orders = result.items || [];
-        byId('mini-recent-orders').innerHTML = state.orders.length ? state.orders.slice(0, 1).map(orderCard).join('') : emptyOrders('还没有出行计划', '第一次出发，从预约开始。');
+        state.orders = prioritizeOrders(result.items || []);
+        const recent = state.orders.find(order => hefeiRank(order) === 0 && order.fulfillment?.stage === 'in_transit') || state.orders.find(order => !closed(order) && !completed(order)) || state.orders[0];
+        byId('mini-recent-orders').innerHTML = recent ? orderCard(recent) : emptyOrders('还没有出行计划', '第一次出发，从预约开始。');
         bindOrderCards();
       }
     } catch (error) {
@@ -158,7 +163,7 @@
 
   function orderCard(order) {
     const done = closed(order);
-    return `<button type="button" class="mini-order-card" data-mini-order="${escape(order.id)}"><div class="mini-order-top"><span class="mini-order-pet">${icon(order.petType === '犬' ? 'dog' : 'cat')}<span>${escape(order.petName)}的出行</span></span><strong class="${done ? 'is-closed' : ''}">${escape(order.status)}</strong></div><h3>${escape(order.fromCity)}<span>${icon('arrow-right')}</span>${escape(order.toCity)}</h3><p>${icon('calendar')}${escape(order.pickup?.date || '未预约')} ${escape(order.pickup?.timeSlot || '')}</p><div class="mini-order-foot"><small>${order.assignedNode ? escape(order.assignedNode.name) : '节点待安排'}</small><span>${done ? '查看结果' : order.reviewStatus === 'not_submitted' ? '继续支付' : '查看行程'} ${icon('chevron-right')}</span></div></button>`;
+    return `<button type="button" class="mini-order-card" data-mini-order="${escape(order.id)}"><div class="mini-order-top"><span class="mini-order-pet">${window.PaichongProfiles?.petAvatar(order) || icon(order.petType === '犬' ? 'dog' : 'cat')}<span class="pc-order-name">${escape(order.pet?.name || order.petName)}的出行</span></span><strong class="${done ? 'is-closed' : ''}">${escape(order.status)}</strong></div><h3>${escape(order.fromCity)}<span>${icon('arrow-right')}</span>${escape(order.toCity)}</h3><p>${icon('calendar')}${escape(order.pickup?.date || '未预约')} ${escape(order.pickup?.timeSlot || '')}</p><div class="mini-order-foot"><small>${order.assignedNode ? escape(order.assignedNode.name) : '节点待安排'}</small><span>${done ? '查看结果' : order.reviewStatus === 'not_submitted' ? '继续支付' : '查看行程'} ${icon('chevron-right')}</span></div></button>`;
   }
 
   async function loadOrderList(request) {
@@ -166,7 +171,7 @@
     try {
       const result = await app.api('/api/user/orders');
       if (request !== state.request) return;
-      state.orders = result.items || [];
+      state.orders = prioritizeOrders(result.items || []);
       renderOrderList();
     } catch (error) { if (request === state.request) errorPage(error.message, () => navigate('orders')); }
   }
@@ -181,10 +186,21 @@
   function bindOrderCards() { document.querySelectorAll('[data-mini-order]').forEach((button) => button.addEventListener('click', () => navigate('detail', button.dataset.miniOrder))); }
   function bindLinks() { byId('mini-page').querySelectorAll('[data-go]').forEach((button) => button.addEventListener('click', () => navigate(button.dataset.go))); }
 
-  function renderProfile() {
+  async function renderProfile() {
     title('我的');
     const session = app.session(), account = session?.account || '';
     const masked = /^1\d{10}$/.test(account) ? `${account.slice(0, 3)} **** ${account.slice(-4)}` : account;
+    if (state.role === 'user' && window.PaichongProfiles) {
+      const request=state.request;
+      byId('mini-page').innerHTML='<div class="mini-empty">正在整理毛孩子的行程…</div>';
+      try { const result=await app.api('/api/user/orders'); if(request!==state.request)return;state.orders=prioritizeOrders(result.items || []); }
+      catch(error){if(request===state.request)errorPage(error.message,()=>navigate('profile'));return;}
+      const profiles=window.PaichongProfiles, profile=profiles.user(session);
+      const pets=profiles.featuredPets(state.orders,state.orders.length);
+      const active=state.orders.filter(order=>!closed(order)&&!completed(order)).length;
+      byId('mini-page').innerHTML=`<div class="mini-profile"><section class="pc-profile-hero"><div class="pc-profile-top">${profiles.avatar(profile,'large')}<div><h1>${escape(profile.name)}</h1><p>${escape(masked)}</p><small>合肥 · 宠物主人</small></div></div><p class="pc-profile-quote">${escape(profile.intro)}</p></section><div class="pc-profile-stats"><div><strong>${pets.length}</strong><span>毛孩子</span></div><div><strong>${active}</strong><span>进行中的订单</span></div><div><strong>${state.orders.filter(completed).length}</strong><span>已完成行程</span></div></div><section class="pc-pets-section"><div class="pc-pets-heading"><h2>我的毛孩子</h2><button type="button" data-go="orders">查看行程${icon('chevron-right')}</button></div>${pets.length?`<div class="pc-pet-grid">${pets.slice(0,3).map(order=>`<button type="button" data-mini-order="${escape(order.id)}">${profiles.petAvatar(order)}<strong>${escape(profiles.pet(order).name)}</strong><small>${escape(profiles.pet(order).type || '宠物')} · ${escape(profiles.pet(order).weight || '—')} kg</small></button>`).join('')}</div>`:'<p class="pc-profile-empty">预约第一段旅程后，毛孩子的资料会出现在这里。</p>'}</section><div class="mini-menu-card"><button data-go="orders">${icon('order')}<span>我的订单</span>${icon('chevron-right')}</button><button data-go="guide">${icon('info')}<span>出行须知</span>${icon('chevron-right')}</button><div class="mini-version">常用出发城市<span>安徽 · 合肥</span></div><div class="mini-version">登录方式<span>账号密码</span></div></div><button id="mini-logout" class="outline-button mini-full-button">退出当前账号</button><p class="mini-demo-note">资料与照片为体验样例，操作仅保存在本端浏览器。</p></div>`;
+      bindOrderCards();bindLinks();byId('mini-logout').addEventListener('click',app.logout);return;
+    }
     byId('mini-page').innerHTML = `<div class="mini-profile"><div class="mini-profile-card"><span>${icon(state.role === 'ops' ? 'workbench' : 'dog')}</span><div><h1>${state.role === 'ops' ? '派宠经营者' : '宠物主人'}</h1><p>${escape(masked)}</p><small>${state.role === 'ops' ? '运营权限' : '用户权限'}</small></div></div><div class="mini-menu-card"><button data-go="${state.role === 'ops' ? 'ops-orders' : 'orders'}">${icon('clipboard-check')}<span>${state.role === 'ops' ? '订单管理' : '我的订单'}</span>${icon('arrow-right')}</button><button data-go="guide">${icon('info')}<span>使用说明</span>${icon('arrow-right')}</button><div class="mini-version">总部所在地<span>安徽 · 合肥</span></div><div class="mini-version">当前版本<span>体验版</span></div></div><div class="mini-security-note">${icon('shield-check')}身份由账号密码决定，退出后才能切换账号。</div><button id="mini-logout" class="outline-button mini-full-button">退出当前账号</button><p class="mini-demo-note">体验说明：数据仅保存在本端浏览器，不跨端同步。</p></div>`;
     if (state.role === 'ops') byId('mini-page').querySelector('.mini-menu-card').insertAdjacentHTML('afterbegin', `<button data-go="partner">${icon('node')}<span>合作机构余量审批</span>${icon('arrow-right')}</button>`);
     bindLinks(); byId('mini-logout').addEventListener('click', app.logout);

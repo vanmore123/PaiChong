@@ -1,14 +1,14 @@
 {
   "application": "paichong-h5-review",
   "mode": "static-demo",
-  "createdAt": "2026-09-08T01:57:42.669Z",
+  "createdAt": "2026-09-08T02:45:41.078Z",
   "apiBase": "",
   "simulated": true,
   "portals": {
     "client": {
       "directory": "client",
       "entry": "client/index.html",
-      "files": 61,
+      "files": 68,
       "allowedRoles": [
         "user"
       ]
@@ -16,7 +16,7 @@
     "workbench": {
       "directory": "workbench",
       "entry": "workbench/index.html",
-      "files": 67,
+      "files": 74,
       "allowedRoles": [
         "ops",
         "driver",
@@ -26,8 +26,8 @@
   },
   "files": {
     "client/login.html": {
-      "bytes": 7443,
-      "sha256": "f16ad261386468dd781aee37f68cda9f490905c26b09d910c33d3dbe4577b756"
+      "bytes": 7578,
+      "sha256": "057feeb160326576a08f6705f20d8ae9125c9ec5ee70db69b107f5db5ae45852"
     },
     "client/login.css": {
       "bytes": 14135,
@@ -38,48 +38,56 @@
       "sha256": "9a34dbe22e20c1975cdb95ec7df46d0e7f0e94f0669e5beacbeb6b94ddba90bd"
     },
     "client/miniapp-login.css": {
-      "bytes": 7515,
-      "sha256": "e7bb8f271be2595db50c7d0db2b5e15ff85e83922352e53f8ac60c2c0808bc87"
+      "bytes": 7830,
+      "sha256": "500deee6efe7cf5dbedc9ccc00688e4e7b4bc12de01cc2ced3318a6d76b4f0d6"
     },
     "client/client-review.html": {
-      "bytes": 29739,
-      "sha256": "6bc46cef02525fec4a2391a3d477d3967515ccb4c042bbca408af2751b5eced5"
+      "bytes": 30165,
+      "sha256": "d49013a25b2a1494809391fdc912e4950bb8df09a9790e07206091b16580373d"
     },
     "client/client-review.css": {
       "bytes": 39611,
       "sha256": "52e22fba23eb02f7f737482c4f52d1806b300bee746186daf118a1656468e28b"
     },
     "client/client-review.js": {
-      "bytes": 81352,
-      "sha256": "94cac671be4bc12e0e85109a59a1bf0a879230dace93111d8933042d786da2b3"
+      "bytes": 81565,
+      "sha256": "b7679c0d602cca288b111a2140a15954db57913820856a7a49bf7be234b2925d"
     },
     "client/ops-workbench.js": {
-      "bytes": 47105,
-      "sha256": "22ed707ae98ab3f481d4defd8bec6d06934a7577d3ea183ea66f0190efbe659a"
+      "bytes": 47100,
+      "sha256": "2a5e1b1185f96b1f08244ced6c1fa51bf31ae5622662b0bbcff764fa386dc8b3"
     },
     "client/ops-workbench.css": {
-      "bytes": 28757,
-      "sha256": "fd26e1f1c207897c71893e36b911b2c0d5b5b2261e6d738e49208e60e695cc8b"
+      "bytes": 28923,
+      "sha256": "ee628a08ee282d2e6b232b7ebf7f7e6b6059fc16703101026493fe270a8a141f"
     },
     "client/miniapp.js": {
-      "bytes": 20917,
-      "sha256": "c556281c554cd08f694e4c67f42d60feb2cb00b3489861b65fbcc26524c44a3a"
+      "bytes": 24426,
+      "sha256": "f2fecba6e1c6c00a17f26e3bf18f30540c83db09982283667ee503a4b7678097"
     },
     "client/miniapp.css": {
-      "bytes": 39494,
-      "sha256": "3be564cad6b3944ad92043e91d29143ae009b994256dadfb67ea0a084edc1ebd"
+      "bytes": 40267,
+      "sha256": "181a1343eafa7529147298f1d9ec851c4d6e88d3b307d2e536f515d03ddedeb3"
     },
     "client/fulfillment-ui.js": {
       "bytes": 5911,
       "sha256": "cc5cc919d7f0985ef5d663992cef9d38cab775c2f4b6d172636b820d6ba10961"
     },
     "client/cabin-monitor.js": {
-      "bytes": 5158,
-      "sha256": "250b2def9a4f540c0a36b435f5316ad51da55f0dac0b4002abd177add08a5fb7"
+      "bytes": 6425,
+      "sha256": "41760498c8e5efe0f0b937c7d47d67937447670cb702f662cb98c96631b3b26f"
     },
     "client/cabin-monitor.css": {
-      "bytes": 4612,
-      "sha256": "3d50854f9c2954a5a297383472d2d8c473651577791298ebcdcd18b2241778bd"
+      "bytes": 5778,
+      "sha256": "8308efacb1d5e7059b7b31fd8dec93dc7a1dd507ad6c538a3e55f76b8d59a6bd"
+    },
+    "client/profile-assets.js": {
+      "bytes": 4086,
+      "sha256": "cd160b0cfd85527649add8e46e1bba210dc3ff98e2ebc002bb17d5e893b44563"
+    },
+    "client/profile-assets.css": {
+      "bytes": 4051,
+      "sha256": "b0998d1ee6d26141a0e4c9db6f1979fcd149af2362c7934e32c2b12f7c55b374"
     },
     "client/product-copy.js": {
       "bytes": 4731,
@@ -94,8 +102,8 @@
       "sha256": "1befeb8b3ec77db5924c9e5c4d1fd60c9877a3bd6b7318e9ab232a36cc36585b"
     },
     "client/static-demo.js": {
-      "bytes": 101706,
-      "sha256": "91133d28bab14b1a7f8fee77879407817579ac7d48c321d835b0fe58492bdcac"
+      "bytes": 106848,
+      "sha256": "aa5b318b4645ed9c516ba25f1981f56b9d82456a85a4d30c6c4de02e9e531b4b"
     },
     "client/assets/brand/paichong-logo.png": {
       "bytes": 1107621,
@@ -104,6 +112,26 @@
     "client/assets/ui-icons.svg": {
       "bytes": 6481,
       "sha256": "9a2be2d4b18a83e127d9bd617137a5d4f060d3eb41d19bf935fcd961a47300fb"
+    },
+    "client/assets/v5/avatars/pet-corgi-v1.jpg": {
+      "bytes": 43246,
+      "sha256": "d464f96b8a5ea5aca8049431d5a6948cf8ac85247fe90182fef4ffd44ed908d2"
+    },
+    "client/assets/v5/avatars/pet-orange-v1.jpg": {
+      "bytes": 57624,
+      "sha256": "cf657e3013623027b0bd626a9d69df962e984f685aa746af624af956f1985e4b"
+    },
+    "client/assets/v5/avatars/pet-silver-v1.jpg": {
+      "bytes": 64925,
+      "sha256": "42c56cfeb7b2294356c012365827b6ff4e90ddd971784155fcc0b50e74acd617"
+    },
+    "client/assets/v5/avatars/user-chen-v1.jpg": {
+      "bytes": 50740,
+      "sha256": "fa533656e03bf325c49fe0fd5e0f73ade9bc0d3345257d550747ef4bfbb947c7"
+    },
+    "client/assets/v5/avatars/user-lin-v1.jpg": {
+      "bytes": 60632,
+      "sha256": "3e43f29a7e970171cf693fbffa1861cb4c2e0649fa7966091589308f5c4fae01"
     },
     "client/assets/v5/brand/paichong-logo.png": {
       "bytes": 1107621,
@@ -262,16 +290,16 @@
       "sha256": "2317aa488855b8909cc7bbcae297f5e73e69448c35823be1f1d0aaa90c9922ba"
     },
     "client/index.html": {
-      "bytes": 7443,
-      "sha256": "f16ad261386468dd781aee37f68cda9f490905c26b09d910c33d3dbe4577b756"
+      "bytes": 7578,
+      "sha256": "057feeb160326576a08f6705f20d8ae9125c9ec5ee70db69b107f5db5ae45852"
     },
     "client/portal-config.js": {
       "bytes": 119,
       "sha256": "b8243d907a7e9cb5ad4d1bd01854aa0cd4f1df40be4406cd270ebdce1fa4a9f9"
     },
     "workbench/login.html": {
-      "bytes": 7443,
-      "sha256": "f16ad261386468dd781aee37f68cda9f490905c26b09d910c33d3dbe4577b756"
+      "bytes": 7578,
+      "sha256": "0aa1ef7ab55c02150d809a37e4e22ab22679927232e62f003ba39babdec5e1f5"
     },
     "workbench/login.css": {
       "bytes": 14135,
@@ -282,48 +310,56 @@
       "sha256": "9a34dbe22e20c1975cdb95ec7df46d0e7f0e94f0669e5beacbeb6b94ddba90bd"
     },
     "workbench/miniapp-login.css": {
-      "bytes": 7515,
-      "sha256": "e7bb8f271be2595db50c7d0db2b5e15ff85e83922352e53f8ac60c2c0808bc87"
+      "bytes": 7830,
+      "sha256": "500deee6efe7cf5dbedc9ccc00688e4e7b4bc12de01cc2ced3318a6d76b4f0d6"
     },
     "workbench/client-review.html": {
-      "bytes": 29739,
-      "sha256": "6bc46cef02525fec4a2391a3d477d3967515ccb4c042bbca408af2751b5eced5"
+      "bytes": 30165,
+      "sha256": "0820e23b3e1c8e94d5acd370414d716956839c9faf4eb73970f4cec8a68031a6"
     },
     "workbench/client-review.css": {
       "bytes": 39611,
       "sha256": "52e22fba23eb02f7f737482c4f52d1806b300bee746186daf118a1656468e28b"
     },
     "workbench/client-review.js": {
-      "bytes": 81352,
-      "sha256": "94cac671be4bc12e0e85109a59a1bf0a879230dace93111d8933042d786da2b3"
+      "bytes": 81565,
+      "sha256": "b7679c0d602cca288b111a2140a15954db57913820856a7a49bf7be234b2925d"
     },
     "workbench/ops-workbench.js": {
-      "bytes": 47105,
-      "sha256": "22ed707ae98ab3f481d4defd8bec6d06934a7577d3ea183ea66f0190efbe659a"
+      "bytes": 47100,
+      "sha256": "2a5e1b1185f96b1f08244ced6c1fa51bf31ae5622662b0bbcff764fa386dc8b3"
     },
     "workbench/ops-workbench.css": {
-      "bytes": 28757,
-      "sha256": "fd26e1f1c207897c71893e36b911b2c0d5b5b2261e6d738e49208e60e695cc8b"
+      "bytes": 28923,
+      "sha256": "ee628a08ee282d2e6b232b7ebf7f7e6b6059fc16703101026493fe270a8a141f"
     },
     "workbench/miniapp.js": {
-      "bytes": 20917,
-      "sha256": "c556281c554cd08f694e4c67f42d60feb2cb00b3489861b65fbcc26524c44a3a"
+      "bytes": 24426,
+      "sha256": "f2fecba6e1c6c00a17f26e3bf18f30540c83db09982283667ee503a4b7678097"
     },
     "workbench/miniapp.css": {
-      "bytes": 39494,
-      "sha256": "3be564cad6b3944ad92043e91d29143ae009b994256dadfb67ea0a084edc1ebd"
+      "bytes": 40267,
+      "sha256": "181a1343eafa7529147298f1d9ec851c4d6e88d3b307d2e536f515d03ddedeb3"
     },
     "workbench/fulfillment-ui.js": {
       "bytes": 5911,
       "sha256": "cc5cc919d7f0985ef5d663992cef9d38cab775c2f4b6d172636b820d6ba10961"
     },
     "workbench/cabin-monitor.js": {
-      "bytes": 5158,
-      "sha256": "250b2def9a4f540c0a36b435f5316ad51da55f0dac0b4002abd177add08a5fb7"
+      "bytes": 6425,
+      "sha256": "41760498c8e5efe0f0b937c7d47d67937447670cb702f662cb98c96631b3b26f"
     },
     "workbench/cabin-monitor.css": {
-      "bytes": 4612,
-      "sha256": "3d50854f9c2954a5a297383472d2d8c473651577791298ebcdcd18b2241778bd"
+      "bytes": 5778,
+      "sha256": "8308efacb1d5e7059b7b31fd8dec93dc7a1dd507ad6c538a3e55f76b8d59a6bd"
+    },
+    "workbench/profile-assets.js": {
+      "bytes": 4086,
+      "sha256": "cd160b0cfd85527649add8e46e1bba210dc3ff98e2ebc002bb17d5e893b44563"
+    },
+    "workbench/profile-assets.css": {
+      "bytes": 4051,
+      "sha256": "b0998d1ee6d26141a0e4c9db6f1979fcd149af2362c7934e32c2b12f7c55b374"
     },
     "workbench/product-copy.js": {
       "bytes": 4731,
@@ -338,32 +374,32 @@
       "sha256": "1befeb8b3ec77db5924c9e5c4d1fd60c9877a3bd6b7318e9ab232a36cc36585b"
     },
     "workbench/static-demo.js": {
-      "bytes": 101706,
-      "sha256": "91133d28bab14b1a7f8fee77879407817579ac7d48c321d835b0fe58492bdcac"
+      "bytes": 106848,
+      "sha256": "aa5b318b4645ed9c516ba25f1981f56b9d82456a85a4d30c6c4de02e9e531b4b"
     },
     "workbench/driver.html": {
-      "bytes": 1526,
-      "sha256": "9e4162ebfe1ffbaae89dfdf7f8e32b3e98bd06729e8ab37bb7e94afb0db454d0"
+      "bytes": 1676,
+      "sha256": "99829adb35ed83f11581bf58c84d46e0f881c349d7d35813d33e2fbb4ad972dd"
     },
     "workbench/driver.js": {
       "bytes": 15607,
       "sha256": "fb6fcce508063ecf2d33c9cc1f8ec046a035c1a7952c5c827aea0a7b2b2eb7bc"
     },
     "workbench/driver.css": {
-      "bytes": 4776,
-      "sha256": "30a30e050d0e97df7e939788a61dc1bd9817b16ef36a47079f82d752459435c6"
+      "bytes": 5249,
+      "sha256": "2981a4b385b5f08443996000c21b1bb48e8d86e59a0ae7e2d198c94661de1461"
     },
     "workbench/partner.html": {
-      "bytes": 1429,
-      "sha256": "6a0b58e3030c6669faa8b33596013957fba70572769a92420a2112624b444a1a"
+      "bytes": 1549,
+      "sha256": "d07e905573cd976c6119bbc336c6fb4e5e43f41d5dc785e33bca00d49e94fa56"
     },
     "workbench/partner.js": {
       "bytes": 26516,
       "sha256": "6ab31236efb85fb35a497c23b3f6d40b7c2a876eadfb70dca854a30714d48399"
     },
     "workbench/partner.css": {
-      "bytes": 8082,
-      "sha256": "4e26de132bde5baeb558851ab52292ceb834094e4277e961ce63750e35b12611"
+      "bytes": 8235,
+      "sha256": "84b810bc8aa26d9961a5147b7ef7681493001a021181f62aff38ffd03362350b"
     },
     "workbench/assets/brand/paichong-logo.png": {
       "bytes": 1107621,
@@ -372,6 +408,26 @@
     "workbench/assets/ui-icons.svg": {
       "bytes": 6481,
       "sha256": "9a2be2d4b18a83e127d9bd617137a5d4f060d3eb41d19bf935fcd961a47300fb"
+    },
+    "workbench/assets/v5/avatars/pet-corgi-v1.jpg": {
+      "bytes": 43246,
+      "sha256": "d464f96b8a5ea5aca8049431d5a6948cf8ac85247fe90182fef4ffd44ed908d2"
+    },
+    "workbench/assets/v5/avatars/pet-orange-v1.jpg": {
+      "bytes": 57624,
+      "sha256": "cf657e3013623027b0bd626a9d69df962e984f685aa746af624af956f1985e4b"
+    },
+    "workbench/assets/v5/avatars/pet-silver-v1.jpg": {
+      "bytes": 64925,
+      "sha256": "42c56cfeb7b2294356c012365827b6ff4e90ddd971784155fcc0b50e74acd617"
+    },
+    "workbench/assets/v5/avatars/user-chen-v1.jpg": {
+      "bytes": 50740,
+      "sha256": "fa533656e03bf325c49fe0fd5e0f73ade9bc0d3345257d550747ef4bfbb947c7"
+    },
+    "workbench/assets/v5/avatars/user-lin-v1.jpg": {
+      "bytes": 60632,
+      "sha256": "3e43f29a7e970171cf693fbffa1861cb4c2e0649fa7966091589308f5c4fae01"
     },
     "workbench/assets/v5/brand/paichong-logo.png": {
       "bytes": 1107621,
@@ -530,8 +586,8 @@
       "sha256": "2317aa488855b8909cc7bbcae297f5e73e69448c35823be1f1d0aaa90c9922ba"
     },
     "workbench/index.html": {
-      "bytes": 7443,
-      "sha256": "f16ad261386468dd781aee37f68cda9f490905c26b09d910c33d3dbe4577b756"
+      "bytes": 7578,
+      "sha256": "0aa1ef7ab55c02150d809a37e4e22ab22679927232e62f003ba39babdec5e1f5"
     },
     "workbench/portal-config.js": {
       "bytes": 122,

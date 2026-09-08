@@ -260,12 +260,12 @@
     const order = state.step >= 4 ? state.currentOrder : null;
     const pet = order ? getOrderPet(order) : null;
     const quote = order?.quote || state.quote;
-    const from = order?.fromCity || formValue('from-city') || quote?.fromCity || '广州';
+    const from = order?.fromCity || formValue('from-city') || quote?.fromCity || '合肥';
     const to = order?.toCity || formValue('to-city') || quote?.toCity || '武汉';
-    const name = pet?.name || formValue('pet-name') || '豆包';
+    const name = pet?.name || formValue('pet-name') || '团子';
     const type = pet?.type || formValue('pet-type') || '猫';
-    const breed = pet?.breed || formValue('pet-breed') || '中华田园猫';
-    const weight = pet?.weight || formValue('pet-weight') || '5';
+    const breed = pet?.breed || formValue('pet-breed') || '英国短毛猫';
+    const weight = pet?.weight || formValue('pet-weight') || '4.2';
     byId('summary-route').textContent = `${from} → ${to}`;
     byId('summary-pet-name').textContent = `${name} · ${type}`;
     byId('summary-pet-detail').textContent = `${breed} · ${weight}kg`;
@@ -703,6 +703,7 @@
     const canCancel = !order.routeId && !['arrived', 'departed'].includes(order.nodeReservation?.status) && !['cancelled', 'rejected'].includes(current) && !['已完成', '已签收', '已取消', '已驳回'].includes(order.status);
     container.innerHTML = `<article class="order-detail-card">
       <div class="status-hero" data-tone="${escapeHtml(tone)}">${stateArtwork}<div><span class="order-number">订单 ${escapeHtml(order.id)}</span><h3>${escapeHtml(label)}</h3><p>${escapeHtml(description)}</p></div><span class="status-badge" data-tone="${escapeHtml(tone)}">${icon(statusIcon)}<span>${escapeHtml(order.status || label)}</span></span></div>
+      ${window.PaichongProfiles?.petCard(order) || ''}
       <div class="order-route-line"><span><small>起运</small><br><strong>${escapeHtml(order.fromCity)}</strong></span><i aria-hidden="true">${icon('arrow-right')}</i><span><small>送达</small><br><strong>${escapeHtml(order.toCity)}</strong></span></div>
       <dl class="cost-breakdown"><div><dt>宠物</dt><dd>${escapeHtml(pet.name)} · ${escapeHtml(pet.type)} · ${escapeHtml(pet.weight)}kg</dd></div><div><dt>预订保证金</dt><dd>${formatMoney(depositAmount(order))}</dd></div><div><dt>保证金状态</dt><dd>${escapeHtml(userDepositStatus(order))}</dd></div><div><dt>预约时段</dt><dd>${escapeHtml(order.pickup?.date || '')} ${escapeHtml(order.pickup?.timeSlot || order.pickupTime || '')}</dd></div></dl>
       ${window.PaichongCabinMonitor?.markup(order) || ''}${window.PaichongFulfillment?.markup(order, 'user') || ''}${journeyMarkup(order)}${pricingMarkup(order)}${contactsMarkup(order)}
@@ -744,7 +745,7 @@
     byId('reschedule-order')?.addEventListener('click', () => openReschedule(order));
     const sample = byId('sample-standing-photo');
     if (sample) sample.addEventListener('click', () => {
-      state.materials.standingPhoto = '豆包-补充站立全身照.jpg';
+      state.materials.standingPhoto = `${getOrderPet(order).name || '毛孩子'}-补充站立全身照.jpg`;
       byId('standing-file-result').textContent = state.materials.standingPhoto;
     });
     byId('standing-photo')?.addEventListener('change', (event) => {
@@ -1081,8 +1082,8 @@
         opsToken: authSession?.role === 'ops' ? authSession.token : ''
       });
       all('form').forEach((form) => form.reset());
-      byId('from-city').value = '广州'; byId('to-city').value = '武汉'; byId('pet-name').value = '豆包'; byId('pet-type').value = '猫';
-      byId('pet-breed').value = '中华田园猫'; byId('pet-weight').value = '5'; byId('travel-date').value = defaultTravelDate();
+      byId('from-city').value = '合肥'; byId('to-city').value = '武汉'; byId('pet-name').value = '团子'; byId('pet-type').value = '猫';
+      byId('pet-breed').value = '英国短毛猫'; byId('pet-weight').value = '4.2'; byId('travel-date').value = defaultTravelDate();
       setUpload('petPhoto', ''); setUpload('vaccineProof', '');
       persistState(); updateSummary();
       if (authSession?.role === 'ops') {
@@ -1160,7 +1161,10 @@
     });
     ['from-city', 'to-city', 'pet-name', 'pet-type', 'pet-breed', 'pet-weight', 'service-type', 'travel-date'].forEach((id) => byId(id).addEventListener('input', () => { invalidateDraft(); if (id === 'from-city') loadBookingDates(); }));
     byId('materials-form').addEventListener('input', () => { state.clientRequestId = ''; if (!state.currentOrder) state.maxStep = Math.min(state.maxStep, 2); });
-    all('.sample-file').forEach((button) => button.addEventListener('click', () => setUpload(button.dataset.target, button.dataset.filename)));
+    all('.sample-file').forEach((button) => button.addEventListener('click', () => {
+      const suffix = button.dataset.filename.split('-').slice(1).join('-');
+      setUpload(button.dataset.target, `${formValue('pet-name') || '毛孩子'}-${suffix}`);
+    }));
     byId('pet-photo').addEventListener('change', (event) => setUpload('petPhoto', event.target.files?.[0]?.name || ''));
     byId('vaccine-proof').addEventListener('change', (event) => setUpload('vaccineProof', event.target.files?.[0]?.name || ''));
     all('.filter-tab').forEach((button) => button.addEventListener('click', () => {

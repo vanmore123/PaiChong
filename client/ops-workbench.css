@@ -193,8 +193,9 @@
 .mini-operations-page .workbench-metric > span { font-size: 11px; }
 .mini-operations-page .workbench-metric strong { margin: 7px 0 3px; font-size: 26px; font-weight: 850; line-height: 1; }
 .mini-operations-page .workbench-metric small { display: block; margin: 4px 0 0; font-size: 9px; line-height: 1.4; }
-.node-quick-actions { margin-bottom: 16px; }
-.node-quick-actions > button { display: flex; width: 100%; gap: 9px; padding: 12px 15px; border: 1px solid #e6e9de; border-radius: 15px; color: var(--pc-ink); background: var(--pc-paper); font-size: 13px; }
+.node-quick-actions { display: grid; gap: 10px; margin-bottom: 16px; }
+.node-quick-actions > button { display: flex; align-items: center; justify-content: flex-start; width: 100%; gap: 9px; padding: 12px 15px; border: 1px solid #e6e9de; border-radius: 15px; color: var(--pc-ink); background: var(--pc-paper); font-size: 13px; }
+.node-quick-actions > button > span { min-width: 0; text-align: left; line-height: 1.5; }
 .node-quick-actions > button > .ui-icon:first-child { color: var(--pc-green); }
 .node-quick-actions > button > .ui-icon:last-child { margin-left: auto; width: 17px; height: 17px; color: var(--pc-muted); }
 .node-section-tabs { display: flex; gap: 4px; margin: 0 0 16px; padding: 4px; border: 1px solid #e2e5d9; border-radius: 14px; background: #f1f1e7; }

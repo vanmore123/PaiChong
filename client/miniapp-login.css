@@ -6,7 +6,7 @@ body { -webkit-font-smoothing: antialiased; }
 .mini-login-nav { position: relative; display: flex; align-items: center; justify-content: center; min-height: 58px; padding: calc(env(safe-area-inset-top) + 4px) 16px 4px; color: #173e39; background: #fff; border-bottom: 1px solid #e6efea80; }
 .mini-login-nav > strong { font-size: 16px; font-weight: 650; }
 .mini-nav-tag { position: absolute; left: 16px; color: #627a73; font-size: 12px; }
-.mini-nav-capsule { position: absolute; right: 14px; display: flex; align-items: center; justify-content: space-around; width: 76px; height: 30px; padding: 0 7px; border: 1px solid #e3eae6; border-radius: 20px; color: #173e39; background: #fff; font-size: 13px; }
+.mini-nav-capsule { position: absolute; right: 14px; display: grid; grid-template-columns: 1fr 1px 1fr; align-items: center; justify-items: center; width: 90px; height: 32px; padding: 0 7px; border: 1px solid #e3eae6; border-radius: 20px; color: #173e39; background: #fff; font-size: 13px; line-height: 1; }
 .mini-nav-capsule i { height: 14px; border-left: 1px solid #e3eae6; }
 .brand-panel { display: flex; align-items: center; min-height: 0; padding: 15px 20px 22px; background: #fff url('./assets/v5/decor/soft-mint-wash.svg') center / 320px 210px no-repeat; text-align: center; }
 .brand-panel::before, .brand-panel::after { display: none; }
@@ -41,17 +41,20 @@ body { -webkit-font-smoothing: antialiased; }
 .entry-tab[data-entry="user"].is-active .entry-icon, .entry-tab[data-entry="ops"].is-active .entry-icon { color: #176c5f; background: none; box-shadow: none; }
 .identity-tip { align-items: center; gap: 6px; margin: 10px 0 18px; color: #627a73; font-size: 12px; }
 .identity-tip .tip-icon { width: 17px; height: 17px; background: none; color: #627a73; }
+.identity-tip .tip-icon .ui-icon { width: 17px; height: 17px; }
 #login-form { gap: 16px; }
 .form-field { gap: 7px; color: #173e39; font-size: 14px; font-weight: 550; }
 .input-wrap input { min-height: 50px; padding-block: 11px; border: 1px solid #dce8e1; border-radius: 14px; background: #fff; color: #173e39; font-size: 16px; }
 .input-wrap input::placeholder { color: #7b8d85; font-size: 14px; }
 .input-wrap input:focus { border-color: #4e9378; box-shadow: 0 0 0 3px #e7f5ed; }
-.input-wrap > svg { color: #627a73; stroke-width: 1.7; }
+.input-wrap > svg { display: block; left: 15px; width: 20px; height: 20px; color: #627a73; stroke-width: 1.7; }
+.input-wrap input { display: block; padding-left: 46px; padding-right: 50px; }
 .password-toggle { right: 4px; width: 44px; height: 44px; color: #627a73; }
+.password-toggle svg { display: block; flex: 0 0 auto; }
 .login-button { min-height: 50px; margin: 2px 0 0; border-radius: 16px; color: #173e39; background: #ff985c; box-shadow: 0 2px 6px #173e3908; font-size: 16px; font-weight: 600; }
 .login-button:hover:not(:disabled) { transform: none; background: #ff8c49; box-shadow: none; }
 .login-button:focus-visible, .entry-tab:focus-visible, .sample-button:focus-visible { outline: 3px solid #18887b80; outline-offset: 3px; }
-.button-arrow { width: 24px; height: 24px; border-radius: 0; color: #173e39; background: none; }
+.button-arrow { flex: 0 0 24px; width: 24px; height: 24px; border-radius: 0; color: #173e39; background: none; }
 .button-arrow .ui-icon { width: 21px; height: 21px; }
 .form-meta { position: relative; display: grid; grid-template-columns: 1fr; gap: 4px; margin: 0; text-align: center; }
 .form-meta .sample-button { justify-content: center; width: 100%; min-height: 44px; padding: 9px; border: 1px solid #dce9e1; border-radius: 14px; background: #f1faf5; color: #176c5f; font-size: 13px; font-weight: 500; }

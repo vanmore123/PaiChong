@@ -15,8 +15,8 @@
     driver001: { password: 'driver123', role: 'driver', name: '刘师傅', driverId: 'DRV-001' },
     driver002: { password: 'driver123', role: 'driver', name: '陈师傅', driverId: 'DRV-002' },
     driver003: { password: 'driver123', role: 'driver', name: '王师傅', driverId: 'DRV-003' },
-    partner001: { password: 'partner123', role: 'partner', name: '天河合作机构', nodeId: 'NODE-GZ-TH' },
-    partner002: { password: 'partner123', role: 'partner', name: '白云合作机构', nodeId: 'NODE-GZ-BY' }
+    partner001: { password: 'partner123', role: 'partner', name: '合肥蜀山合作机构', nodeId: 'NODE-HF-SS' },
+    partner002: { password: 'partner123', role: 'partner', name: '合肥包河合作机构', nodeId: 'NODE-HF-BH' }
   };
   const allowed = (role) => kind === 'client' ? role === 'user' : ['ops', 'driver', 'partner'].includes(role);
   function randomHex(size) {
@@ -62,6 +62,8 @@ function demoData() {
       nodes: [{ city: '广州', capacity: 8, used: 2 }, { city: '武汉', capacity: 8, used: 4 }, { city: '郑州', capacity: 8, used: 3 }, { city: '北京', capacity: 8, used: 5 }]
     }],
     cityNodes: [
+      { id: 'NODE-HF-SS', city: '合肥', name: '蜀山合作交接点', capacity: 12, occupied: 0, open: '09:00-20:00', status: '正常' },
+      { id: 'NODE-HF-BH', city: '合肥', name: '包河合作交接点', capacity: 8, occupied: 0, open: '09:00-20:00', status: '正常' },
       { id: 'NODE-GZ-TH', city: '广州', name: '天河合作交接点', capacity: 3, occupied: 1, open: '09:00-20:00', status: '正常' },
       { id: 'NODE-GZ-BY', city: '广州', name: '白云合作交接点', capacity: 5, occupied: 2, open: '09:00-20:00', status: '正常' },
       { id: 'NODE-WH-HK', city: '武汉', name: '汉口合作交接点', capacity: 4, occupied: 1, open: '09:00-20:00', status: '正常' },
@@ -84,6 +86,7 @@ function demoData() {
 }
 
 const ROUTE_PRICES = {
+  '合肥|武汉': [680, '1-2天'], '合肥|广州': [1380, '2-3天'], '合肥|郑州': [780, '1-2天'], '合肥|北京': [1480, '2-3天'],
   '广州|武汉': [1280, '2-3天'], '广州|郑州': [1580, '3-4天'], '广州|北京': [1880, '3-4天'],
   '武汉|郑州': [760, '1-2天'], '武汉|北京': [1280, '2-3天'], '郑州|北京': [980, '1-2天']
 };
@@ -101,13 +104,13 @@ const fulfillment = require('./fulfillment')({ StoreError, moneyValue, log });
 function hydrate(data) {
   data.availability ||= [];
   const { today } = bookingWindow();
-  const cityCodes = { 广州: 'GZ', 武汉: 'WH', 郑州: 'ZZ', 北京: 'BJ' };
+  const cityCodes = { 合肥: 'HF', 广州: 'GZ', 武汉: 'WH', 郑州: 'ZZ', 北京: 'BJ' };
   const cities = [...new Set((data.cityNodes || []).map((node) => node.city))];
   for (const city of cities) for (let offset = 1; offset <= 14; offset += 1) {
     const date = addDays(today, offset);
     for (const [period, timeSlot] of [['AM', '09:00-12:00'], ['PM', '13:00-16:00']]) {
       if (data.availability.some((slot) => slot.city === city && slot.date === date && slot.timeSlot === timeSlot)) continue;
-      data.availability.push({ id: `SLOT-${cityCodes[city] || encodeURIComponent(city)}-${date.replaceAll('-', '')}-${period}`, city, date, timeSlot, capacity: ['广州', '北京'].includes(city) ? 4 : 3, occupied: 0 });
+      data.availability.push({ id: `SLOT-${cityCodes[city] || encodeURIComponent(city)}-${date.replaceAll('-', '')}-${period}`, city, date, timeSlot, capacity: city === '合肥' ? 20 : ['广州', '北京'].includes(city) ? 4 : 3, occupied: 0 });
     }
   }
   for (const order of data.orders || []) {
@@ -273,7 +276,9 @@ function createOrder(input = {}, account) {
   data.orders.unshift(order); log(data, 'USER_ORDER_CREATED', '用户演示账号', { orderId: order.id, phone: userPhone }); write(data); return order;
 }
 
-function listUserOrders(account) { const value = accountValue(account); return read().orders.filter((order) => ownerOf(order) === value); }
+function hefeiPriority(item) { return (item.fromCity || item.cities?.[0]) === '合肥' ? 0 : item.toCity === '合肥' || item.cities?.includes('合肥') ? 1 : 2; }
+function prioritizeHefei(items) { return [...items].sort((a, b) => hefeiPriority(a) - hefeiPriority(b)); }
+function listUserOrders(account) { const value = accountValue(account); return prioritizeHefei(read().orders.filter((order) => ownerOf(order) === value)); }
 function getOrder(id) { return findOrder(read(), id); }
 function getUserOrder(id, account) {
   const order = getOrder(id);
@@ -423,9 +428,9 @@ function listOrders(query = {}) {
   if (query.status) orders = orders.filter((order) => order.status === query.status);
   if (query.city) orders = orders.filter((order) => order.fromCity === query.city || order.toCity === query.city);
   if (query.phone) orders = orders.filter((order) => order.userPhone === query.phone);
-  return orders;
+  return prioritizeHefei(orders);
 }
-function listCityNodes() { const data = read(); return data.cityNodes.map((node) => operations.summaryNode(data, node)); }
+function listCityNodes() { const data = read(); return data.cityNodes.map((node) => operations.summaryNode(data, node)).sort((a, b) => Number(b.city === '合肥') - Number(a.city === '合肥')); }
 function nodeCalendar(query = {}) { return operations.nodeCalendar(read(), query); }
 function updateCityNode(id, input = {}) { const data = read(), result = operations.updateCityNode(data, id, input); write(data); return result; }
 function partnerNode(identity, query = {}) { return partners.node(read(), identity, query); }
@@ -434,7 +439,7 @@ function submitCapacityRequest(identity, input = {}) { const data = read(), resu
 function reviewCapacityRequest(id, identity, input = {}) { const data = read(), result = partners.review(data, id, identity, input); if (!result.idempotent) write(data); return result; }
 function nodeCheckIn(id, input = {}) { const data = read(), result = operations.nodeCheckIn(data, findOrder(data, id), input); if (!result.idempotent) write(data); return result; }
 function nodeCheckOut(id, input = {}) { const data = read(), result = operations.nodeCheckOut(data, findOrder(data, id), input); if (!result.idempotent) write(data); return result; }
-function listRoutes() { const data = read(); return data.routes.map((route) => operations.routeSummary(data, route)); }
+function listRoutes() { const data = read(); return prioritizeHefei(data.routes.map((route) => operations.routeSummary(data, route))); }
 function getRoute(id) { const data = read(); return operations.routeSummary(data, operations.findRoute(data, id)); }
 function createRoute(input = {}) { const data = read(), result = operations.createRoute(data, input); write(data); return result; }
 function addOrderToRoute(routeId, orderId, input = {}) { const data = read(), result = operations.addOrderToRoute(data, routeId, findOrder(data, orderId), input); write(data); return result; }
@@ -451,7 +456,7 @@ function resetDemo() { const data = demoData(); data.demo.resetAt = new Date().t
 function listDriverOrders(driverId) {
   const data = read();
   const routeIds = new Set(data.routes.filter((r) => r.driverId === driverId && ['已派车', '运输中', '已完成'].includes(r.status)).map((r) => r.id));
-  return data.orders.filter((o) => routeIds.has(o.routeId) && data.routes.find((r) => r.id === o.routeId)?.orderIds.includes(o.id));
+  return prioritizeHefei(data.orders.filter((o) => routeIds.has(o.routeId) && data.routes.find((r) => r.id === o.routeId)?.orderIds.includes(o.id)));
 }
 function getDriverOrder(id, driverId) { const data = read(), order = findOrder(data, id); fulfillment.allowed(data, order, driverId); return order; }
 function fulfillmentAction(action, id, input = {}) {
@@ -548,7 +553,7 @@ module.exports = function operations({ StoreError, shanghaiDate, addDays, log })
     for (const node of data.cityNodes) { node.dateOverrides ||= []; node.open ||= '09:00-20:00'; node.status ||= '正常'; node.configVersion ||= 0; }
     data.transportResources ||= {
       drivers: [{ id: 'DRV-001', name: '刘师傅', phone: '13800001001', status: '可用' }, { id: 'DRV-002', name: '陈师傅', phone: '13800001002', status: '可用' }, { id: 'DRV-003', name: '王师傅', phone: '13800001003', status: '可用' }],
-      vehicles: [{ id: 'VEH-001', plate: '粤A·PC001', capacity: 8, status: '可用' }, { id: 'VEH-002', plate: '粤A·PC002', capacity: 6, status: '可用' }, { id: 'VEH-003', plate: '鄂A·PC003', capacity: 8, status: '可用' }]
+      vehicles: [{ id: 'VEH-001', plate: '皖A·P3108', capacity: 8, status: '可用' }, { id: 'VEH-002', plate: '皖A·P3206', capacity: 6, status: '可用' }, { id: 'VEH-003', plate: '鄂A·P3308', capacity: 8, status: '可用' }]
     };
     for (const route of data.routes) { route.orderIds ||= []; route.cities ||= (route.nodes || []).map((n) => n.city); }
     for (const order of data.orders) if (order.routeId) {
@@ -1011,37 +1016,72 @@ module.exports = function fulfillment({ StoreError, moneyValue, log }) {
     }
     return cache.get(name).exports;
   }
+  let stagedData = null;
   function readDemoData() {
-    const value = local.getItem(dataKey);
+    const value = stagedData === null ? local.getItem(dataKey) : stagedData;
     if (!value) throw new Error('数据尚未准备好，请点击“恢复初始”。');
     return JSON.parse(value);
   }
   function writeDemoData(data) {
+    if (stagedData !== null) { stagedData = JSON.stringify(data); return; }
     try { local.setItem(dataKey, JSON.stringify(data)); }
     catch { throw new Error('浏览器无法保存当前操作，请允许网站存储后重试。'); }
   }
   const store = requireModule('./store');
-  function seedDemo(store) {
-  const data = store.demoData();
-  data.orders = []; data.routes = []; data.auditLogs = []; data.availability = [];
-  data.demo = { enabled: true, label: '纯静态预置场景 · 无真实订单', resetAt: new Date().toISOString() };
-  // Deliberately ample virtual capacity lets reviewers try several scenarios.
-  data.cityNodes.find((node) => node.id === 'NODE-GZ-TH').capacity = 12;
+  function seedDemo(store, { preserveExisting = false } = {}) {
+  const previous = preserveExisting ? store.read() : null;
+  const existingHefeiBusiness = previous && (previous.cityNodes.some((node) => node.id === 'NODE-HF-SS') || previous.orders.some((order) => order.fromCity === '合肥'));
+  const data = previous || store.demoData();
+  if (!previous) {
+    data.orders = []; data.routes = []; data.auditLogs = []; data.availability = []; data.capacityRequests = [];
+    data.demo = { enabled: true, label: '纯静态预置场景 · 无真实订单', resetAt: new Date().toISOString() };
+  }
+  data.cityNodes ||= [];
+  for (const node of store.demoData().cityNodes.filter((item) => item.city === '合肥')) {
+    if (!data.cityNodes.some((item) => item.id === node.id)) data.cityNodes.push(node);
+  }
   store.write(data);
   const hydrated = store.read();
-  hydrated.availability.forEach((slot) => { slot.capacity = 20; slot.occupied = 0; });
+  if (!previous) hydrated.availability.forEach((slot) => { slot.capacity = 20; slot.occupied = 0; });
+  // An existing Hefei workspace may already contain user-created reservations.
+  // Only add the missing infrastructure there; never replay sample payments.
+  if (existingHefeiBusiness) {
+    hydrated.demo ||= {}; hydrated.demo.hefeiVersion = 1; store.write(hydrated); return;
+  }
+  // Add a vehicle on upgrade; never relabel an existing assigned vehicle.
+  const vehicleId = previous ? 'VEH-HF-001' : 'VEH-001';
+  if (!hydrated.transportResources.vehicles.some((vehicle) => vehicle.id === vehicleId)) {
+    hydrated.transportResources.vehicles.push({ id: vehicleId, plate: '皖A·P3108', capacity: 8, status: '可用' });
+  }
   store.write(hydrated);
-  const slot = store.listAvailability({ city: '广州' })[0];
   const addDays = (date, count) => new Date(Date.parse(date + 'T00:00:00Z') + count * 86400000).toISOString().slice(0, 10);
+  const slots = store.listAvailability({ city: '合肥' }).filter((item) => item.remaining >= 13 && item.timeSlot === '09:00-12:00');
+  const vehicle = hydrated.transportResources.vehicles.find((item) => item.id === vehicleId);
+  const driver = hydrated.transportResources.drivers.find((item) => item.id === 'DRV-001');
+  const resourceAvailable = (candidate) => vehicle?.status === '可用' && vehicle.capacity >= 8 && driver?.status === '可用' && !hydrated.routes.some((route) =>
+    !['已完成', '已取消'].includes(route.status) && (route.driverId === 'DRV-001' || route.vehicleId === vehicleId) &&
+    Date.parse(route.departureAt) < Date.parse(addDays(candidate.date, 1) + 'T18:00:00+08:00') &&
+    Date.parse(candidate.date + 'T17:00:00+08:00') < Date.parse(route.arrivalAt));
+  const freeSlot = slots.find(resourceAvailable), slot = freeSlot || slots[0];
+  // A user's configured capacity takes precedence over populating review scenes.
+  if (!slot) { hydrated.demo ||= {}; hydrated.demo.hefeiVersion = 1; store.write(hydrated); return; }
   const ops = { operator: 'ops001' };
+  const pets = {
+    奶糖: ['猫', '英国短毛猫', 4.6], 豆包: ['犬', '威尔士柯基', 9.8], 可乐: ['猫', '英国短毛猫', 4.8],
+    布丁: ['猫', '英国短毛猫', 5.2], 麻薯: ['犬', '威尔士柯基', 10.6], 花卷: ['猫', '中华田园猫', 4.4],
+    糯米: ['猫', '英国短毛猫', 4.5], 年糕: ['猫', '中华田园猫', 4.1], 团子: ['猫', '英国短毛猫', 4.2],
+    橘子: ['猫', '中华田园猫', 5], 丸子: ['猫', '中华田园猫', 3.8], 幸运: ['猫', '中华田园猫', 5.4], 小满: ['猫', '中华田园猫', 3.6]
+  };
+  let sequence = 0;
   function make(name, stage = 'paid', owner = '13800138000') {
+    const [type, breed, weight] = pets[name];
     const order = store.createOrder({
-      requestId: 'static-seed-' + name,
-      pet: { name: name.split(' · ')[0], type: '猫', breed: '中华田园猫', weight: 5 }, fromCity: '广州', toCity: '郑州',
-      pickup: { slotId: slot.id }, materials: { petPhoto: '宠物近照.jpg', vaccineCertificate: '免疫证明.jpg' },
+      clientRequestId: 'static-hefei-v1-' + String(++sequence).padStart(2, '0'),
+      pet: { name, type, breed, weight }, fromCity: '合肥', toCity: '广州',
+      pickup: { slotId: slot.id }, materials: { petPhoto: name + '_近照.jpg', vaccineCertificate: name + '_免疫记录.jpg' },
       healthDeclaration: ['noDisease', 'notPregnant', 'safeHandling'],
-      contactName: '林女士', contactPhone: owner, pickupAddress: '广州市天河区 · 接送地址（示例）',
-      recipientName: '陈先生', recipientPhone: '13800138009', recipientAddress: '郑州市金水区 · 接送地址（示例）',
+      contactName: '林女士', contactPhone: owner, pickupAddress: '合肥市蜀山区 · 预约接宠地址',
+      recipientName: '陈先生', recipientPhone: '13800138009', recipientAddress: '广州市天河区 · 预约送达地址',
       careNote: '初次坐长途车，请留意饮水，停车时观察状态。'
     }, owner);
     if (stage === 'unpaid') return order;
@@ -1051,58 +1091,81 @@ module.exports = function fulfillment({ StoreError, moneyValue, log }) {
       store.reviewOrder(order.id, { ...ops, action: 'request_info', note: '请补充一张清晰的站立全身照。' });
       return store.getOrder(order.id);
     }
-    store.reviewOrder(order.id, { ...ops, action: 'approve', nodeId: 'NODE-GZ-TH', proposedPrice: order.quote.basePrice, note: '材料已核对，请确认运输方案。' });
+    store.reviewOrder(order.id, { ...ops, action: 'approve', nodeId: 'NODE-HF-SS', proposedPrice: order.quote.basePrice, note: '材料已核对，请确认运输方案。' });
     if (stage === 'approved') return store.getOrder(order.id);
     store.confirmOrder(order.id, { acceptedPrice: order.quote.basePrice });
     if (stage === 'confirmed') return store.getOrder(order.id);
     store.nodeCheckIn(order.id, ops);
     return store.getOrder(order.id);
   }
-  make('奶糖 · 待付保证金', 'unpaid');
-  make('豆包 · 待审核');
-  make('可乐 · 待补材料', 'info');
-  make('布丁 · 待确认方案', 'approved');
-  make('麻薯 · 待编线', 'confirmed');
+  make('奶糖', 'unpaid'); make('豆包'); make('可乐', 'info'); make('布丁', 'approved'); make('麻薯', 'confirmed');
   const scenarios = [
-    ['花卷 · 待验宠', 'inspection'], ['糯米 · 待付尾款', 'balance'], ['年糕 · 待出发', 'ready'],
-    ['团子 · 运输中', 'transit'], ['橘子 · 待签收', 'arrived'], ['丸子 · 异常待处理', 'exception'], ['幸运 · 已签收', 'delivered']
+    ['花卷', 'inspection'], ['糯米', 'balance'], ['年糕', 'ready'], ['团子', 'transit'],
+    ['橘子', 'arrived'], ['丸子', 'exception'], ['幸运', 'delivered']
   ].map(([name, stage]) => ({ order: make(name, 'arrived'), stage }));
-  const route = store.createRoute({ ...ops, name: '猫狗专车 · 广州—郑州线', cities: ['广州', '武汉', '郑州'],
-    departureAt: `${slot.date}T17:00:00+08:00`, arrivalAt: `${addDays(slot.date, 1)}T18:00:00+08:00`, capacity: 8, minOrders: 1 }).route;
+  const route = store.createRoute({ ...ops, name: '猫狗专车 · 合肥—广州线', cities: ['合肥', '武汉', '广州'],
+    departureAt: slot.date + 'T17:00:00+08:00', arrivalAt: addDays(slot.date, 1) + 'T18:00:00+08:00', capacity: 8, minOrders: 1 }).route;
   scenarios.forEach(({ order }) => store.addOrderToRoute(route.id, order.id, ops));
-  store.assignRoute(route.id, { ...ops, driverId: 'DRV-001', vehicleId: 'VEH-001' });
-  store.dispatchRoute(route.id, ops);
-  const actor = { driverId: 'DRV-001', operator: 'driver001' };
-  for (const { order, stage } of scenarios) {
-    if (stage === 'inspection') continue;
-    const inspected = store.fulfillmentAction('inspect', order.id, { ...actor, checks: { identity: true, cage: true, handoff: true }, lockedPrice: order.quote.basePrice, note: '验宠已完成，费用与确认方案一致。' }).order;
-    if (stage === 'balance') continue;
-    store.fulfillmentAction('payBalance', order.id, { ownerAccount: '13800138000', operator: '13800138000', invoiceId: inspected.fulfillment.invoice.id, acceptedTotal: inspected.fulfillment.invoice.total });
-    store.nodeCheckOut(order.id, ops);
-    if (stage === 'ready') continue;
-    store.fulfillmentAction('depart', order.id, actor);
-    store.fulfillmentAction('checkpoint', order.id, { ...actor, city: stage === 'transit' ? '武汉' : '郑州', note: '已完成停车检查，毛孩子状态平稳，饮水正常。' });
-    if (stage === 'exception') store.fulfillmentAction('reportException', order.id, { ...actor, clientRequestId: 'static-seed-exception', note: '签收人暂时未到场，请总部确认交接安排。' });
-    if (stage === 'delivered') store.fulfillmentAction('receive', order.id, { ...actor, receiverName: '陈先生', receiverVerified: true, petAccepted: true });
+  if (freeSlot) {
+    store.assignRoute(route.id, { ...ops, driverId: 'DRV-001', vehicleId });
+    store.dispatchRoute(route.id, ops);
+    const actor = { driverId: 'DRV-001', operator: 'driver001' };
+    for (const { order, stage } of scenarios) {
+      if (stage === 'inspection') continue;
+      const inspected = store.fulfillmentAction('inspect', order.id, { ...actor, checks: { identity: true, cage: true, handoff: true }, lockedPrice: order.quote.basePrice, note: '验宠已完成，费用与确认方案一致。' }).order;
+      if (stage === 'balance') continue;
+      store.fulfillmentAction('payBalance', order.id, { ownerAccount: '13800138000', operator: '13800138000', invoiceId: inspected.fulfillment.invoice.id, acceptedTotal: inspected.fulfillment.invoice.total });
+      store.nodeCheckOut(order.id, ops);
+      if (stage === 'ready') continue;
+      store.fulfillmentAction('depart', order.id, actor);
+      store.fulfillmentAction('checkpoint', order.id, { ...actor, city: stage === 'transit' ? '武汉' : '广州', note: '已完成停车检查，毛孩子状态平稳，饮水正常。' });
+      if (stage === 'exception') store.fulfillmentAction('reportException', order.id, { ...actor, clientRequestId: 'static-hefei-v1-exception', note: '签收人暂时未到场，请总部确认交接安排。' });
+      if (stage === 'delivered') store.fulfillmentAction('receive', order.id, { ...actor, receiverName: '陈先生', receiverVerified: true, petAccepted: true });
+    }
   }
-  make('小满 · 第二用户样例', 'unpaid', '13800138001');
-  const partner = { account: 'partner001', role: 'partner', nodeId: 'NODE-GZ-TH' };
+  make('小满', 'unpaid', '13800138001');
+  const partner = { account: 'partner001', role: 'partner', nodeId: 'NODE-HF-SS' };
   const operator = { account: 'ops001', role: 'ops' };
-  const approved = store.submitCapacityRequest(partner, { requestId: 'static-approved-capacity', date: addDays(slot.date, 3), capacities: { AM: 12, PM: 14 }, note: '下午增加两个笼位，人员和消毒安排已确认。' }).request;
+  const approved = store.submitCapacityRequest(partner, { requestId: 'static-hefei-approved-capacity', date: addDays(slot.date, 3), capacities: { AM: 12, PM: 14 }, note: '下午增加两个笼位，人员和消毒安排已确认。' }).request;
   store.reviewCapacityRequest(approved.id, operator, { action: 'approve', note: '已核对笼位和排班，本次申报通过。' });
-  const returned = store.submitCapacityRequest(partner, { requestId: 'static-returned-capacity', date: addDays(slot.date, 4), capacities: { AM: 14, PM: 14 }, note: '拟增加上午和下午可接宠笼位，请审核。' }).request;
+  const returned = store.submitCapacityRequest(partner, { requestId: 'static-hefei-returned-capacity', date: addDays(slot.date, 4), capacities: { AM: 14, PM: 14 }, note: '拟增加上午和下午可接宠笼位，请审核。' }).request;
   store.reviewCapacityRequest(returned.id, operator, { action: 'return', note: '请确认下午人员排班后重新申报。' });
-  store.submitCapacityRequest(partner, { requestId: 'static-pending-capacity', date: addDays(slot.date, 2), capacities: { AM: 14, PM: 12 }, note: '上午新增两个笼位，照护人员已安排，请审核。' });
+  store.submitCapacityRequest(partner, { requestId: 'static-hefei-pending-capacity', date: addDays(slot.date, 2), capacities: { AM: 14, PM: 12 }, note: '上午新增两个笼位，照护人员已安排，请审核。' });
   const complete = store.read();
-  complete.demo.staticVersion = 2;
-  complete.demo.seedDate = addDays(slot.date, -1);
+  complete.demo ||= {}; complete.demo.staticVersion = 2; complete.demo.hefeiVersion = 1;
+  complete.demo.seedDate ||= addDays(slots[0].date, -1);
   store.write(complete);
 }
 
+  function prepareDemo(preserveExisting = false) {
+    const original = preserveExisting ? local.getItem(dataKey) : null;
+    stagedData = original || '{}';
+    try {
+      seedDemo(store, { preserveExisting });
+      const complete = JSON.parse(stagedData);
+      if (original) {
+        const previous = JSON.parse(original);
+        // Preserve old orders/routes exactly, including user changes, and keep
+        // all prior audit records even when the seed exceeds the log limit.
+        for (const key of ['orders', 'routes', 'auditLogs', 'cityNodes', 'availability', 'capacityRequests']) {
+          const old = previous[key] || [], ids = new Set(old.map((item) => item.id));
+          complete[key] = [...(complete[key] || []).filter((item) => !ids.has(item.id)), ...old];
+        }
+      }
+      if (original && local.getItem(dataKey) !== original) throw new Error('另一个页面刚更新了订单，请刷新后继续；已有操作已保留。');
+      stagedData = null;
+      writeDemoData(complete);
+    } finally { stagedData = null; }
+  }
   let startupError = '';
   try {
     const saved = local.getItem(dataKey);
-    if (!saved || JSON.parse(saved)?.demo?.staticVersion !== 2) seedDemo(store);
+    if (!saved) prepareDemo();
+    else {
+      const data = JSON.parse(saved);
+      if (!Array.isArray(data.orders) || !Array.isArray(data.cityNodes)) throw new Error('当前浏览器数据格式不完整，请保留数据并联系工作人员。');
+      if (data.demo?.hefeiVersion !== 1) prepareDemo(true);
+    }
   } catch (error) { startupError = error.message; }
 
   function sessionRegistry() { return JSON.parse(local.getItem(sessionsKey) || '{}'); }
@@ -1127,13 +1190,16 @@ module.exports = function fulfillment({ StoreError, moneyValue, log }) {
       const freshToken = 'DEMO-' + randomHex(24); sessions[freshToken] = session; saveSessions(sessions);
       return result({ token: freshToken, ...session });
     }
-    const session = sessions[token];
+    const existingSession = sessions[token];
+    const partnerProfile = accounts[existingSession?.account];
+    const session = existingSession?.role === 'partner' && partnerProfile?.role === 'partner'
+      ? { ...existingSession, name: partnerProfile.name, nodeId: partnerProfile.nodeId } : existingSession;
     if (!session || session.expiresAt <= Date.now() || !allowed(session.role)) fail('请先登录账号。', 401, 'UNAUTHORIZED');
     if (pathname === '/api/auth/me' && method === 'GET') return result(session);
     if (pathname === '/api/auth/logout' && method === 'POST') { delete sessions[token]; saveSessions(sessions); return result({ ok: true }); }
     if (pathname === '/api/demo/reset' && method === 'POST') {
       if (session.role !== 'ops') fail('仅运营账号可执行此操作。', 403, 'FORBIDDEN');
-      seedDemo(store); return result({ ok: true, message: '已恢复本端初始数据。' });
+      prepareDemo(); return result({ ok: true, message: '已恢复本端初始数据。' });
     }
     const role = pathname.split('/')[2];
     if (role !== session.role) fail('当前账号没有此页面的操作权限。', 403, 'FORBIDDEN');
@@ -1215,7 +1281,7 @@ module.exports = function fulfillment({ StoreError, moneyValue, log }) {
   };
 
   function reset() {
-    seedDemo(store); startupError = '';
+    prepareDemo(); startupError = '';
   }
   window.PaichongStaticDemo = Object.freeze({ mode: 'static-demo', portal: kind, reset });
   function mountNotice() {
