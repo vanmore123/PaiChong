@@ -1,7 +1,7 @@
 {
   "application": "paichong-h5-review",
   "mode": "static-demo",
-  "createdAt": "2026-09-08T01:51:31.583Z",
+  "createdAt": "2026-09-08T01:57:42.669Z",
   "apiBase": "",
   "simulated": true,
   "portals": {
@@ -78,8 +78,8 @@
       "sha256": "250b2def9a4f540c0a36b435f5316ad51da55f0dac0b4002abd177add08a5fb7"
     },
     "client/cabin-monitor.css": {
-      "bytes": 4605,
-      "sha256": "405205c5774e5887c946326d873ce924a1d0ac7ed7fe8e9c1efb813fe5d2acbf"
+      "bytes": 4612,
+      "sha256": "3d50854f9c2954a5a297383472d2d8c473651577791298ebcdcd18b2241778bd"
     },
     "client/product-copy.js": {
       "bytes": 4731,
@@ -322,8 +322,8 @@
       "sha256": "250b2def9a4f540c0a36b435f5316ad51da55f0dac0b4002abd177add08a5fb7"
     },
     "workbench/cabin-monitor.css": {
-      "bytes": 4605,
-      "sha256": "405205c5774e5887c946326d873ce924a1d0ac7ed7fe8e9c1efb813fe5d2acbf"
+      "bytes": 4612,
+      "sha256": "3d50854f9c2954a5a297383472d2d8c473651577791298ebcdcd18b2241778bd"
     },
     "workbench/product-copy.js": {
       "bytes": 4731,
