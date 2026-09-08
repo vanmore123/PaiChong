@@ -1,14 +1,14 @@
 {
   "application": "paichong-h5-review",
   "mode": "static-demo",
-  "createdAt": "2026-09-08T01:25:46.413Z",
+  "createdAt": "2026-09-08T01:51:31.583Z",
   "apiBase": "",
   "simulated": true,
   "portals": {
     "client": {
       "directory": "client",
       "entry": "client/index.html",
-      "files": 58,
+      "files": 61,
       "allowedRoles": [
         "user"
       ]
@@ -16,7 +16,7 @@
     "workbench": {
       "directory": "workbench",
       "entry": "workbench/index.html",
-      "files": 64,
+      "files": 67,
       "allowedRoles": [
         "ops",
         "driver",
@@ -26,60 +26,64 @@
   },
   "files": {
     "client/login.html": {
-      "bytes": 7488,
-      "sha256": "e120ea2350ae7e634724e9b6a8051daae9272ee26087c3ceb5ba26379f865b9d"
+      "bytes": 7443,
+      "sha256": "f16ad261386468dd781aee37f68cda9f490905c26b09d910c33d3dbe4577b756"
     },
     "client/login.css": {
       "bytes": 14135,
       "sha256": "f98bc0f244d686b5edb4701f754982a2c9f8410b3180d752a978cf32f529d7d2"
     },
     "client/login.js": {
-      "bytes": 10951,
-      "sha256": "1224166be2361deb435cffe302d4af9deaa5d7009687f6d89054c0bd436cbd62"
+      "bytes": 10983,
+      "sha256": "9a34dbe22e20c1975cdb95ec7df46d0e7f0e94f0669e5beacbeb6b94ddba90bd"
     },
     "client/miniapp-login.css": {
       "bytes": 7515,
       "sha256": "e7bb8f271be2595db50c7d0db2b5e15ff85e83922352e53f8ac60c2c0808bc87"
     },
     "client/client-review.html": {
-      "bytes": 29913,
-      "sha256": "c26998369dce6dcf60344f3a9bee7ded4f3574ebd0059fc04f875f1cb6b40e63"
+      "bytes": 29739,
+      "sha256": "6bc46cef02525fec4a2391a3d477d3967515ccb4c042bbca408af2751b5eced5"
     },
     "client/client-review.css": {
       "bytes": 39611,
       "sha256": "52e22fba23eb02f7f737482c4f52d1806b300bee746186daf118a1656468e28b"
     },
     "client/client-review.js": {
-      "bytes": 81706,
-      "sha256": "9059b85b4a43341cd1a31620b85c24a1d5af4b458486606c2bfc3ba6b97d6111"
+      "bytes": 81352,
+      "sha256": "94cac671be4bc12e0e85109a59a1bf0a879230dace93111d8933042d786da2b3"
     },
     "client/ops-workbench.js": {
-      "bytes": 47219,
-      "sha256": "9a5f8c1d54e714d89471c5c7b91a2b2ded0da75a782649cd4ad5d927fb218a72"
+      "bytes": 47105,
+      "sha256": "22ed707ae98ab3f481d4defd8bec6d06934a7577d3ea183ea66f0190efbe659a"
     },
     "client/ops-workbench.css": {
       "bytes": 28757,
       "sha256": "fd26e1f1c207897c71893e36b911b2c0d5b5b2261e6d738e49208e60e695cc8b"
     },
     "client/miniapp.js": {
-      "bytes": 20978,
-      "sha256": "57ff181c1675bff2eb8d9c9d73e29977a9ea984eed0a7f899942ae41288879ff"
+      "bytes": 20917,
+      "sha256": "c556281c554cd08f694e4c67f42d60feb2cb00b3489861b65fbcc26524c44a3a"
     },
     "client/miniapp.css": {
       "bytes": 39494,
       "sha256": "3be564cad6b3944ad92043e91d29143ae009b994256dadfb67ea0a084edc1ebd"
     },
     "client/fulfillment-ui.js": {
-      "bytes": 5917,
-      "sha256": "a8ced5e1dcbcd2aa9050be7b6887f637ef45108d0151b02fa2a6e7d7926cdd6a"
+      "bytes": 5911,
+      "sha256": "cc5cc919d7f0985ef5d663992cef9d38cab775c2f4b6d172636b820d6ba10961"
     },
     "client/cabin-monitor.js": {
-      "bytes": 4639,
-      "sha256": "cb39cc973a284757f03cedb3b1c7c52e1dae1f039f41fae35cad44b3190ea377"
+      "bytes": 5158,
+      "sha256": "250b2def9a4f540c0a36b435f5316ad51da55f0dac0b4002abd177add08a5fb7"
     },
     "client/cabin-monitor.css": {
-      "bytes": 3344,
-      "sha256": "b49ead283161295f9bbabba28dbc8485625473b2fbe4679fb3dfa509dbceaf01"
+      "bytes": 4605,
+      "sha256": "405205c5774e5887c946326d873ce924a1d0ac7ed7fe8e9c1efb813fe5d2acbf"
+    },
+    "client/product-copy.js": {
+      "bytes": 4731,
+      "sha256": "b527e136a21f038046452f94d9a19c0d2abbad34ac0e3eb1e4e55b8d102cadf3"
     },
     "client/web-session.js": {
       "bytes": 5445,
@@ -90,8 +94,8 @@
       "sha256": "1befeb8b3ec77db5924c9e5c4d1fd60c9877a3bd6b7318e9ab232a36cc36585b"
     },
     "client/static-demo.js": {
-      "bytes": 101793,
-      "sha256": "7c15de33af7076c59172120e750e9530005f294063a2c7f2a91e8d99417c9614"
+      "bytes": 101706,
+      "sha256": "91133d28bab14b1a7f8fee77879407817579ac7d48c321d835b0fe58492bdcac"
     },
     "client/assets/brand/paichong-logo.png": {
       "bytes": 1107621,
@@ -249,69 +253,81 @@
       "bytes": 1150270,
       "sha256": "8d29eb8f1b00cf2f94bc262ed4ad6ce2fd6108dd8bd01806683c27a9b939bace"
     },
+    "client/assets/v5/monitor/cabin-near-v2.jpg": {
+      "bytes": 234047,
+      "sha256": "25803b16e4c75b8f9500b98157aa3f04653f698cfd3e1e12b37eff1f536d9d8b"
+    },
+    "client/assets/v5/monitor/cabin-wide-v2.jpg": {
+      "bytes": 425707,
+      "sha256": "2317aa488855b8909cc7bbcae297f5e73e69448c35823be1f1d0aaa90c9922ba"
+    },
     "client/index.html": {
-      "bytes": 7488,
-      "sha256": "e120ea2350ae7e634724e9b6a8051daae9272ee26087c3ceb5ba26379f865b9d"
+      "bytes": 7443,
+      "sha256": "f16ad261386468dd781aee37f68cda9f490905c26b09d910c33d3dbe4577b756"
     },
     "client/portal-config.js": {
       "bytes": 119,
       "sha256": "b8243d907a7e9cb5ad4d1bd01854aa0cd4f1df40be4406cd270ebdce1fa4a9f9"
     },
     "workbench/login.html": {
-      "bytes": 7488,
-      "sha256": "e120ea2350ae7e634724e9b6a8051daae9272ee26087c3ceb5ba26379f865b9d"
+      "bytes": 7443,
+      "sha256": "f16ad261386468dd781aee37f68cda9f490905c26b09d910c33d3dbe4577b756"
     },
     "workbench/login.css": {
       "bytes": 14135,
       "sha256": "f98bc0f244d686b5edb4701f754982a2c9f8410b3180d752a978cf32f529d7d2"
     },
     "workbench/login.js": {
-      "bytes": 10951,
-      "sha256": "1224166be2361deb435cffe302d4af9deaa5d7009687f6d89054c0bd436cbd62"
+      "bytes": 10983,
+      "sha256": "9a34dbe22e20c1975cdb95ec7df46d0e7f0e94f0669e5beacbeb6b94ddba90bd"
     },
     "workbench/miniapp-login.css": {
       "bytes": 7515,
       "sha256": "e7bb8f271be2595db50c7d0db2b5e15ff85e83922352e53f8ac60c2c0808bc87"
     },
     "workbench/client-review.html": {
-      "bytes": 29913,
-      "sha256": "c26998369dce6dcf60344f3a9bee7ded4f3574ebd0059fc04f875f1cb6b40e63"
+      "bytes": 29739,
+      "sha256": "6bc46cef02525fec4a2391a3d477d3967515ccb4c042bbca408af2751b5eced5"
     },
     "workbench/client-review.css": {
       "bytes": 39611,
       "sha256": "52e22fba23eb02f7f737482c4f52d1806b300bee746186daf118a1656468e28b"
     },
     "workbench/client-review.js": {
-      "bytes": 81706,
-      "sha256": "9059b85b4a43341cd1a31620b85c24a1d5af4b458486606c2bfc3ba6b97d6111"
+      "bytes": 81352,
+      "sha256": "94cac671be4bc12e0e85109a59a1bf0a879230dace93111d8933042d786da2b3"
     },
     "workbench/ops-workbench.js": {
-      "bytes": 47219,
-      "sha256": "9a5f8c1d54e714d89471c5c7b91a2b2ded0da75a782649cd4ad5d927fb218a72"
+      "bytes": 47105,
+      "sha256": "22ed707ae98ab3f481d4defd8bec6d06934a7577d3ea183ea66f0190efbe659a"
     },
     "workbench/ops-workbench.css": {
       "bytes": 28757,
       "sha256": "fd26e1f1c207897c71893e36b911b2c0d5b5b2261e6d738e49208e60e695cc8b"
     },
     "workbench/miniapp.js": {
-      "bytes": 20978,
-      "sha256": "57ff181c1675bff2eb8d9c9d73e29977a9ea984eed0a7f899942ae41288879ff"
+      "bytes": 20917,
+      "sha256": "c556281c554cd08f694e4c67f42d60feb2cb00b3489861b65fbcc26524c44a3a"
     },
     "workbench/miniapp.css": {
       "bytes": 39494,
       "sha256": "3be564cad6b3944ad92043e91d29143ae009b994256dadfb67ea0a084edc1ebd"
     },
     "workbench/fulfillment-ui.js": {
-      "bytes": 5917,
-      "sha256": "a8ced5e1dcbcd2aa9050be7b6887f637ef45108d0151b02fa2a6e7d7926cdd6a"
+      "bytes": 5911,
+      "sha256": "cc5cc919d7f0985ef5d663992cef9d38cab775c2f4b6d172636b820d6ba10961"
     },
     "workbench/cabin-monitor.js": {
-      "bytes": 4639,
-      "sha256": "cb39cc973a284757f03cedb3b1c7c52e1dae1f039f41fae35cad44b3190ea377"
+      "bytes": 5158,
+      "sha256": "250b2def9a4f540c0a36b435f5316ad51da55f0dac0b4002abd177add08a5fb7"
     },
     "workbench/cabin-monitor.css": {
-      "bytes": 3344,
-      "sha256": "b49ead283161295f9bbabba28dbc8485625473b2fbe4679fb3dfa509dbceaf01"
+      "bytes": 4605,
+      "sha256": "405205c5774e5887c946326d873ce924a1d0ac7ed7fe8e9c1efb813fe5d2acbf"
+    },
+    "workbench/product-copy.js": {
+      "bytes": 4731,
+      "sha256": "b527e136a21f038046452f94d9a19c0d2abbad34ac0e3eb1e4e55b8d102cadf3"
     },
     "workbench/web-session.js": {
       "bytes": 5445,
@@ -322,28 +338,28 @@
       "sha256": "1befeb8b3ec77db5924c9e5c4d1fd60c9877a3bd6b7318e9ab232a36cc36585b"
     },
     "workbench/static-demo.js": {
-      "bytes": 101793,
-      "sha256": "7c15de33af7076c59172120e750e9530005f294063a2c7f2a91e8d99417c9614"
+      "bytes": 101706,
+      "sha256": "91133d28bab14b1a7f8fee77879407817579ac7d48c321d835b0fe58492bdcac"
     },
     "workbench/driver.html": {
-      "bytes": 1482,
-      "sha256": "f3435c231b4b5f75d768f2917e1f3c597642dd87f32c4a43efd88eb422e42b82"
+      "bytes": 1526,
+      "sha256": "9e4162ebfe1ffbaae89dfdf7f8e32b3e98bd06729e8ab37bb7e94afb0db454d0"
     },
     "workbench/driver.js": {
-      "bytes": 15580,
-      "sha256": "4ea98edbb30fd4ed6f32b799b4efc916195ff2298a20f7b92740de135fa3a436"
+      "bytes": 15607,
+      "sha256": "fb6fcce508063ecf2d33c9cc1f8ec046a035c1a7952c5c827aea0a7b2b2eb7bc"
     },
     "workbench/driver.css": {
       "bytes": 4776,
       "sha256": "30a30e050d0e97df7e939788a61dc1bd9817b16ef36a47079f82d752459435c6"
     },
     "workbench/partner.html": {
-      "bytes": 1385,
-      "sha256": "3204ad1fe7012a3a743b96cbfb3b2c03a309d7d7a4ae4a5502b64ec5bbb3312d"
+      "bytes": 1429,
+      "sha256": "6a0b58e3030c6669faa8b33596013957fba70572769a92420a2112624b444a1a"
     },
     "workbench/partner.js": {
-      "bytes": 26432,
-      "sha256": "9c3bd12ba85d3c8823ad27b5ec31afef47a12b3112e2f16f4476171c05700389"
+      "bytes": 26516,
+      "sha256": "6ab31236efb85fb35a497c23b3f6d40b7c2a876eadfb70dca854a30714d48399"
     },
     "workbench/partner.css": {
       "bytes": 8082,
@@ -505,17 +521,25 @@
       "bytes": 1150270,
       "sha256": "8d29eb8f1b00cf2f94bc262ed4ad6ce2fd6108dd8bd01806683c27a9b939bace"
     },
+    "workbench/assets/v5/monitor/cabin-near-v2.jpg": {
+      "bytes": 234047,
+      "sha256": "25803b16e4c75b8f9500b98157aa3f04653f698cfd3e1e12b37eff1f536d9d8b"
+    },
+    "workbench/assets/v5/monitor/cabin-wide-v2.jpg": {
+      "bytes": 425707,
+      "sha256": "2317aa488855b8909cc7bbcae297f5e73e69448c35823be1f1d0aaa90c9922ba"
+    },
     "workbench/index.html": {
-      "bytes": 7488,
-      "sha256": "e120ea2350ae7e634724e9b6a8051daae9272ee26087c3ceb5ba26379f865b9d"
+      "bytes": 7443,
+      "sha256": "f16ad261386468dd781aee37f68cda9f490905c26b09d910c33d3dbe4577b756"
     },
     "workbench/portal-config.js": {
       "bytes": 122,
       "sha256": "d996f76c5e6646e3a15a7cfe612946114289903afcb0f3f9ef3d5ae51c29e706"
     },
     "index.html": {
-      "bytes": 1509,
-      "sha256": "bf23f725c91e647a8e3e737cf106da14fb572566b31daf7d1123109d874c710b"
+      "bytes": 1435,
+      "sha256": "0ead96f51c0f6aaccfb3d88d4c6d6cca7e90d7d595872d59fefb9dd1494d1f06"
     },
     ".nojekyll": {
       "bytes": 0,

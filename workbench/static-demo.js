@@ -9,9 +9,9 @@
   const dataKey = prefix + 'data', sessionsKey = prefix + 'sessions';
   const local = window.localStorage;
   const accounts = {
-    '13800138000': { password: 'user123', role: 'user', name: '用户演示账号' },
-    '13800138001': { password: 'user123', role: 'user', name: '第二用户演示账号' },
-    ops001: { password: 'ops123', role: 'ops', name: '总部运营演示账号' },
+    '13800138000': { password: 'user123', role: 'user', name: '宠物主人' },
+    '13800138001': { password: 'user123', role: 'user', name: '宠物主人二' },
+    ops001: { password: 'ops123', role: 'ops', name: '总部运营' },
     driver001: { password: 'driver123', role: 'driver', name: '刘师傅', driverId: 'DRV-001' },
     driver002: { password: 'driver123', role: 'driver', name: '陈师傅', driverId: 'DRV-002' },
     driver003: { password: 'driver123', role: 'driver', name: '王师傅', driverId: 'DRV-003' },
@@ -1013,12 +1013,12 @@ module.exports = function fulfillment({ StoreError, moneyValue, log }) {
   }
   function readDemoData() {
     const value = local.getItem(dataKey);
-    if (!value) throw new Error('演示数据尚未准备好，请重置本端演示。');
+    if (!value) throw new Error('数据尚未准备好，请点击“恢复初始”。');
     return JSON.parse(value);
   }
   function writeDemoData(data) {
     try { local.setItem(dataKey, JSON.stringify(data)); }
-    catch { throw new Error('浏览器无法保存演示数据，请允许网站存储，或清理本网站的演示数据后重试。'); }
+    catch { throw new Error('浏览器无法保存当前操作，请允许网站存储后重试。'); }
   }
   const store = requireModule('./store');
   function seedDemo(store) {
@@ -1038,20 +1038,20 @@ module.exports = function fulfillment({ StoreError, moneyValue, log }) {
     const order = store.createOrder({
       requestId: 'static-seed-' + name,
       pet: { name: name.split(' · ')[0], type: '猫', breed: '中华田园猫', weight: 5 }, fromCity: '广州', toCity: '郑州',
-      pickup: { slotId: slot.id }, materials: { petPhoto: '虚拟宠物近照.jpg', vaccineCertificate: '虚拟免疫证明.jpg' },
+      pickup: { slotId: slot.id }, materials: { petPhoto: '宠物近照.jpg', vaccineCertificate: '免疫证明.jpg' },
       healthDeclaration: ['noDisease', 'notPregnant', 'safeHandling'],
-      contactName: '虚拟寄件人', contactPhone: owner, pickupAddress: '广州市虚拟演示路1号',
-      recipientName: '虚拟收件人', recipientPhone: '13800138009', recipientAddress: '郑州市虚拟演示路2号',
-      careNote: '仅用于界面评审，没有真实宠物、支付、材料或运输。'
+      contactName: '林女士', contactPhone: owner, pickupAddress: '广州市天河区 · 接送地址（示例）',
+      recipientName: '陈先生', recipientPhone: '13800138009', recipientAddress: '郑州市金水区 · 接送地址（示例）',
+      careNote: '初次坐长途车，请留意饮水，停车时观察状态。'
     }, owner);
     if (stage === 'unpaid') return order;
     store.payDeposit(order.id);
     if (stage === 'paid') return store.getOrder(order.id);
     if (stage === 'info') {
-      store.reviewOrder(order.id, { ...ops, action: 'request_info', note: '演示补件：请补充一张清晰的站立全身照。' });
+      store.reviewOrder(order.id, { ...ops, action: 'request_info', note: '请补充一张清晰的站立全身照。' });
       return store.getOrder(order.id);
     }
-    store.reviewOrder(order.id, { ...ops, action: 'approve', nodeId: 'NODE-GZ-TH', proposedPrice: order.quote.basePrice, note: '虚拟材料已核对，请确认运输方案。' });
+    store.reviewOrder(order.id, { ...ops, action: 'approve', nodeId: 'NODE-GZ-TH', proposedPrice: order.quote.basePrice, note: '材料已核对，请确认运输方案。' });
     if (stage === 'approved') return store.getOrder(order.id);
     store.confirmOrder(order.id, { acceptedPrice: order.quote.basePrice });
     if (stage === 'confirmed') return store.getOrder(order.id);
@@ -1067,7 +1067,7 @@ module.exports = function fulfillment({ StoreError, moneyValue, log }) {
     ['花卷 · 待验宠', 'inspection'], ['糯米 · 待付尾款', 'balance'], ['年糕 · 待出发', 'ready'],
     ['团子 · 运输中', 'transit'], ['橘子 · 待签收', 'arrived'], ['丸子 · 异常待处理', 'exception'], ['幸运 · 已签收', 'delivered']
   ].map(([name, stage]) => ({ order: make(name, 'arrived'), stage }));
-  const route = store.createRoute({ ...ops, name: '猫狗专车 · 虚拟演示线', cities: ['广州', '武汉', '郑州'],
+  const route = store.createRoute({ ...ops, name: '猫狗专车 · 广州—郑州线', cities: ['广州', '武汉', '郑州'],
     departureAt: `${slot.date}T17:00:00+08:00`, arrivalAt: `${addDays(slot.date, 1)}T18:00:00+08:00`, capacity: 8, minOrders: 1 }).route;
   scenarios.forEach(({ order }) => store.addOrderToRoute(route.id, order.id, ops));
   store.assignRoute(route.id, { ...ops, driverId: 'DRV-001', vehicleId: 'VEH-001' });
@@ -1075,24 +1075,24 @@ module.exports = function fulfillment({ StoreError, moneyValue, log }) {
   const actor = { driverId: 'DRV-001', operator: 'driver001' };
   for (const { order, stage } of scenarios) {
     if (stage === 'inspection') continue;
-    const inspected = store.fulfillmentAction('inspect', order.id, { ...actor, checks: { identity: true, cage: true, handoff: true }, lockedPrice: order.quote.basePrice, note: '虚拟验宠已完成，费用与确认方案一致。' }).order;
+    const inspected = store.fulfillmentAction('inspect', order.id, { ...actor, checks: { identity: true, cage: true, handoff: true }, lockedPrice: order.quote.basePrice, note: '验宠已完成，费用与确认方案一致。' }).order;
     if (stage === 'balance') continue;
     store.fulfillmentAction('payBalance', order.id, { ownerAccount: '13800138000', operator: '13800138000', invoiceId: inspected.fulfillment.invoice.id, acceptedTotal: inspected.fulfillment.invoice.total });
     store.nodeCheckOut(order.id, ops);
     if (stage === 'ready') continue;
     store.fulfillmentAction('depart', order.id, actor);
-    store.fulfillmentAction('checkpoint', order.id, { ...actor, city: stage === 'transit' ? '武汉' : '郑州', note: '预置虚拟节点，已模拟检查毛孩子状态。' });
-    if (stage === 'exception') store.fulfillmentAction('reportException', order.id, { ...actor, clientRequestId: 'static-seed-exception', note: '虚拟签收人暂时未到场，请总部确认交接安排。' });
-    if (stage === 'delivered') store.fulfillmentAction('receive', order.id, { ...actor, receiverName: '虚拟收件人', receiverVerified: true, petAccepted: true });
+    store.fulfillmentAction('checkpoint', order.id, { ...actor, city: stage === 'transit' ? '武汉' : '郑州', note: '已完成停车检查，毛孩子状态平稳，饮水正常。' });
+    if (stage === 'exception') store.fulfillmentAction('reportException', order.id, { ...actor, clientRequestId: 'static-seed-exception', note: '签收人暂时未到场，请总部确认交接安排。' });
+    if (stage === 'delivered') store.fulfillmentAction('receive', order.id, { ...actor, receiverName: '陈先生', receiverVerified: true, petAccepted: true });
   }
   make('小满 · 第二用户样例', 'unpaid', '13800138001');
   const partner = { account: 'partner001', role: 'partner', nodeId: 'NODE-GZ-TH' };
   const operator = { account: 'ops001', role: 'ops' };
-  const approved = store.submitCapacityRequest(partner, { requestId: 'static-approved-capacity', date: addDays(slot.date, 3), capacities: { AM: 12, PM: 14 }, note: '预置已通过场景：新增两处下午虚拟笼位。' }).request;
-  store.reviewCapacityRequest(approved.id, operator, { action: 'approve', note: '虚拟配置核对完成，通过生效。' });
-  const returned = store.submitCapacityRequest(partner, { requestId: 'static-returned-capacity', date: addDays(slot.date, 4), capacities: { AM: 14, PM: 14 }, note: '预置退回场景。' }).request;
+  const approved = store.submitCapacityRequest(partner, { requestId: 'static-approved-capacity', date: addDays(slot.date, 3), capacities: { AM: 12, PM: 14 }, note: '下午增加两个笼位，人员和消毒安排已确认。' }).request;
+  store.reviewCapacityRequest(approved.id, operator, { action: 'approve', note: '已核对笼位和排班，本次申报通过。' });
+  const returned = store.submitCapacityRequest(partner, { requestId: 'static-returned-capacity', date: addDays(slot.date, 4), capacities: { AM: 14, PM: 14 }, note: '拟增加上午和下午可接宠笼位，请审核。' }).request;
   store.reviewCapacityRequest(returned.id, operator, { action: 'return', note: '请确认下午人员排班后重新申报。' });
-  store.submitCapacityRequest(partner, { requestId: 'static-pending-capacity', date: addDays(slot.date, 2), capacities: { AM: 14, PM: 12 }, note: '预置待审核场景，可演示总部通过或退回。' });
+  store.submitCapacityRequest(partner, { requestId: 'static-pending-capacity', date: addDays(slot.date, 2), capacities: { AM: 14, PM: 12 }, note: '上午新增两个笼位，照护人员已安排，请审核。' });
   const complete = store.read();
   complete.demo.staticVersion = 2;
   complete.demo.seedDate = addDays(slot.date, -1);
@@ -1119,8 +1119,8 @@ module.exports = function fulfillment({ StoreError, moneyValue, log }) {
     const sessions = sessionRegistry();
     if (pathname === '/api/auth/login' && method === 'POST') {
       const account = String(body.account || '').trim(), configured = accounts[account];
-      if (!configured || body.password !== configured.password) fail('演示账号或密码错误，请使用页面提供的测试账号。', 401, 'INVALID_CREDENTIALS');
-      if (!allowed(configured.role)) fail(kind === 'client' ? '请使用客户端的用户演示账号。' : '请使用工作端的运营、司机或合作机构账号。', 403, 'WRONG_PORTAL');
+      if (!configured || body.password !== configured.password) fail('账号或密码有误，可使用页面下方的体验账号。', 401, 'INVALID_CREDENTIALS');
+      if (!allowed(configured.role)) fail(kind === 'client' ? '请使用客户端的用户账号。' : '请使用工作端的运营、司机或合作机构账号。', 403, 'WRONG_PORTAL');
       const { password, ...profile } = configured;
       const session = { account, ...profile, expiresAt: Date.now() + 8 * 3600000, simulated: true };
       for (const [key, value] of Object.entries(sessions)) if (value.expiresAt <= Date.now()) delete sessions[key];
@@ -1128,15 +1128,15 @@ module.exports = function fulfillment({ StoreError, moneyValue, log }) {
       return result({ token: freshToken, ...session });
     }
     const session = sessions[token];
-    if (!session || session.expiresAt <= Date.now() || !allowed(session.role)) fail('请先登录演示账号。', 401, 'UNAUTHORIZED');
+    if (!session || session.expiresAt <= Date.now() || !allowed(session.role)) fail('请先登录账号。', 401, 'UNAUTHORIZED');
     if (pathname === '/api/auth/me' && method === 'GET') return result(session);
     if (pathname === '/api/auth/logout' && method === 'POST') { delete sessions[token]; saveSessions(sessions); return result({ ok: true }); }
     if (pathname === '/api/demo/reset' && method === 'POST') {
-      if (session.role !== 'ops') fail('仅运营演示账号可执行此操作。', 403, 'FORBIDDEN');
-      seedDemo(store); return result({ ok: true, message: '已恢复本端预置演示数据。' });
+      if (session.role !== 'ops') fail('仅运营账号可执行此操作。', 403, 'FORBIDDEN');
+      seedDemo(store); return result({ ok: true, message: '已恢复本端初始数据。' });
     }
     const role = pathname.split('/')[2];
-    if (role !== session.role) fail('当前演示账号不能操作此角色页面。', 403, 'FORBIDDEN');
+    if (role !== session.role) fail('当前账号没有此页面的操作权限。', 403, 'FORBIDDEN');
     const actor = { ...body, operator: session.account };
     const route = `${method} ${pathname}`;
     const table = {
@@ -1159,12 +1159,12 @@ module.exports = function fulfillment({ StoreError, moneyValue, log }) {
     };
     if (Object.hasOwn(table, route)) return result(table[route](), method === 'POST' && pathname.endsWith('/orders') ? 201 : 200);
     const match = pathname.match(/^\/api\/(user|ops|driver)\/(orders|routes|city-nodes|capacity-requests)\/([^/]+)(?:\/(.*))?$/);
-    if (!match) fail('此演示操作不存在。', 404, 'NOT_FOUND');
+    if (!match) fail('未找到此操作。', 404, 'NOT_FOUND');
     const [, , resource, id, action = ''] = match;
     if (role === 'user' && resource === 'orders') {
       const own = store.getUserOrder(id, session.account);
       if (method === 'GET' && !action) return result(wrapped(own));
-      if (method !== 'POST') fail('不支持此演示操作。', 405);
+      if (method !== 'POST') fail('当前不支持此操作。', 405);
       const actions = {
         'deposit/pay': () => store.payDeposit(id),
         'balance/pay': () => store.fulfillmentAction('payBalance', id, { ...actor, ownerAccount: session.account }),
@@ -1194,7 +1194,7 @@ module.exports = function fulfillment({ StoreError, moneyValue, log }) {
         if (method === 'POST' && Object.hasOwn(actions, action)) return result(actions[action]());
       }
     }
-    fail('此演示操作不存在。', 404, 'NOT_FOUND');
+    fail('未找到此操作。', 404, 'NOT_FOUND');
   }
 
   window.fetch = async (input, options = {}) => {
@@ -1208,10 +1208,10 @@ module.exports = function fulfillment({ StoreError, moneyValue, log }) {
       const headers = new Headers(options.headers || request?.headers || {});
       const text = options.body === undefined ? (request && !['GET', 'HEAD'].includes(method) ? await request.text() : '') : options.body;
       const body = text ? JSON.parse(text) : {};
-      if (!body || typeof body !== 'object' || Array.isArray(body)) fail('请输入有效的演示内容。');
+      if (!body || typeof body !== 'object' || Array.isArray(body)) fail('请检查填写内容后重试。');
       const token = (headers.get('Authorization') || '').replace(/^Bearer\s+/i, '');
       return await dispatch(url, method, token, body);
-    } catch (error) { return result({ error: error.message || '演示操作失败', code: error.code || 'DEMO_ERROR' }, error.status || 400); }
+    } catch (error) { return result({ error: error.message || '操作未完成，请重试', code: error.code || 'DEMO_ERROR' }, error.status || 400); }
   };
 
   function reset() {
@@ -1222,16 +1222,16 @@ module.exports = function fulfillment({ StoreError, moneyValue, log }) {
     const bar = document.createElement('div');
     bar.className = 'static-demo-notice';
     bar.setAttribute('role', 'note');
-    bar.innerHTML = '<span><b>离线演示</b> · 虚拟数据 · 不跨端同步</span><button type="button">重置本端</button>';
+    bar.innerHTML = '<span><b>体验版</b> · 不产生真实交易</span><button type="button">恢复初始</button>';
     try {
       const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
-      if (readDemoData().demo.seedDate < today) bar.querySelector('span').textContent = '离线演示 · 样例日期已变化，请重置更新';
+      if (readDemoData().demo.seedDate < today) bar.querySelector('span').textContent = '体验版 · 不产生真实交易 · 可恢复初始更新日期';
     } catch { /* The API exposes the storage error with an actionable message. */ }
     const style = document.createElement('style');
     style.textContent = '.static-demo-notice{box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;max-width:430px;margin:0 auto;padding:9px 12px;background:#eaf5ef;color:#426c5c;font:11px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif}.static-demo-notice b{font-weight:650}.static-demo-notice button{flex-shrink:0;border:1px solid #c9dfd2;border-radius:8px;background:#fff;color:#426c5c;padding:7px;font:inherit;min-height:36px}.static-demo-notice button:focus-visible{outline:2px solid #ea8b44;outline-offset:2px}';
     document.head.append(style); document.body.prepend(bar);
     bar.querySelector('button').addEventListener('click', () => {
-      if (!window.confirm('恢复本端的预置虚拟订单？只清除本端演示操作，不影响另一端、云端或其他网站。')) return;
+      if (!window.confirm('恢复本端初始订单？当前新增订单和操作将被清除，其他端的数据不受影响。')) return;
       try { reset(); window.location.reload(); } catch (error) { window.alert(error.message); }
     });
   }

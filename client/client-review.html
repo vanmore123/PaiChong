@@ -7,7 +7,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#F7FBF9" />
-    <title>派宠一号｜甲方评审联调版</title>
+    <title>派宠一号｜猫狗专车</title>
     <link rel="icon" type="image/png" href="./assets/brand/paichong-logo.png" />
     <link rel="stylesheet" href="./client-review.css" />
     <link rel="stylesheet" href="./ops-workbench.css" />
@@ -18,11 +18,11 @@
 
     <div class="review-shell">
       <header class="review-header">
-        <a class="review-brand" href="./client-review.html" aria-label="派宠一号评审首页">
+        <a class="review-brand" href="./client-review.html" aria-label="派宠一号首页">
           <span class="review-brand-art" aria-hidden="true">
             <img src="./assets/brand/paichong-logo.png" alt="" />
           </span>
-          <span class="review-brand-copy"><strong>派宠一号</strong><small>猫狗专车 · 甲方评审版</small></span>
+          <span class="review-brand-copy"><strong>派宠一号</strong><small>猫狗专车 · 安心出行</small></span>
         </a>
 
         <div class="portal-session" aria-label="当前登录信息">
@@ -32,14 +32,14 @@
         </div>
 
         <div class="header-actions">
-          <span class="demo-chip"><i></i> 虚拟联调环境</span>
-          <button class="reset-button" id="reset-demo" type="button" hidden><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-reset"></use></svg><span>重置演示数据</span></button>
+          <span class="demo-chip"><i></i> 体验版</span>
+          <button class="reset-button" id="reset-demo" type="button" hidden><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-reset"></use></svg><span>恢复初始数据</span></button>
         </div>
       </header>
 
       <div class="review-note" role="note">
         <span class="note-icon" aria-hidden="true"><svg class="ui-icon"><use href="./assets/v5/icons/app-sprite.svg#icon-info"></use></svg></span>
-        <p id="review-note-copy"><strong>评审提示</strong>　所有订单、材料与支付均为虚拟数据，不产生真实交易。</p>
+        <p id="review-note-copy">体验版 · 不产生真实交易</p>
       </div>
 
       <main id="review-main">
@@ -52,7 +52,7 @@
             </div>
             <div class="user-identity">
               <span class="user-avatar" aria-hidden="true"><svg class="ui-icon"><use href="./assets/v5/icons/app-sprite.svg#icon-paw"></use></svg></span>
-              <span><small>演示用户</small><strong id="current-user-phone">138 0013 8000</strong></span>
+              <span><small>当前用户</small><strong id="current-user-phone">138 0013 8000</strong></span>
             </div>
           </div>
 
@@ -64,9 +64,9 @@
           <nav class="wizard-nav" aria-label="下单进度">
             <ol>
               <li><button class="wizard-step is-current" type="button" data-step="1" aria-current="step"><b>1</b><span>快速询价<small>路线与宠物</small></span></button></li>
-              <li><button class="wizard-step" type="button" data-step="2" disabled><b>2</b><span>适运材料<small>虚拟上传</small></span></button></li>
+              <li><button class="wizard-step" type="button" data-step="2" disabled><b>2</b><span>适运材料<small>补充资料</small></span></button></li>
               <li><button class="wizard-step" type="button" data-step="3" disabled><b>3</b><span>接宠时段<small>容量预约</small></span></button></li>
-              <li><button class="wizard-step" type="button" data-step="4" disabled><b>4</b><span>预订保证金<small>模拟支付</small></span></button></li>
+              <li><button class="wizard-step" type="button" data-step="4" disabled><b>4</b><span>预订保证金<small>确认支付</small></span></button></li>
               <li><button class="wizard-step" type="button" data-step="5"><b>5</b><span>订单状态<small>刷新同步</small></span></button></li>
             </ol>
           </nav>
@@ -108,12 +108,12 @@
               <div class="wizard-pane" data-pane="2">
                 <div class="panel-heading">
                   <div><p class="eyebrow">Step 02</p><h2>补齐适运核验材料</h2></div>
-                  <span class="soft-badge">仅作演示</span>
+                  <span class="soft-badge">出行资料</span>
                 </div>
                 <p class="panel-intro">运营会根据宠物近照、疫苗记录与健康声明判断是否需要补充材料。</p>
                 <div class="mini-quote-summary" id="mini-quote-summary" aria-live="polite" hidden></div>
                 <form id="materials-form" novalidate>
-                  <div class="contact-heading"><h3>接送联系信息</h3><button class="text-button" id="fill-sample-address" type="button"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-sparkles"></use></svg><span>填入虚拟地址</span></button></div>
+                  <div class="contact-heading"><h3>接送联系信息</h3><button class="text-button" id="fill-sample-address" type="button"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-sparkles"></use></svg><span>使用示例地址</span></button></div>
                   <div class="form-grid contact-fields">
                     <label class="field-label" for="contact-name">寄件联系人<input id="contact-name" maxlength="30" required autocomplete="name" /></label>
                     <label class="field-label" for="contact-phone">寄件联系电话<input id="contact-phone" type="tel" inputmode="tel" pattern="1[0-9]{10}" maxlength="11" required autocomplete="tel" /></label>
@@ -155,7 +155,7 @@
               <div class="wizard-pane" data-pane="3">
                 <div class="panel-heading">
                   <div><p class="eyebrow">Step 03</p><h2>预约接宠时间</h2></div>
-                  <span class="soft-badge">实时虚拟容量</span>
+                  <span class="soft-badge">可约时段</span>
                 </div>
                 <div class="assignment-note"><span aria-hidden="true"><svg class="ui-icon"><use href="./assets/v5/icons/app-sprite.svg#icon-map-pin"></use></svg></span><p><strong>合作交接点无需用户选择</strong><br />支付保证金并审核通过后，由运营结合接宠地址、线路与容量统一分配。</p></div>
                 <div class="slot-list" id="availability-list" aria-live="polite">
@@ -168,7 +168,7 @@
               <div class="wizard-pane" data-pane="4">
                 <div class="panel-heading">
                   <div><p class="eyebrow">Step 04</p><h2>支付预订保证金</h2></div>
-                  <span class="simulation-badge">模拟支付</span>
+                  <span class="simulation-badge">确认支付</span>
                 </div>
                 <div class="deposit-hero">
                   <p>本次需付</p><div><span>¥</span><strong id="deposit-amount">—</strong></div><small>按预估基础服务费的 <b id="deposit-rate">20%</b> 计算</small>
@@ -182,9 +182,9 @@
                   <strong>保证金说明</strong>
                   <p>用于启动人工审核、锁定运力与预约容量；成功承运时全额抵扣服务费。最终费用以司机上门验宠后确认的报价为准。</p>
                 </div>
-                <label class="agreement-row"><input id="deposit-agreement" type="checkbox" /> <span>我已阅读并同意虚拟演示中的服务及取消规则</span></label>
+                <label class="agreement-row"><input id="deposit-agreement" type="checkbox" /> <span>我已核对服务及取消规则，知悉体验版支付不扣款</span></label>
                 <div class="form-message" id="deposit-error" role="alert" hidden></div>
-                <div class="form-actions"><button class="quiet-button" id="back-to-order" type="button"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-chevron-left"></use></svg><span>返回订单详情</span></button><button class="pay-button" id="pay-deposit" type="button"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-credit-card"></use></svg><span>模拟支付保证金</span></button></div>
+                <div class="form-actions"><button class="quiet-button" id="back-to-order" type="button"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-chevron-left"></use></svg><span>返回订单详情</span></button><button class="pay-button" id="pay-deposit" type="button"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-credit-card"></use></svg><span>确认支付保证金</span></button></div>
               </div>
 
               <div class="wizard-pane" data-pane="5">
@@ -193,7 +193,7 @@
                   <button class="outline-button" id="refresh-user-orders" type="button"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-refresh"></use></svg><span>刷新状态</span></button>
                 </div>
                 <div class="order-status-area" id="user-order-area" aria-live="polite">
-                  <div class="empty-state"><span class="empty-icon" aria-hidden="true"><svg class="ui-icon"><use href="./assets/v5/icons/app-sprite.svg#icon-paw"></use></svg></span><h3>还没有演示订单</h3><p>完成前四步后，这里会显示运营审核结果。</p><button class="primary-button" type="button" data-jump-step="1"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-route"></use></svg><span>从询价开始</span></button></div>
+                  <div class="empty-state"><span class="empty-icon" aria-hidden="true"><svg class="ui-icon"><use href="./assets/v5/icons/app-sprite.svg#icon-paw"></use></svg></span><h3>还没有订单</h3><p>完成前四步后，这里会显示运营审核结果。</p><button class="primary-button" type="button" data-jump-step="1"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-route"></use></svg><span>从询价开始</span></button></div>
                 </div>
               </div>
             </section>
@@ -219,7 +219,7 @@
         <section class="role-view" id="ops-view" aria-label="运营审核台" hidden>
           <div class="view-heading ops-heading">
             <div><p class="eyebrow">运营审核台</p><h1>让每一单都清楚、可追踪</h1><p>核验材料、处理补件、分配合作交接点，再反馈给用户确认。</p></div>
-            <div class="ops-session" id="ops-session" hidden><span><small>当前账号</small><strong id="ops-name">运营演示账号</strong></span><button class="quiet-button" id="ops-logout" type="button"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-log-out"></use></svg><span>退出</span></button></div>
+            <div class="ops-session" id="ops-session" hidden><span><small>当前账号</small><strong id="ops-name">总部运营</strong></span><button class="quiet-button" id="ops-logout" type="button"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-log-out"></use></svg><span>退出</span></button></div>
           </div>
 
           <section class="ops-workbench" id="ops-workbench" hidden>
@@ -257,7 +257,7 @@
             </section>
             <section class="operations-panel" id="operations-nodes-panel" role="tabpanel" aria-labelledby="operations-nodes-tab" hidden>
               <div class="workbench-heading"><div><p class="eyebrow">合作交接点 · 容量管理</p><h2>每个笼位，都有清楚的去向</h2><p>按交接日期和上午 / 下午时段预留；到点与离点单独留痕。</p></div><button class="outline-button" type="button" data-workbench-refresh><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-refresh"></use></svg><span>刷新工作台</span></button></div>
-              <p class="workbench-demo-note"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-info"></use></svg><span>虚拟交接演示：可按预约时间模拟未来到点、离点，不代表已经实际接到宠物。</span></p>
+              <p class="workbench-demo-note"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-info"></use></svg><span>按预约时间登记到点与离点，核对交接信息后再确认。</span></p>
               <div class="form-message" id="nodes-workbench-error" role="alert" hidden></div>
               <div class="node-summary" id="node-summary" aria-live="polite"></div>
               <div class="capacity-layout">
@@ -273,7 +273,7 @@
             </section>
             <section class="operations-panel" id="operations-routes-panel" role="tabpanel" aria-labelledby="operations-routes-tab" hidden>
               <div class="workbench-heading"><div><p class="eyebrow">干线 · 调度管理</p><h2>先编好线路，再安心出发</h2><p>核对途经方向与笼位，绑定司机车辆，达到发车条件后派车。</p></div><button class="outline-button" type="button" data-workbench-refresh><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-refresh"></use></svg><span>刷新工作台</span></button></div>
-              <p class="workbench-demo-note"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-info"></use></svg><span>派车后任务进入对应司机账号；所有编线、支付和履约均为模拟，不发送真实通知。</span></p>
+              <p class="workbench-demo-note"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-info"></use></svg><span>核对线路、司机和车辆后派车，再按任务完成后续交接。</span></p>
               <div class="form-message" id="routes-workbench-error" role="alert" hidden></div>
               <div class="route-summary" id="route-summary" aria-live="polite"></div>
               <div class="dispatch-layout"><section class="workbench-card route-pool" aria-labelledby="route-pool-title"><div class="workbench-card-heading"><div><p class="eyebrow">线路计划</p><h3 id="route-pool-title">全部线路</h3></div><button class="text-button" type="button" id="toggle-route-create"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-route"></use></svg><span>新建线路</span></button></div><div id="route-list"></div></section><section class="workbench-card" id="route-workbench-detail" aria-live="polite"></section></div>
@@ -282,7 +282,7 @@
         </section>
       </main>
 
-      <footer class="review-footer"><span>派宠一号 · 产品评审联调版</span><span>数据为虚拟演示，不代表正式服务承诺</span></footer>
+      <footer class="review-footer"><span>派宠一号 · 猫狗专车</span><span>一路被好好照顾</span></footer>
     </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -293,6 +293,7 @@
       </section>
     </div>
 
+    <script src="./product-copy.js"></script>
     <script src="./web-session.js"></script>
     <link rel="stylesheet" href="./cabin-monitor.css" />
     <script src="./cabin-monitor.js"></script>

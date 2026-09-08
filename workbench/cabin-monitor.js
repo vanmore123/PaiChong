@@ -1,11 +1,16 @@
 (() => {
   'use strict';
   const escape = (value = '') => String(value).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  // Demo-only UI. A real device adapter must later enforce order access on the server.
+  // Demo-only UI; a future device adapter must enforce order access server-side.
   const available = (order) => ['in_transit', 'arrived'].includes(order?.fulfillment?.stage);
+  const views = {
+    wide: { name: '宠物舱全景', image: './assets/v5/monitor/cabin-wide-v2.jpg' },
+    near: { name: '笼位近景', image: './assets/v5/monitor/cabin-near-v2.jpg' }
+  };
+  const petName = (order) => order?.pet?.name || order?.petName || '毛孩子';
   function markup(order) {
     if (!available(order)) return '';
-    return `<section class="cabin-entry"><div><span class="cabin-eyebrow">陪伴每一程 · 模拟演示</span><h3>想看看毛孩子？</h3><p>查看车内环境，让等待多一份安心</p></div><button type="button" class="primary-button" data-open-cabin><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-camera"></use></svg>查看车内监控</button></section>`;
+    return `<section class="cabin-entry"><div><span class="cabin-eyebrow">陪伴每一程</span><h3>想看看毛孩子？</h3><p>查看车内环境，让等待多一份安心</p></div><button type="button" class="primary-button" data-open-cabin><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-camera"></use></svg>查看车内监控</button></section>`;
   }
   function bind(container, order) {
     container.querySelector('[data-open-cabin]')?.addEventListener('click', (event) => open(order, event.currentTarget));
@@ -15,28 +20,37 @@
     const dialog = document.createElement('dialog');
     dialog.className = 'cabin-dialog';
     dialog.setAttribute('aria-labelledby', 'cabin-title');
+    dialog.setAttribute('aria-describedby', 'cabin-disclaimer');
     dialog.innerHTML = `<header class="cabin-header"><div><span class="cabin-eyebrow">安心陪伴</span><h2 id="cabin-title">车内监控</h2></div><button type="button" data-close aria-label="关闭车内监控">✕</button></header>
-      <p class="cabin-order">订单 ${escape(order.id)} · ${escape(order.pet?.name || '毛孩子')}</p>
-      <div class="cabin-warning">模拟画面 · 未连接摄像头，不代表本单宠物实况</div>
-      <div class="cabin-feed" role="img" aria-label="宠物舱示意动画，不是真实监控"><div class="cabin-feed-label"><span>DEMO · <b data-view-label>宠物舱全景</b></span><span data-play-state>模拟播放中</span></div>
-        <div class="cabin-window"></div><div class="cabin-crates"><div class="cabin-crate"><svg aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-cat"></use></svg><span>示意笼位 A</span></div><div class="cabin-crate"><svg aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-dog"></use></svg><span>示意笼位 B</span></div></div><span class="cabin-watermark">派宠一号 / 演示动画</span></div>
-      <div class="cabin-views" aria-label="模拟摄像头视角"><button type="button" data-view="wide" aria-pressed="true">01 · 宠物舱全景</button><button type="button" data-view="near" aria-pressed="false">02 · 笼位近景</button></div>
-      <div class="cabin-controls"><button type="button" data-pause>暂停模拟画面</button><button type="button" data-expand aria-pressed="false">放大画面</button></div>
-      <div class="cabin-note"><strong>现在看到的是演示，不是直播</strong><p>两个视角均为预设示意动画，无实时声音、录像或传感器数据。后续确定设备后，再接入真实视频与订单权限。</p></div>`;
+      <p class="cabin-order"><strong>${escape(petName(order))}的行程</strong><span>订单 ${escape(order.id)}</span></p>
+      <div class="cabin-player"><div class="cabin-feed"><img class="cabin-image" src="${views.wide.image}" alt="宠物舱全景示例" /><div class="cabin-feed-label"><span data-view-label>01 / 宠物舱全景</span><span>演示画面</span></div><div class="cabin-image-error" role="status" hidden>画面暂未加载，请切换视角重试</div><span class="cabin-pause-overlay" hidden>已暂停</span><span class="cabin-watermark">PAICHONG · CABIN</span></div>
+      <div class="cabin-playback"><span data-play-state>播放中</span><div class="cabin-progress" aria-hidden="true"><i></i></div><span>无声音</span></div></div>
+      <div class="cabin-views" aria-label="摄像头视角"><button type="button" data-view="wide" aria-pressed="true"><small>CAM 01</small>宠物舱全景</button><button type="button" data-view="near" aria-pressed="false"><small>CAM 02</small>笼位近景</button></div>
+      <div class="cabin-controls"><button type="button" data-pause aria-pressed="false">暂停画面</button><button type="button" data-expand aria-pressed="false">放大画面</button></div>
+      <p class="cabin-note" id="cabin-disclaimer">示例画面，仅供体验，非本单实时监控。</p>`;
     document.body.append(dialog);
     const oldOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     dialog.addEventListener('close', () => { document.body.style.overflow = oldOverflow; dialog.remove(); if (trigger?.isConnected) trigger.focus(); }, { once: true });
     dialog.querySelector('[data-close]').onclick = () => dialog.close();
+    const picture = dialog.querySelector('.cabin-image');
+    const imageError = dialog.querySelector('.cabin-image-error');
+    picture.onerror = () => { imageError.hidden = false; };
+    picture.onload = () => { imageError.hidden = true; };
     dialog.querySelectorAll('[data-view]').forEach((button) => { button.onclick = () => {
+      const view = views[button.dataset.view];
       dialog.querySelectorAll('[data-view]').forEach((item) => item.setAttribute('aria-pressed', String(item === button)));
-      dialog.querySelector('.cabin-feed').classList.toggle('is-near', button.dataset.view === 'near');
-      dialog.querySelector('[data-view-label]').textContent = button.dataset.view === 'near' ? '笼位近景' : '宠物舱全景';
+      imageError.hidden = true;
+      picture.src = view.image;
+      picture.alt = `${view.name}示例`;
+      dialog.querySelector('[data-view-label]').textContent = `${button.dataset.view === 'near' ? '02' : '01'} / ${view.name}`;
     }; });
     dialog.querySelector('[data-pause]').onclick = (event) => {
-      const paused = dialog.querySelector('.cabin-feed').classList.toggle('is-paused');
-      event.currentTarget.textContent = paused ? '继续模拟播放' : '暂停模拟画面';
-      dialog.querySelector('[data-play-state]').textContent = paused ? '已暂停' : '模拟播放中';
+      const paused = dialog.querySelector('.cabin-player').classList.toggle('is-paused');
+      event.currentTarget.textContent = paused ? '继续播放' : '暂停画面';
+      event.currentTarget.setAttribute('aria-pressed', String(paused));
+      dialog.querySelector('.cabin-pause-overlay').hidden = !paused;
+      dialog.querySelector('[data-play-state]').textContent = paused ? '已暂停' : '播放中';
     };
     dialog.querySelector('[data-expand]').onclick = (event) => {
       const expanded = dialog.classList.toggle('is-expanded');
@@ -45,5 +59,5 @@
     };
     dialog.showModal();
   }
-  window.PaichongCabinMonitor = { available, markup, bind };
+  window.PaichongCabinMonitor = { available, markup, bind, petName, views };
 })();

@@ -1,5 +1,6 @@
 (() => {
   'use strict';
+  const copy = (value) => window.PaichongProductCopy?.text(value) ?? value;
 
   const sessions = window.PaichongSession;
   const STORAGE_KEY = sessions?.storageKey || 'paichong-auth-v1';
@@ -11,16 +12,16 @@
       placeholder: '请输入手机号',
       inputMode: 'tel',
       description: '查看宠物行程，提交材料并确认运输方案。',
-      sampleLabel: '填入用户演示账号',
+      sampleLabel: '使用用户体验账号',
       submitLabel: '登录用户端'
     },
     driver: {
       account: 'driver001', password: 'driver123', accountLabel: '司机账号', placeholder: '请输入司机账号', inputMode: 'text',
-      description: '查看分配任务，完成模拟验宠、运输记录与签收。', sampleLabel: '填入司机演示账号', submitLabel: '登录司机端'
+      description: '查看分配任务，完成验宠、运输记录与签收。', sampleLabel: '使用司机体验账号', submitLabel: '登录司机端'
     },
     partner: {
       account: 'partner001', password: 'partner123', accountLabel: '机构账号', placeholder: '请输入合作机构账号', inputMode: 'text',
-      description: '提交合作点余量，查看总部审核与生效结果。', sampleLabel: '填入机构演示账号', submitLabel: '登录合作机构'
+      description: '提交合作点余量，查看总部审核与生效结果。', sampleLabel: '使用机构体验账号', submitLabel: '登录合作机构'
     },
     ops: {
       account: 'ops001',
@@ -28,8 +29,8 @@
       accountLabel: '运营账号',
       placeholder: '请输入运营账号',
       inputMode: 'text',
-      description: '审核订单、管理合作点容量，编排线路并模拟派车交接。',
-      sampleLabel: '填入经营者演示账号',
+      description: '审核订单、管理合作点容量，编排线路并安排派车交接。',
+      sampleLabel: '使用经营者体验账号',
       submitLabel: '登录经营者后台'
     }
   };
@@ -115,7 +116,7 @@
     if (!box) return;
     box.hidden = !current?.token;
     if (!current?.token) return;
-    byId('current-session-copy').textContent = '正在核对已有演示身份…';
+    byId('current-session-copy').textContent = '正在核对当前身份…';
     byId('continue-session').hidden = true;
     try {
       const verified = sessions
@@ -138,7 +139,7 @@
       token: source.token || source.accessToken || '',
       role,
       account: source.account || profile.account || fallbackAccount,
-      name: source.name || profile.name || (role === 'ops' ? '运营演示账号' : '演示用户')
+      name: copy(source.name || profile.name) || (role === 'ops' ? '总部运营' : '宠物主人')
     };
   }
 
@@ -226,8 +227,8 @@
   const requestedEntry = new URLSearchParams(window.location.search || '').get('entry');
   selectEntry(allowedRoles.includes(requestedEntry) ? requestedEntry : allowedRoles[0]);
   if (window.PAICHONG_DEMO_MODE) {
-    byId('login-environment').textContent = '离线演示 · 虚拟数据 · 不跨端同步';
-    document.querySelector('.identity-tip p').textContent = '演示账号只切换体验角色，不代表正式账号验证。';
+    byId('login-environment').textContent = '操作仅保存在本端浏览器';
+    document.querySelector('.identity-tip p').textContent = '可使用下方体验账号进入对应角色。';
   }
   showExistingSession();
 })();

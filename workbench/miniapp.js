@@ -83,7 +83,7 @@
     if (state.page !== 'create') return;
     title(labels[state.step - 1], true);
     byId('mini-progress').hidden = state.step > 4;
-    byId('mini-progress').innerHTML = `<div>${[1, 2, 3, 4].map((step) => `<span class="${step <= state.step ? 'is-done' : ''}"></span>`).join('')}</div><small>第 ${Math.min(state.step, 4)} / 4 步 · ${['出行信息', '适运核验', '接宠预约', '模拟支付'][Math.min(state.step, 4) - 1]}</small>`;
+    byId('mini-progress').innerHTML = `<div>${[1, 2, 3, 4].map((step) => `<span class="${step <= state.step ? 'is-done' : ''}"></span>`).join('')}</div><small>第 ${Math.min(state.step, 4)} / 4 步 · ${['出行信息', '适运核验', '接宠预约', '支付确认'][Math.min(state.step, 4) - 1]}</small>`;
     tabs();
   }
 
@@ -133,7 +133,7 @@
 
   async function renderHome(request) {
     const ops = state.role === 'ops';
-    byId('mini-page').innerHTML = `${hero(ops)}<div class="mini-home-content">${ops ? `<div class="mini-section-title"><h2>今日工作</h2><span>虚拟演示</span></div><div class="mini-metrics" id="mini-home-metrics"><span>正在同步…</span></div><div class="mini-shortcuts"><button data-go="ops-orders">${icon('file-check')}<strong>订单审核</strong><small>材料、补件与确认</small></button><button data-go="nodes">${icon('node')}<strong>合作点容量</strong><small>笼位预约与交接</small></button><button data-go="routes">${icon('van')}<strong>线路与派车</strong><small>编线与资源安排</small></button><button data-go="guide">${icon('info')}<strong>操作须知</strong><small>当前演示范围</small></button></div>` : `${bookingCard()}<div class="mini-section-title"><h2>我的行程</h2><button data-go="orders">全部订单 ${icon('chevron-right')}</button></div><div id="mini-recent-orders"><div class="mini-empty" role="status">正在同步行程…</div></div><button class="mini-guide-card" data-go="guide">${icon('file-check')}<span><strong>第一次托运？看看出行须知</strong><small>适运材料、保证金与交接说明</small></span>${icon('chevron-right')}</button>`}<p class="mini-demo-note">网页模拟小程序 · 当前不产生真实交易</p></div>`;
+    byId('mini-page').innerHTML = `${hero(ops)}<div class="mini-home-content">${ops ? `<div class="mini-section-title"><h2>今日工作</h2><span>待办概览</span></div><div class="mini-metrics" id="mini-home-metrics"><span>正在同步…</span></div><div class="mini-shortcuts"><button data-go="ops-orders">${icon('file-check')}<strong>订单审核</strong><small>材料、补件与确认</small></button><button data-go="nodes">${icon('node')}<strong>合作点容量</strong><small>笼位预约与交接</small></button><button data-go="routes">${icon('van')}<strong>线路与派车</strong><small>编线与资源安排</small></button><button data-go="guide">${icon('info')}<strong>操作须知</strong><small>流程与注意事项</small></button></div>` : `${bookingCard()}<div class="mini-section-title"><h2>我的行程</h2><button data-go="orders">全部订单 ${icon('chevron-right')}</button></div><div id="mini-recent-orders"><div class="mini-empty" role="status">正在同步行程…</div></div><button class="mini-guide-card" data-go="guide">${icon('file-check')}<span><strong>第一次托运？看看出行须知</strong><small>适运材料、保证金与交接说明</small></span>${icon('chevron-right')}</button>`}<p class="mini-demo-note">派宠一号 · 一路被好好照顾</p></div>`;
     if (ops) byId('mini-page').querySelector('.mini-shortcuts').insertAdjacentHTML('beforeend', `<button data-go="partner">${icon('clipboard-check')}<strong>机构余量审批</strong><small>查看申报与生效结果</small></button>`);
     bindLinks(); bindHomeBooking();
     try {
@@ -185,7 +185,7 @@
     title('我的');
     const session = app.session(), account = session?.account || '';
     const masked = /^1\d{10}$/.test(account) ? `${account.slice(0, 3)} **** ${account.slice(-4)}` : account;
-    byId('mini-page').innerHTML = `<div class="mini-profile"><div class="mini-profile-card"><span>${icon(state.role === 'ops' ? 'workbench' : 'dog')}</span><div><h1>${state.role === 'ops' ? '派宠经营者' : '宠物主人'}</h1><p>${escape(masked)}</p><small>虚拟演示账号 · ${state.role === 'ops' ? '运营权限' : '用户权限'}</small></div></div><div class="mini-menu-card"><button data-go="${state.role === 'ops' ? 'ops-orders' : 'orders'}">${icon('clipboard-check')}<span>${state.role === 'ops' ? '订单管理' : '我的订单'}</span>${icon('arrow-right')}</button><button data-go="guide">${icon('info')}<span>使用说明与演示范围</span>${icon('arrow-right')}</button><div class="mini-version">总部所在地<span>安徽 · 合肥</span></div><div class="mini-version">当前版本<span>V5 · 清爽评审版</span></div></div><div class="mini-security-note">${icon('shield-check')}身份由账号密码决定，退出后才能切换账号。</div><button id="mini-logout" class="outline-button mini-full-button">退出当前账号</button><p class="mini-demo-note">当前是网页交互原型，尚未接入微信生产服务。</p></div>`;
+    byId('mini-page').innerHTML = `<div class="mini-profile"><div class="mini-profile-card"><span>${icon(state.role === 'ops' ? 'workbench' : 'dog')}</span><div><h1>${state.role === 'ops' ? '派宠经营者' : '宠物主人'}</h1><p>${escape(masked)}</p><small>${state.role === 'ops' ? '运营权限' : '用户权限'}</small></div></div><div class="mini-menu-card"><button data-go="${state.role === 'ops' ? 'ops-orders' : 'orders'}">${icon('clipboard-check')}<span>${state.role === 'ops' ? '订单管理' : '我的订单'}</span>${icon('arrow-right')}</button><button data-go="guide">${icon('info')}<span>使用说明</span>${icon('arrow-right')}</button><div class="mini-version">总部所在地<span>安徽 · 合肥</span></div><div class="mini-version">当前版本<span>体验版</span></div></div><div class="mini-security-note">${icon('shield-check')}身份由账号密码决定，退出后才能切换账号。</div><button id="mini-logout" class="outline-button mini-full-button">退出当前账号</button><p class="mini-demo-note">体验说明：数据仅保存在本端浏览器，不跨端同步。</p></div>`;
     if (state.role === 'ops') byId('mini-page').querySelector('.mini-menu-card').insertAdjacentHTML('afterbegin', `<button data-go="partner">${icon('node')}<span>合作机构余量审批</span>${icon('arrow-right')}</button>`);
     bindLinks(); byId('mini-logout').addEventListener('click', app.logout);
   }
@@ -196,14 +196,14 @@
       ['01 · 先核验，再安排', '审核材料与建议价时按接宠日期时段预留合作点笼位，用户确认后再编线。'],
       ['02 · 笼位独立计量', '一单一个笼位。已到点尚未离开的宠物持续占位，不因日期变化自动清空；当前满位时需先完成离点交接。'],
       ['03 · 派车前检查', '检查顺向区段、接宠时间、最少发车单数和司机车辆时间冲突；未派车可移单或取消资源分配。'],
-      ['04 · 履约与异常', '到点和派车后由司机验宠，用户确认总价并模拟付清尾款后才能离点。司机更新运输与签收；异常在订单详情中由经营者处理后恢复原流程，不自动签收。']
+      ['04 · 履约与异常', '到点和派车后由司机验宠，用户确认总价并付清尾款后才能离点。司机更新运输与签收；异常在订单详情中由经营者处理后恢复原流程，不自动签收。']
     ] : [
-      ['01 · 提前准备材料', '准备清晰的宠物近期全身照和有效免疫记录，如实填写健康声明及晕车、用药等照护说明。当前文件仅保存名称用于模拟核验。'],
-      ['02 · 费用需要确认', '系统先提供估价，模拟保证金为基础价的20%。运营建议价用于方案确认；司机验宠后再出具总价，由你确认抵扣保证金后的模拟尾款，不会扣取真实资金。'],
-      ['03 · 节点由运营安排', '无需自己挑选琴行，运营根据预约时间和同城笼位安排合作点；订单详情可查看方案及模拟交接进度。'],
-      ['04 · 改期与取消', '审核通过前可以改期；未编线、未到点的订单可取消。本轮可取消已付款订单仅模拟全额退还保证金，不代表正式收费政策。']
+      ['01 · 提前准备材料', '准备清晰的宠物近期全身照和有效免疫记录，如实填写健康声明及晕车、用药等照护说明。体验版仅保留文件名称，请勿上传真实证件。'],
+      ['02 · 费用需要确认', '系统先提供估价，预订保证金为基础价的20%。运营建议价用于方案确认；司机验宠后再出具总价，由你确认抵扣保证金后的尾款，体验版不扣款。'],
+      ['03 · 节点由运营安排', '无需自行选择合作点，运营根据预约时间和同城笼位安排合作点；订单详情可查看方案及交接进度。'],
+      ['04 · 改期与取消', '审核通过前可以改期；未编线、未到点的订单可取消。体验版按全额退还保证金展示，不代表正式收费政策。']
     ];
-    byId('mini-page').innerHTML = `<div class="mini-guide"><p class="mini-guide-intro">先把每一步看清楚，再放心出发。</p>${sections.map(([heading, text]) => `<section><h2>${heading}</h2><p>${text}</p></section>`).join('')}<p class="mini-demo-note">所有订单、付款、派车与交接均为虚拟数据。</p></div>`;
+    byId('mini-page').innerHTML = `<div class="mini-guide"><p class="mini-guide-intro">先把每一步看清楚，再放心出发。</p>${sections.map(([heading, text]) => `<section><h2>${heading}</h2><p>${text}</p></section>`).join('')}<p class="mini-demo-note">体验说明：不产生实际扣款、运输或通知；各端数据独立保存。</p></div>`;
   }
 
   function errorPage(message, retry) {
