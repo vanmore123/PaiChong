@@ -5,8 +5,11 @@
   const nativeFetch = window.fetch.bind(window);
   const kind = window.PAICHONG_PORTAL_KIND === 'client' ? 'client' : 'workbench';
   const basePath = new URL('.', window.location.href).pathname;
+  const projectPath = basePath.replace(/(?:client|workbench)\/$/, '');
   const prefix = `paichong-static-demo-v1:${basePath}:${kind}:`;
-  const dataKey = prefix + 'data', sessionsKey = prefix + 'sessions';
+  const sharedPrefix = `paichong-static-demo-v2:${projectPath}:shared:`;
+  const dataKey = sharedPrefix + 'data', sessionsKey = prefix + 'sessions';
+  const lockKey = sharedPrefix + 'lock', lockName = sharedPrefix + 'write';
   const local = window.localStorage;
   const accounts = {
     '13800138000': { password: 'user123', role: 'user', name: '宠物主人' },
@@ -1016,7 +1019,15 @@ module.exports = function fulfillment({ StoreError, moneyValue, log }) {
     }
     return cache.get(name).exports;
   }
-  let stagedData = null;
+  let stagedData = null, currentToken = '', startupError = '';
+  const subscribers = new Set();
+  function changed(external = false) {
+    let revision = 0;
+    try { revision = JSON.parse(local.getItem(dataKey) || '{}').shared?.revision || 0; } catch { /* Storage failure is reported by the API. */ }
+    const detail = { external, revision, projectPath, portal: kind };
+    for (const listener of subscribers) { try { listener(detail); } catch { /* A page listener must not invalidate a saved transaction. */ } }
+    if (window.dispatchEvent && typeof window.CustomEvent === 'function') window.dispatchEvent(new window.CustomEvent('paichong:demo-updated', { detail }));
+  }
   function readDemoData() {
     const value = stagedData === null ? local.getItem(dataKey) : stagedData;
     if (!value) throw new Error('数据尚未准备好，请点击“恢复初始”。');
@@ -1024,8 +1035,7 @@ module.exports = function fulfillment({ StoreError, moneyValue, log }) {
   }
   function writeDemoData(data) {
     if (stagedData !== null) { stagedData = JSON.stringify(data); return; }
-    try { local.setItem(dataKey, JSON.stringify(data)); }
-    catch { throw new Error('浏览器无法保存当前操作，请允许网站存储后重试。'); }
+    throw new Error('操作未进入保存事务，请刷新后重试。');
   }
   const store = requireModule('./store');
   function seedDemo(store, { preserveExisting = false } = {}) {
@@ -1137,10 +1147,270 @@ module.exports = function fulfillment({ StoreError, moneyValue, log }) {
   store.write(complete);
 }
 
+  // Browser-only institution handoff adapter. The existing business rules remain
+// authoritative; this module only scopes access and collects on-site checks.
+function partnerFrontendAction({ store, session, resource, id, action = '', method, body = {}, query = {} }) {
+  if (session?.role !== 'partner' || resource !== 'orders') return undefined;
+  const fail = (message, status = 400, code = 'PARTNER_HANDOFF_INVALID') => { throw new store.StoreError(message, status, code); };
+  if (!session.nodeId) fail('当前机构尚未绑定合作点，请联系总部。', 403, 'PARTNER_NODE_REQUIRED');
+  const routeFor = (order) => store.listRoutes().find((route) => route.id === order.routeId && route.orderIds?.includes(order.id));
+  const belongs = (order) => {
+    const nodes = [order.assignedNode?.id, order.nodeReservation?.nodeId].filter(Boolean);
+    return nodes.length > 0 && nodes.every((nodeId) => nodeId === session.nodeId);
+  };
+  const controls = (order) => {
+    const reservation = order.nodeReservation || {}, flow = order.fulfillment || {}, route = routeFor(order) || {};
+    if (order.serviceRequest?.status === 'pending') return { canCheckIn: false, canCheckOut: false, nextStep: '变更申请待总部处理，暂缓办理到离点交接。' };
+    const dispatched = ['已派车', '运输中'].includes(route.status) && !!route.driverId && !!route.vehiclePlate;
+    const canCheckIn = reservation.status === 'confirmed' && order.reviewStatus === 'confirmed' && order.deposit?.status === 'paid';
+    const canCheckOut = reservation.status === 'arrived' && order.reviewStatus === 'confirmed' && order.deposit?.status === 'paid' && dispatched && flow.stage === 'ready' && flow.invoice?.status === 'paid';
+    let nextStep = '等待总部安排交接预约。';
+    if (reservation.status === 'reserved') nextStep = '等待用户确认运输方案，预约生效后可到点登记。';
+    if (reservation.status === 'confirmed') nextStep = canCheckIn ? '核对宠物和预约资料后，登记进入合作点。' : '请总部核对方案确认与保证金状态。';
+    if (reservation.status === 'arrived') {
+      nextStep = !dispatched ? '等待总部编线并安排接手司机与车辆。' : !flow.inspection ? '请已分配的司机完成现场验宠和费用确认。' : flow.stage === 'exception' ? '异常处理中，请等待总部确认后继续交接。' : flow.invoice?.status !== 'paid' ? '等待用户确认总价并结清尾款。' : canCheckOut ? '验宠与尾款已完成，核对司机后可办理离点。' : '请总部核对当前交接状态。';
+    }
+    if (reservation.status === 'departed') nextStep = '已完成机构交接，后续行程由司机更新。';
+    if (reservation.status === 'released') nextStep = '预约已释放，无需办理到离点。';
+    return { canCheckIn, canCheckOut, nextStep };
+  };
+  const project = (order) => {
+    const route = routeFor(order) || {}, flow = order.fulfillment || {}, reservation = order.nodeReservation || {};
+    // Pickup contact is needed on site; destination addresses, payment amounts,
+    // account identity, other route orders and internal review notes are not.
+    return {
+      id: order.id, petName: order.pet?.name || order.petName, petType: order.pet?.type || order.petType,
+      breed: order.pet?.breed || order.breed, weight: order.pet?.weight ?? order.weight,
+      fromCity: order.fromCity, toCity: order.toCity, status: order.status,
+      contactName: order.contactName || '', contactPhone: order.contactPhone || order.userPhone || '',
+      ownerAccount: order.ownerAccount || order.userPhone || '',
+      materials: order.materials || {},
+      pickup: order.pickup ? { city: order.pickup.city, date: order.pickup.date, timeSlot: order.pickup.timeSlot } : null,
+      assignedNode: order.assignedNode ? { id: order.assignedNode.id, name: order.assignedNode.name, city: order.assignedNode.city } : null,
+      nodeReservation: { nodeId: reservation.nodeId, date: reservation.date, period: reservation.period, timeSlot: reservation.timeSlot, status: reservation.status, checkedInAt: reservation.checkedInAt, checkInRecordedAt: reservation.checkInRecordedAt, checkedOutAt: reservation.checkedOutAt, checkOutRecordedAt: reservation.checkOutRecordedAt },
+      transport: { routeId: route.id || '', routeName: route.name || '', status: route.status, driverId: route.driverId, driverName: route.driverName || route.driver, vehiclePlate: route.vehiclePlate, departureAt: route.departureAt, arrivalAt: route.arrivalAt },
+      handoff: { ...controls(order), inspected: !!flow.inspection, balancePaid: flow.invoice?.status === 'paid', exceptionOpen: flow.stage === 'exception' },
+      handoffHistory: (order.reviewHistory || []).filter((item) => ['node_checkin', 'node_checkout'].includes(item.action)).map((item) => ({ action: item.action, note: item.note, at: item.at, operator: item.operator })),
+      simulated: true
+    };
+  };
+  if (method === 'GET' && !id && !action) {
+    let orders = store.listOrders().filter(belongs);
+    if (query.date) orders = orders.filter((order) => order.nodeReservation?.date === query.date);
+    return { items: orders.map(project), simulated: true };
+  }
+  if (!id) fail('未找到当前机构的交接订单。', 404, 'PARTNER_ORDER_NOT_FOUND');
+  // Filter before lookup so a foreign ID is indistinguishable from a missing ID.
+  const order = store.listOrders().find((item) => item.id === id && belongs(item));
+  if (!order) fail('未找到当前机构的交接订单。', 404, 'PARTNER_ORDER_NOT_FOUND');
+  if (method === 'GET' && !action) return { order: project(order), simulated: true };
+  if (method !== 'POST' || !['node-check-in', 'node-check-out'].includes(action)) fail('当前不支持此交接操作。', 405, 'METHOD_NOT_ALLOWED');
+  if (body.checks?.petVerified !== true) fail('请先核对宠物身份、笼具与预约资料。', 400, 'PARTNER_CHECKS_REQUIRED');
+  const assignedRoute = routeFor(order);
+  if (action === 'node-check-out' && (body.checks?.driverVerified !== true || !assignedRoute?.driverId || body.driverId !== assignedRoute.driverId)) fail('请核对已分配的接手司机及车辆。', 400, 'PARTNER_DRIVER_CHECK_REQUIRED');
+  if (action === 'node-check-out' && order.nodeReservation?.status !== 'departed' && (order.reviewStatus !== 'confirmed' || order.deposit?.status !== 'paid')) fail('方案确认或保证金状态已变化，请联系总部核对。', 409, 'PARTNER_ORDER_NOT_READY');
+  const note = typeof body.note === 'string' ? body.note.trim() : '';
+  if (!note || note.length > 200) fail('请填写交接备注（最多 200 字）。', 400, 'PARTNER_NOTE_REQUIRED');
+  if (typeof body.occurredAt !== 'string' || !Number.isFinite(Date.parse(body.occurredAt))) fail('请填写有效的交接时间。', 400, 'PARTNER_TIME_REQUIRED');
+  const input = { operator: session.account, occurredAt: body.occurredAt, note: (action === 'node-check-in' ? '已核对宠物、笼具与预约资料。' : '已核对宠物、笼具及接手司机车辆。') + note };
+  const result = action === 'node-check-in' ? store.nodeCheckIn(id, input) : store.nodeCheckOut(id, input);
+  return { order: project(store.getOrder(id)), idempotent: !!result.idempotent, simulated: true };
+}
+
+// Browser-only review extensions. This file is never loaded by the API server.
+function frontendAction(context) {
+  const { store, session, role, resource, id, action, method, body, query, actor } = context;
+  const fail = (message, code = 'FRONTEND_FLOW_CONFLICT', status = 409) => { throw new store.StoreError(message, status, code); };
+  const now = () => new Date().toISOString();
+  const note = value => {
+    if (typeof value !== 'string' || !value.trim() || value.trim().length > 300) fail('请填写处理说明，最多 300 字。', 'NOTE_REQUIRED', 400);
+    return value.trim();
+  };
+  const closed = order => ['cancelled', 'rejected'].includes(order.reviewStatus) || ['delivered', 'terminated'].includes(order.fulfillment?.stage);
+  const moving = order => Boolean(order.fulfillment?.departedAt) || ['in_transit', 'arrived', 'returning'].includes(order.fulfillment?.stage);
+  const owned = () => role === 'user' ? store.getUserOrder(id, session.account) : role === 'driver' ? store.getDriverOrder(id, session.driverId) : store.getOrder(id);
+  const audit = (data, order, event, text) => {
+    order.updatedAt = now(); order.reviewHistory ||= [];
+    order.reviewHistory.push({ action: event, note: text, at: order.updatedAt, operator: session.account, simulated: true });
+    data.auditLogs ||= [];
+    data.auditLogs.unshift({ id: `LOG-FE-${window.crypto.randomUUID()}`, action: event, operator: session.account, payload: { orderId: order.id, note: text }, createdAt: order.updatedAt, simulated: true });
+  };
+  function availability(filter = {}) {
+    const data = store.read(), cache = new Map();
+    return store.listAvailability(filter).map(slot => {
+      const nodes = data.cityNodes.filter(n => n.city === slot.city);
+      const cells = nodes.flatMap(n => {
+        const key = `${n.id}:${slot.date}`;
+        if (!cache.has(key)) cache.set(key, store.nodeCalendar({ nodeId: n.id, date: slot.date, days: 1 }).items);
+        return cache.get(key).filter(c => c.timeSlot === slot.timeSlot);
+      });
+      const held = data.orders.filter(o => o.capacityHeld && o.pickup?.slotId === slot.id);
+      const unallocated = held.filter(o => !['reserved', 'confirmed', 'arrived'].includes(o.nodeReservation?.status)).length;
+      const unknownHeld = Math.max(0, slot.occupied - held.length);
+      const nodeRemaining = Math.max(0, cells.reduce((sum, c) => sum + (c.available ? c.remaining : 0), 0) - unallocated - unknownHeld);
+      const remaining = Math.min(slot.remaining, nodeRemaining);
+      return { ...slot, remaining, nodeRemaining, available: slot.available && remaining > 0, blockedReason: remaining ? '' : '接宠时段或合作点余量不足，请换一个时段。' };
+    });
+  }
+  function release(data, order) {
+    if (order.capacityHeld) {
+      const slot = data.availability.find(s => s.id === order.pickup?.slotId);
+      if (slot) slot.occupied = Math.max(0, slot.occupied - 1);
+      order.capacityHeld = false; order.capacityReleasedAt = now();
+    }
+    if (order.nodeReservation && !['released', 'departed'].includes(order.nodeReservation.status)) {
+      order.nodeReservation.status = 'released'; order.nodeReservation.releasedAt = now();
+    }
+  }
+  function finishRoute(data, order, detach = false) {
+    const route = data.routes.find(r => r.id === order.routeId);
+    if (!route) return;
+    if (detach) {
+      order.previousTransport = { ...order.transport, routeId: route.id, routeName: route.name, driverName: route.driverName, vehiclePlate: route.vehiclePlate };
+      route.orderIds = route.orderIds.filter(value => value !== order.id); order.routeId = ''; order.transport = null;
+    }
+    if (!route.orderIds.length) route.status = '已取消';
+    else if (route.orderIds.every(value => closed(data.orders.find(o => o.id === value) || {}))) { route.status = '已完成'; route.completedAt = now(); }
+  }
+  function cancel(data, order, text, detach = true) {
+    const balance = order.fulfillment?.invoice?.status === 'paid' ? order.fulfillment.invoice.paidAmount || order.fulfillment.invoice.amount : 0;
+    const paidDeposit = order.deposit?.status === 'paid' ? order.deposit.amount : 0;
+    const total = Math.round((paidDeposit + balance) * 100) / 100;
+    release(data, order);
+    order.reviewStatus = 'cancelled'; order.status = '已取消'; order.cancelReason = text; order.cancelledAt = now();
+    if (order.fulfillment) order.fulfillment.stage = 'terminated';
+    if (total > 0) {
+      order.refund = { id: `RF-FE-${order.id}`, status: 'pending', amount: total, depositAmount: paidDeposit, balanceAmount: balance, reason: text, requestedAt: now(), updatedAt: now(), attempts: 0, simulated: true };
+      order.deposit.status = 'refunding'; order.depositStatus = '退款中';
+    }
+    finishRoute(data, order, detach); audit(data, order, 'service_cancelled', text);
+  }
+
+  if (role === 'ops' && resource === 'dashboard' && method === 'GET') {
+    const result = store.dashboard(), orders = store.read().orders;
+    const pending = orders.filter(o => o.serviceRequest?.status === 'pending').length;
+    result.metrics[3] = { label: '异常/变更待办', value: orders.filter(o => o.serviceRequest?.status === 'pending' || o.fulfillment?.stage === 'exception').length, note: '到订单详情处理；行程变更可在订单页单独筛选' };
+    if (pending) result.alert = `${pending} 笔行程变更待处理。${result.alert}`;
+    return result;
+  }
+  if (['user', 'ops'].includes(role) && resource === 'availability' && method === 'GET') {
+    const items = availability(query), all = availability({ city: query.city || query.fromCity });
+    const dates = [...new Set(all.filter(s => s.available).map(s => s.date))];
+    return { ...store.availabilityMeta(query), items, availableDates: dates, nextAvailableDate: dates.find(d => !query.date || d >= query.date) || dates[0] || null };
+  }
+  if (role === 'user' && resource === 'orders' && method === 'POST' && !id) {
+    const previous = store.listUserOrders(session.account).find(o => o.clientRequestId === body.clientRequestId && body.clientRequestId);
+    if (!previous && !availability({ city: body.fromCity }).some(s => s.id === body.pickup?.slotId && s.available)) fail('该时段余量已变化，请重新选择。', 'SLOT_FULL');
+  }
+  if (resource === 'orders' && id) {
+    if (['user', 'driver', 'ops'].includes(role)) {
+      const visible = owned();
+      if (method !== 'GET' && visible.serviceRequest?.status === 'pending' && !['service-request', 'service-request/resolve'].includes(action)) fail('本单有待处理的变更申请，请先由总部处理。', 'SERVICE_REQUEST_PENDING');
+      if (method !== 'GET' && ['returning', 'terminated'].includes(visible.fulfillment?.stage) && !['return-receipt', 'refund', 'service-request/resolve'].includes(action)) fail('本单已进入退运或取消流程，不能继续普通运输动作。', 'ORDER_TERMINATING');
+      if (role === 'user' && action === 'deposit/pay' && method === 'POST' && visible.deposit.status === 'unpaid' && !availability({ city: visible.fromCity }).some(s => s.id === visible.pickup?.slotId && s.available)) fail('余量已被其他订单占用，请改期后再确认保证金。', 'SLOT_FULL');
+    }
+    if (role === 'user' && action === 'service-request' && method === 'POST') {
+      const visible = owned(), reason = note(body.note), kind = body.kind;
+      if (!['price_review', 'cancel', 'reschedule', 'return'].includes(kind)) fail('请选择有效申请类型。', 'INVALID_REQUEST', 400);
+      if (typeof body.requestId !== 'string' || !/^[\w:-]{8,128}$/.test(body.requestId)) fail('请刷新后重新提交申请。', 'REQUEST_ID_REQUIRED', 400);
+      const prior = (visible.serviceRequests || []).find(r => r.requestId === body.requestId);
+      if (prior) {
+        if (prior.kind === kind && prior.note === reason) return { order: visible, idempotent: true };
+        fail('该提交编号已用于不同内容，请刷新后重试。', 'IDEMPOTENCY_CONFLICT');
+      }
+      if (closed(visible)) fail('本单已结束，不能提交出行变更。');
+      if (visible.serviceRequest?.status === 'pending') fail('已有待处理申请，请等待总部回复。');
+      if (kind === 'price_review' && (visible.fulfillment?.stage !== 'awaiting_payment' || moving(visible))) fail('仅待确认验宠费用时可申请复核。');
+      if (kind === 'return' ? !moving(visible) : moving(visible)) fail('运输中请申请退运，发车前可申请取消。');
+      if (kind === 'reschedule' && (visible.fulfillment || ['arrived', 'departed'].includes(visible.nodeReservation?.status))) fail('已交接宠物不能直接改期，请申请取消并安排交回。');
+      const data = store.read(), order = data.orders.find(o => o.id === id);
+      const request = { id: `SR-${window.crypto.randomUUID()}`, requestId: body.requestId, kind, note: reason, status: 'pending', requestedAt: now(), requestedBy: session.account };
+      order.serviceRequests ||= []; order.serviceRequests.push(request); order.serviceRequest = request;
+      audit(data, order, 'service_requested', reason); store.write(data); return { order: store.getUserOrder(id, session.account), idempotent: false };
+    }
+    if (role === 'ops' && action === 'service-request/resolve' && method === 'POST') {
+      const data = store.read(), order = data.orders.find(o => o.id === id), request = order.serviceRequest;
+      const resolution = note(body.note), decision = body.decision;
+      if (!request || request.id !== body.requestId) fail('申请已变化，请刷新后处理。', 'REQUEST_CHANGED');
+      const fingerprint = JSON.stringify([decision, resolution, body.price ?? null, body.slotId ?? null, body.petReturned === true]);
+      if (request.status !== 'pending') {
+        if (request.resolutionFingerprint === fingerprint) return { order: store.getOrder(id), idempotent: true };
+        fail('本申请已处理，不能重复变更结果。', 'REQUEST_RESOLVED');
+      }
+      if (closed(order)) fail('订单已结束，不能再处理变更。');
+      const allowed = { price_review: ['reprice', 'cancel', 'decline'], cancel: ['cancel', 'decline'], reschedule: ['reschedule', 'decline'], return: ['return', 'decline'] };
+      if (!allowed[request.kind]?.includes(decision)) fail('该申请不支持此处理动作。', 'INVALID_DECISION', 400);
+      if (decision === 'reprice') {
+        const price = Number(body.price), f = order.fulfillment;
+        if (!f || f.invoice.status === 'paid' || moving(order) || !Number.isFinite(price) || price < order.deposit.amount || price > 100000 || Math.round(price * 100) / 100 !== price) fail('请填写不低于保证金、最多两位小数的总价。', 'INVALID_PRICE', 400);
+        f.priceRevisions ||= []; f.priceRevisions.push({ invoice: { ...f.invoice }, inspection: { ...f.inspection }, revisedAt: now(), note: resolution });
+        f.invoice = { ...f.invoice, id: `INV-${window.crypto.randomUUID()}`, total: price, amount: Math.round((price - order.deposit.amount) * 100) / 100, status: 'unpaid', paidAmount: 0, paidAt: null, paymentId: null };
+        f.inspection.lockedPrice = price; f.inspection.note = resolution;
+        f.stage = 'awaiting_payment'; order.status = '待尾款确认'; order.lockedPrice = price;
+      } else if (decision === 'cancel') {
+        if (moving(order)) fail('运输中不能直接取消，请先安排退运交接。');
+        if (['arrived', 'departed'].includes(order.nodeReservation?.status) && body.petReturned !== true) fail('请先确认宠物已经交回寄件人。', 'PET_RETURN_REQUIRED');
+        cancel(data, order, resolution);
+      } else if (decision === 'reschedule') {
+        if (moving(order) || order.fulfillment || ['arrived', 'departed'].includes(order.nodeReservation?.status)) fail('当前交接阶段不能直接改期。');
+        const slot = availability({ city: order.fromCity }).find(s => s.id === body.slotId && s.available);
+        if (!slot || slot.id === order.pickup?.slotId) fail('请选择有余量的新时段。', 'SLOT_FULL');
+        const previous = { pickup: order.pickup, assignedNode: order.assignedNode, nodeReservation: order.nodeReservation, routeId: order.routeId };
+        release(data, order); finishRoute(data, order, true);
+        if (order.deposit.status === 'paid') { data.availability.find(s => s.id === slot.id).occupied += 1; order.capacityHeld = true; }
+        order.pickup = { city: slot.city, date: slot.date, timeSlot: slot.timeSlot, slotId: slot.id };
+        order.assignedNode = null; order.nodeReservation = null; order.reviewStatus = order.deposit.status === 'paid' ? 'resubmitted' : 'not_submitted'; order.status = order.deposit.status === 'paid' ? '待审核' : '待支付保证金';
+        request.previous = previous;
+      } else if (decision === 'return') {
+        if (!moving(order) || !order.fulfillment || order.fulfillment.stage === 'returning') fail('当前订单不符合退运条件。');
+        order.fulfillment.stage = 'returning'; order.status = '退运中';
+        order.fulfillment.returnTrip = { destination: order.fromCity, requestedAt: now(), note: resolution, requestId: request.id };
+      }
+      if (decision !== 'decline' && order.fulfillment?.exception?.status === 'open') {
+        Object.assign(order.fulfillment.exception, { status: 'resolved', resolution, resolvedAt: now(), resolvedBy: session.account });
+        const archived = order.fulfillment.exceptions?.find(e => e.id === order.fulfillment.exception.id);
+        if (archived) Object.assign(archived, order.fulfillment.exception);
+      }
+      Object.assign(request, { status: decision === 'decline' ? 'declined' : 'approved', decision, resolution, resolvedAt: now(), resolvedBy: session.account, resolutionFingerprint: fingerprint });
+      const history = order.serviceRequests.find(r => r.id === request.id); Object.assign(history, request);
+      audit(data, order, 'service_resolved', resolution); store.write(data); return { order: store.getOrder(id), idempotent: false };
+    }
+    if (role === 'driver' && method === 'POST' && action === 'return-receipt') {
+      const visible = owned(), receiverName = note(body.receiverName);
+      if (visible.fulfillment?.stage === 'terminated' && visible.fulfillment.returnTrip?.receiverName === receiverName) return { order: visible, idempotent: true };
+      if (visible.fulfillment?.stage !== 'returning' || body.receiverVerified !== true || body.petAccepted !== true) fail('请核对退回接收人和宠物交接情况。', 'RETURN_RECEIPT_REQUIRED');
+      const data = store.read(), order = data.orders.find(o => o.id === id);
+      Object.assign(order.fulfillment.returnTrip, { receiverName, signedAt: now(), operator: session.account });
+      cancel(data, order, `退运交接完成，接收人：${receiverName}`, false); store.write(data); return { order: store.getDriverOrder(id, session.driverId), idempotent: false };
+    }
+    if (role === 'driver' && method === 'POST' && action === 'receipt') {
+      const result = store.fulfillmentAction('receive', id, { ...actor, driverId: session.driverId });
+      if (!result.idempotent) {
+        const data = store.read(), order = data.orders.find(o => o.id === id);
+        order.fulfillment.receipt.signedAt = new Date(Math.max(Date.parse(order.fulfillment.receipt.recordedAt), Date.parse(order.fulfillment.lastCheckpointAt || order.fulfillment.receipt.recordedAt))).toISOString();
+        const event = order.fulfillment.events.filter(e => e.type === 'receipt').at(-1);
+        if (event) event.occurredAt = order.fulfillment.receipt.signedAt;
+        finishRoute(data, order); store.write(data); result.order = store.getDriverOrder(id, session.driverId);
+      }
+      return result;
+    }
+  }
+  if (role === 'ops' && resource === 'routes' && method !== 'GET') {
+    const data = store.read(), route = data.routes.find(r => r.id === id);
+    if ((route?.orderIds || []).concat(body.orderId || []).some(value => data.orders.find(o => o.id === value)?.serviceRequest?.status === 'pending')) fail('线路内有待处理变更申请，请先核实后再调度。', 'SERVICE_REQUEST_PENDING');
+  }
+  if (role === 'partner' && resource === 'orders' && method !== 'GET') {
+    const order = store.getOrder(id);
+    if (order.nodeReservation?.nodeId !== session.nodeId) fail('未找到本机构的交接订单。', 'ORDER_NOT_FOUND', 404);
+    if (order.serviceRequest?.status === 'pending' || ['returning', 'terminated'].includes(order.fulfillment?.stage)) fail('本单正在处理变更，请等待总部确认。', 'SERVICE_REQUEST_PENDING');
+  }
+  if (typeof partnerFrontendAction === 'function') return partnerFrontendAction(context);
+}
+
   function prepareDemo(preserveExisting = false) {
-    const original = preserveExisting ? local.getItem(dataKey) : null;
+    const original = preserveExisting ? stagedData : null;
+    const oldMetadata = JSON.parse(stagedData || '{}');
     stagedData = original || '{}';
-    try {
       seedDemo(store, { preserveExisting });
       const complete = JSON.parse(stagedData);
       if (original) {
@@ -1152,21 +1422,101 @@ module.exports = function fulfillment({ StoreError, moneyValue, log }) {
           complete[key] = [...(complete[key] || []).filter((item) => !ids.has(item.id)), ...old];
         }
       }
-      if (original && local.getItem(dataKey) !== original) throw new Error('另一个页面刚更新了订单，请刷新后继续；已有操作已保留。');
-      stagedData = null;
-      writeDemoData(complete);
+      complete.historyArchive = oldMetadata.historyArchive || complete.historyArchive || [];
+      complete.shared = oldMetadata.shared || complete.shared || {};
+      stagedData = JSON.stringify(complete);
+  }
+  function validateSaved(raw) {
+    const data = JSON.parse(raw);
+    if (!Array.isArray(data.orders) || !Array.isArray(data.cityNodes)) throw new Error('当前浏览器数据格式不完整，原数据已保留，请联系工作人员。');
+    return data;
+  }
+  const ownerOf = (order) => order.ownerAccount || order.userPhone;
+  function migrateLegacy() {
+    const sources = ['workbench', 'client'].map((portal) => {
+      const key = `paichong-static-demo-v1:${projectPath}${portal}/:${portal}:data`;
+      const raw = local.getItem(key);
+      return raw ? { portal, key, raw, data: validateSaved(raw) } : null;
+    }).filter(Boolean);
+    if (!sources.length) { stagedData = '{}'; prepareDemo(); return; }
+    const base = sources[0], merged = JSON.parse(base.raw);
+    merged.historyArchive ||= [];
+    let imported = 0, archived = 0;
+    for (const source of sources.slice(1)) {
+      for (const order of source.data.orders) {
+        const same = merged.orders.find((item) => item.id === order.id);
+        if (same && JSON.stringify(same) === JSON.stringify(order)) continue;
+        const duplicate = merged.orders.some((item) => order.clientRequestId && ownerOf(item) === ownerOf(order) && item.clientRequestId === order.clientRequestId);
+        let reason = same ? '同一订单在旧客户端与工作端的进度不同，保留工作端业务链，客户端原记录归档。' : duplicate ? '旧客户端存在相同提交标识，保留原记录，避免重复订单与付款。' : '';
+        const slot = merged.availability?.find((item) => item.id === order.pickup?.slotId);
+        if (!reason && (order.routeId || order.nodeReservation || order.assignedNode || !['not_submitted', 'pending', 'resubmitted', 'info_required', 'cancelled', 'rejected'].includes(order.reviewStatus))) reason = '订单已关联节点或线路，无法确认跨端容量一致性，原记录完整归档。';
+        if (!reason && order.capacityHeld && (!slot || slot.city !== order.fromCity || !Number.isFinite(slot.occupied) || !Number.isFinite(slot.capacity) || slot.occupied >= slot.capacity)) reason = '共享预约时段不足或无法核对，原记录已归档，未挤占现有订单容量。';
+        if (reason) {
+          const route = source.data.routes?.find((item) => item.id === order.routeId) || null;
+          merged.historyArchive.push({ id: `legacy-${source.portal}-${order.id}`, source: source.portal, reason, archivedAt: new Date().toISOString(), order, route, node: source.data.cityNodes.find((item) => item.id === order.assignedNode?.id) || null, booking: source.data.availability?.find((item) => item.id === order.pickup?.slotId) || null });
+          archived++;
+        } else {
+          merged.orders.push(order); if (order.capacityHeld) slot.occupied++;
+          for (const log of source.data.auditLogs || []) if (log.orderId === order.id && !(merged.auditLogs || []).some((item) => item.id === log.id)) (merged.auditLogs ||= []).push(log);
+          imported++;
+        }
+      }
+    }
+    merged.shared = { version: 2, revision: 0, migratedAt: new Date().toISOString(), sources: sources.map((source) => source.portal), imported, archived, baseline: base.portal };
+    stagedData = JSON.stringify(merged);
+    if (merged.demo?.hefeiVersion !== 1) prepareDemo(true);
+  }
+  function transaction(action, assertLock = () => {}) {
+    const original = local.getItem(dataKey);
+    stagedData = original || '{}';
+    try {
+      const value = action();
+      if (stagedData !== original) {
+        const complete = JSON.parse(stagedData);
+        complete.shared = { ...complete.shared, version: 2, revision: (JSON.parse(original || '{}').shared?.revision || 0) + 1, updatedAt: new Date().toISOString() };
+        assertLock();
+        if (local.getItem(dataKey) !== original) fail('另一页面刚更新了订单，本次未保存。请刷新确认后重试。', 409, 'DEMO_WRITE_CONFLICT');
+        try { local.setItem(dataKey, JSON.stringify(complete)); }
+        catch { throw new Error('浏览器无法保存当前操作，本次未生效。请释放存储空间或允许网站存储后重试。'); }
+        changed(false);
+      }
+      return value;
     } finally { stagedData = null; }
   }
-  let startupError = '';
-  try {
-    const saved = local.getItem(dataKey);
-    if (!saved) prepareDemo();
-    else {
-      const data = JSON.parse(saved);
-      if (!Array.isArray(data.orders) || !Array.isArray(data.cityNodes)) throw new Error('当前浏览器数据格式不完整，请保留数据并联系工作人员。');
-      if (data.demo?.hefeiVersion !== 1) prepareDemo(true);
-    }
-  } catch (error) { startupError = error.message; }
+  function initialize(assertLock = () => {}) {
+    transaction(() => {
+      const saved = local.getItem(dataKey);
+      if (!saved) migrateLegacy();
+      else if (validateSaved(saved).demo?.hefeiVersion !== 1) prepareDemo(true);
+    }, assertLock);
+  }
+  let pendingWrite = Promise.resolve();
+  function withWriteLock(action) {
+    if (window.navigator?.locks?.request) return window.navigator.locks.request(lockName, { mode: 'exclusive' }, () => action(() => {}));
+    // A synchronous dispatch never yields while holding this short lease. The
+    // settling turn resolves simultaneous claims before either reads business data.
+    const run = pendingWrite.catch(() => {}).then(async () => {
+      let existing = JSON.parse(local.getItem(lockKey) || 'null');
+      for (let attempt = 0; existing?.expiresAt > Date.now() && window.setTimeout && attempt < 12; attempt++) {
+        await new Promise((resolve) => window.setTimeout(resolve, 40));
+        existing = JSON.parse(local.getItem(lockKey) || 'null');
+      }
+      if (existing?.expiresAt > Date.now()) fail('另一页面正在保存，请稍后再试。', 409, 'DEMO_WRITE_BUSY');
+      const lease = { owner: randomHex(12), expiresAt: Date.now() + 30000 };
+      try { local.setItem(lockKey, JSON.stringify(lease)); }
+      catch { throw new Error('浏览器无法保存当前操作，请允许网站存储后重试。'); }
+      const assertLock = () => {
+        const active = JSON.parse(local.getItem(lockKey) || 'null');
+        if (active?.owner !== lease.owner || active.expiresAt <= Date.now()) fail('另一页面正在保存，本次未生效。请刷新后重试。', 409, 'DEMO_WRITE_CONFLICT');
+      };
+      try {
+        if (window.setTimeout) await new Promise((resolve) => window.setTimeout(resolve, 24));
+        assertLock(); return action(assertLock);
+      } finally { if (JSON.parse(local.getItem(lockKey) || 'null')?.owner === lease.owner) local.removeItem(lockKey); }
+    });
+    pendingWrite = run; return run;
+  }
+  const initialized = withWriteLock((assertLock) => initialize(assertLock)).catch((error) => { startupError = error.message; });
 
   function sessionRegistry() { return JSON.parse(local.getItem(sessionsKey) || '{}'); }
   function saveSessions(sessions) { local.setItem(sessionsKey, JSON.stringify(sessions)); }
@@ -1175,7 +1525,17 @@ module.exports = function fulfillment({ StoreError, moneyValue, log }) {
   const wrapped = (order) => ({ order });
   const items = (values) => ({ items: values });
 
-  async function dispatch(url, method, token, body) {
+  function liveSession(token) {
+    const saved = sessionRegistry()[token], configured = accounts[saved?.account];
+    if (!saved || saved.expiresAt <= Date.now() || !allowed(saved.role) || configured?.role !== saved.role) fail('请先登录账号。', 401, 'UNAUTHORIZED');
+    return saved.role === 'partner' ? { ...saved, name: configured.name, nodeId: configured.nodeId } : saved;
+  }
+  function history(token = currentToken) {
+    const session = liveSession(token), data = readDemoData();
+    const visible = (entry) => session.role === 'ops' || (session.role === 'user' && ownerOf(entry.order) === session.account) || (session.role === 'driver' && entry.route?.driverId === session.driverId && entry.route.orderIds?.includes(entry.order.id) && ['已派车', '运输中', '已完成'].includes(entry.route.status)) || (session.role === 'partner' && (entry.order.nodeReservation?.nodeId || entry.order.assignedNode?.id) === session.nodeId);
+    return { items: (data.historyArchive || []).filter(visible).map((entry) => ({ ...entry, route: entry.route && session.role !== 'ops' ? { id: entry.route.id, name: entry.route.name, cities: entry.route.cities, driverId: entry.route.driverId, vehiclePlate: entry.route.vehiclePlate } : entry.route })), migration: { migratedAt: data.shared?.migratedAt || null, baseline: data.shared?.baseline || null, sources: data.shared?.sources || [] }, readOnly: true };
+  }
+  function dispatch(url, method, token, body) {
     const pathname = url.pathname, query = Object.fromEntries(url.searchParams);
     if (pathname === '/health') return result({ ok: true, mode: 'static-demo', offline: true });
     if (startupError) fail(startupError, 503, 'DEMO_STORAGE_UNAVAILABLE');
@@ -1187,23 +1547,28 @@ module.exports = function fulfillment({ StoreError, moneyValue, log }) {
       const { password, ...profile } = configured;
       const session = { account, ...profile, expiresAt: Date.now() + 8 * 3600000, simulated: true };
       for (const [key, value] of Object.entries(sessions)) if (value.expiresAt <= Date.now()) delete sessions[key];
-      const freshToken = 'DEMO-' + randomHex(24); sessions[freshToken] = session; saveSessions(sessions);
+      const freshToken = 'DEMO-' + randomHex(24); sessions[freshToken] = session; saveSessions(sessions); currentToken = freshToken;
       return result({ token: freshToken, ...session });
     }
-    const existingSession = sessions[token];
-    const partnerProfile = accounts[existingSession?.account];
-    const session = existingSession?.role === 'partner' && partnerProfile?.role === 'partner'
-      ? { ...existingSession, name: partnerProfile.name, nodeId: partnerProfile.nodeId } : existingSession;
-    if (!session || session.expiresAt <= Date.now() || !allowed(session.role)) fail('请先登录账号。', 401, 'UNAUTHORIZED');
+    const session = liveSession(token); currentToken = token;
     if (pathname === '/api/auth/me' && method === 'GET') return result(session);
-    if (pathname === '/api/auth/logout' && method === 'POST') { delete sessions[token]; saveSessions(sessions); return result({ ok: true }); }
+    if (pathname === '/api/auth/logout' && method === 'POST') { delete sessions[token]; saveSessions(sessions); currentToken = ''; return result({ ok: true }); }
+    if (pathname === '/api/demo/history' && method === 'GET') return result(history(token));
     if (pathname === '/api/demo/reset' && method === 'POST') {
       if (session.role !== 'ops') fail('仅运营账号可执行此操作。', 403, 'FORBIDDEN');
-      prepareDemo(); return result({ ok: true, message: '已恢复本端初始数据。' });
+      prepareDemo(); return result({ ok: true, message: '已恢复本浏览器客户端和工作端的共享初始数据，旧版历史档案已保留。' });
     }
     const role = pathname.split('/')[2];
     if (role !== session.role) fail('当前账号没有此页面的操作权限。', 403, 'FORBIDDEN');
     const actor = { ...body, operator: session.account };
+    const extensionMatch = pathname.match(/^\/api\/(user|ops|driver|partner)\/([^/]+)(?:\/([^/]+))?(?:\/(.*))?$/);
+    if (typeof frontendAction === 'function' && extensionMatch) {
+      const [, , resource, id = '', action = ''] = extensionMatch;
+      if (resource === 'orders' && id && role === 'user') store.getUserOrder(id, session.account);
+      if (resource === 'orders' && id && role === 'driver') store.getDriverOrder(id, session.driverId);
+      const value = frontendAction({ store, session, role, resource, id, action, method, body, query, actor });
+      if (value !== undefined) return result(value, method === 'POST' && resource === 'orders' && !id ? 201 : 200);
+    }
     const route = `${method} ${pathname}`;
     const table = {
       'POST /api/user/quote': () => ({ quote: store.createQuote(body) }),
@@ -1276,29 +1641,75 @@ module.exports = function fulfillment({ StoreError, moneyValue, log }) {
       const body = text ? JSON.parse(text) : {};
       if (!body || typeof body !== 'object' || Array.isArray(body)) fail('请检查填写内容后重试。');
       const token = (headers.get('Authorization') || '').replace(/^Bearer\s+/i, '');
-      return await dispatch(url, method, token, body);
+      await initialized;
+      if (['GET', 'HEAD'].includes(method)) return dispatch(url, method, token, body);
+      return await withWriteLock((assertLock) => transaction(() => dispatch(url, method, token, body), assertLock));
     } catch (error) { return result({ error: error.message || '操作未完成，请重试', code: error.code || 'DEMO_ERROR' }, error.status || 400); }
   };
 
-  function reset() {
-    prepareDemo(); startupError = '';
+  async function reset(token = currentToken) {
+    await initialized;
+    return withWriteLock((assertLock) => transaction(() => {
+      if (liveSession(token).role !== 'ops') fail('请使用工作端运营账号恢复共享初始数据。', 403, 'FORBIDDEN');
+      prepareDemo(); startupError = '';
+    }, assertLock));
   }
-  window.PaichongStaticDemo = Object.freeze({ mode: 'static-demo', portal: kind, reset });
+  window.PaichongStaticDemo = Object.freeze({ mode: 'static-demo', portal: kind, projectPath, ready: initialized, reset, history, subscribe(listener) { subscribers.add(listener); return () => subscribers.delete(listener); } });
+  if (window.addEventListener) window.addEventListener('storage', (event) => {
+    if (event.key === dataKey) changed(true);
+    if (event.key === sessionsKey) { try { if (currentToken) liveSession(currentToken); } catch { currentToken = ''; } }
+  });
   function mountNotice() {
     const bar = document.createElement('div');
     bar.className = 'static-demo-notice';
     bar.setAttribute('role', 'note');
-    bar.innerHTML = '<span><b>体验版</b> · 不产生真实交易</span><button type="button">恢复初始</button>';
+    bar.innerHTML = '<span><b>体验版</b> · 不产生真实交易</span><div class="static-demo-tools"><button type="button" data-demo-history>历史档案</button><button type="button" data-demo-reset>恢复初始</button></div>';
     try {
       const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
-      if (readDemoData().demo.seedDate < today) bar.querySelector('span').textContent = '体验版 · 不产生真实交易 · 可恢复初始更新日期';
+      if (readDemoData().demo.seedDate < today) bar.querySelector('span').textContent = '体验版 · 不产生真实交易 · 场景日期较早';
     } catch { /* The API exposes the storage error with an actionable message. */ }
     const style = document.createElement('style');
-    style.textContent = '.static-demo-notice{box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;max-width:430px;margin:0 auto;padding:9px 12px;background:#eaf5ef;color:#426c5c;font:11px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif}.static-demo-notice b{font-weight:650}.static-demo-notice button{flex-shrink:0;border:1px solid #c9dfd2;border-radius:8px;background:#fff;color:#426c5c;padding:7px;font:inherit;min-height:36px}.static-demo-notice button:focus-visible{outline:2px solid #ea8b44;outline-offset:2px}';
+    style.textContent = '.static-demo-notice{box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;max-width:430px;margin:0 auto;padding:7px 12px;background:#eaf5ef;color:#426c5c;font:11px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif}.static-demo-notice b{font-weight:650}.static-demo-tools{display:flex;gap:5px}.static-demo-notice button{flex-shrink:0;border:1px solid #c9dfd2;border-radius:8px;background:#fff;color:#426c5c;padding:7px;font:inherit;min-height:36px}.static-demo-notice button:focus-visible{outline:2px solid #ea8b44;outline-offset:2px}.static-history-dialog{box-sizing:border-box;width:min(92vw,560px);max-height:85dvh;padding:20px;border:1px solid #dce8e1;border-radius:20px;color:#29493e;background:#fffefb;font:14px/1.6 -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif}.static-history-dialog::backdrop{background:#17382d66}.static-history-dialog header{display:flex;align-items:center;justify-content:space-between;gap:12px}.static-history-dialog h2{font-size:18px;margin:0}.static-history-dialog button{min-width:44px;min-height:44px;border:1px solid #dce8e1;border-radius:12px;background:#f4f9f5;color:#29493e}.static-history-dialog details{margin-top:12px;padding:12px;border:1px solid #e2ebe5;border-radius:14px}.static-history-dialog summary{cursor:pointer;font-weight:600;overflow-wrap:anywhere}.static-history-dialog p{font-size:12px;color:#627b70}.static-history-dialog pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;max-height:45dvh;overflow:auto;background:#f5f8f5;padding:10px;border-radius:10px}';
     document.head.append(style); document.body.prepend(bar);
-    bar.querySelector('button').addEventListener('click', () => {
-      if (!window.confirm('恢复本端初始订单？当前新增订单和操作将被清除，其他端的数据不受影响。')) return;
-      try { reset(); window.location.reload(); } catch (error) { window.alert(error.message); }
+    bar.querySelector('[data-demo-reset]').addEventListener('click', async () => {
+      try { if (liveSession(currentToken).role !== 'ops') { window.alert('请切换到工作端运营账号恢复共享初始数据。'); return; } } catch { window.alert('请先登录工作端运营账号。'); return; }
+      if (!window.confirm('恢复本浏览器的共享初始订单？客户端和工作端的当前新增订单与操作都会被清除。旧版历史档案、旧数据备份和其他项目不受影响。')) return;
+      try { await reset(); window.location.reload(); } catch (error) { window.alert(error.message); }
+    });
+    bar.querySelector('[data-demo-history]').addEventListener('click', () => {
+      try {
+        const archive = history(), dialog = document.createElement('dialog');
+        dialog.className = 'static-history-dialog';
+        const header = document.createElement('header'), title = document.createElement('h2'), close = document.createElement('button');
+        title.textContent = '旧版历史档案'; close.type = 'button'; close.textContent = '关闭'; header.append(title, close); dialog.append(header);
+        const intro = document.createElement('p'); intro.textContent = '旧版双端进度不同或容量无法安全合并的记录保留在这里，只读查看，不重复执行付款、预约或派车。原浏览器数据备份未删除。'; dialog.append(intro);
+        if (!archive.items.length) { const empty = document.createElement('p'); empty.textContent = '当前账号没有需要归档的旧记录。'; dialog.append(empty); }
+        for (const entry of archive.items) {
+          const details = document.createElement('details'), summary = document.createElement('summary'), reason = document.createElement('p'), content = document.createElement('pre');
+          summary.textContent = `${entry.order.petName || '毛孩子'} · ${entry.order.status || entry.order.reviewStatus} · ${entry.order.id}`;
+          reason.textContent = entry.reason;
+          const order = entry.order, facts = document.createElement('dl');
+          facts.style.cssText = 'display:grid;grid-template-columns:62px minmax(0,1fr);gap:7px 12px;font-size:13px;margin:14px 0;overflow-wrap:anywhere';
+          const money = (value) => Number.isFinite(Number(value)) ? `¥${Number(value).toFixed(2)}` : '尚未确认';
+          const depositNames = { unpaid: '待支付', paid: '已支付', refunding: '退款中', refund_failed: '退款待重试', refunded: '已退款' };
+          const fields = [
+            ['毛孩子', [order.petName || order.pet?.name || '未填写', order.breed || order.pet?.breed, order.weight ? `${order.weight} kg` : ''].filter(Boolean).join(' · ')],
+            ['路线', `${order.fromCity || '待确认'} → ${order.toCity || '待确认'}`],
+            ['接宠时间', [order.pickup?.date, order.pickup?.timeSlot].filter(Boolean).join(' ') || '待确认'],
+            ['订单状态', order.status || '待确认'],
+            ['运输费用', money(order.fulfillment?.invoice?.total ?? order.proposedPrice ?? order.quote?.basePrice)],
+            ['保证金', `${money(order.deposit?.amount)} · ${depositNames[order.deposit?.status] || '待确认'}`],
+            ['接宠联系', [order.contactName, order.contactPhone || order.userPhone].filter(Boolean).join(' · ') || '未填写'],
+            ['交接机构', order.assignedNode?.name || entry.node?.name || '尚未分配'],
+            ['记录来源', entry.source === 'client' ? '旧版客户端' : '旧版工作端']
+          ];
+          for (const [label, value] of fields) { const term = document.createElement('dt'), description = document.createElement('dd'); term.textContent = label; term.style.color = '#72877b'; description.textContent = value; description.style.margin = '0'; facts.append(term, description); }
+          const raw = document.createElement('details'), rawLabel = document.createElement('summary'); rawLabel.textContent = '原始记录';
+          content.textContent = JSON.stringify(entry.order, null, 2);
+          raw.append(rawLabel, content); details.append(summary, reason, facts, raw); dialog.append(details);
+        }
+        const remove = () => dialog.remove(); close.addEventListener('click', () => { dialog.close(); remove(); }); dialog.addEventListener('close', remove, { once: true }); document.body.append(dialog); dialog.showModal();
+      } catch (error) { window.alert(error.message); }
     });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mountNotice, { once: true });

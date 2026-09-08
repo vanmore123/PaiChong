@@ -1,14 +1,14 @@
 {
   "application": "paichong-h5-review",
   "mode": "static-demo",
-  "createdAt": "2026-09-08T02:45:41.078Z",
+  "createdAt": "2026-09-08T03:46:19.861Z",
   "apiBase": "",
   "simulated": true,
   "portals": {
     "client": {
       "directory": "client",
       "entry": "client/index.html",
-      "files": 68,
+      "files": 73,
       "allowedRoles": [
         "user"
       ]
@@ -16,7 +16,7 @@
     "workbench": {
       "directory": "workbench",
       "entry": "workbench/index.html",
-      "files": 74,
+      "files": 79,
       "allowedRoles": [
         "ops",
         "driver",
@@ -27,51 +27,51 @@
   "files": {
     "client/login.html": {
       "bytes": 7578,
-      "sha256": "057feeb160326576a08f6705f20d8ae9125c9ec5ee70db69b107f5db5ae45852"
+      "sha256": "b6762a7cfb54ee252a02daa17397c7e8416898cdcffdfb54e1f5f9decba221cd"
     },
     "client/login.css": {
       "bytes": 14135,
       "sha256": "f98bc0f244d686b5edb4701f754982a2c9f8410b3180d752a978cf32f529d7d2"
     },
     "client/login.js": {
-      "bytes": 10983,
-      "sha256": "9a34dbe22e20c1975cdb95ec7df46d0e7f0e94f0669e5beacbeb6b94ddba90bd"
+      "bytes": 10998,
+      "sha256": "c0486aeaa3c6bf349b6805376827ec43fc3be8cf5908df943766cf4f955a6777"
     },
     "client/miniapp-login.css": {
       "bytes": 7830,
       "sha256": "500deee6efe7cf5dbedc9ccc00688e4e7b4bc12de01cc2ced3318a6d76b4f0d6"
     },
     "client/client-review.html": {
-      "bytes": 30165,
-      "sha256": "d49013a25b2a1494809391fdc912e4950bb8df09a9790e07206091b16580373d"
+      "bytes": 30627,
+      "sha256": "37d0853816fedd10229575755379a35c5e2ddff347eb4ff2ad59e7e487583842"
     },
     "client/client-review.css": {
       "bytes": 39611,
       "sha256": "52e22fba23eb02f7f737482c4f52d1806b300bee746186daf118a1656468e28b"
     },
     "client/client-review.js": {
-      "bytes": 81565,
-      "sha256": "b7679c0d602cca288b111a2140a15954db57913820856a7a49bf7be234b2925d"
+      "bytes": 86314,
+      "sha256": "f0755eb0fc96eac66d8b7a14a747691528c4a177ae7a4575730212bfcb979f92"
     },
     "client/ops-workbench.js": {
-      "bytes": 47100,
-      "sha256": "2a5e1b1185f96b1f08244ced6c1fa51bf31ae5622662b0bbcff764fa386dc8b3"
+      "bytes": 47671,
+      "sha256": "6bc42aced726ee958bd95053b2ce16bbfc5e2bb7d6519c82c8a1a1ae0aa22ca6"
     },
     "client/ops-workbench.css": {
       "bytes": 28923,
       "sha256": "ee628a08ee282d2e6b232b7ebf7f7e6b6059fc16703101026493fe270a8a141f"
     },
     "client/miniapp.js": {
-      "bytes": 24426,
-      "sha256": "f2fecba6e1c6c00a17f26e3bf18f30540c83db09982283667ee503a4b7678097"
+      "bytes": 24441,
+      "sha256": "0fa3ac6e51a3e2d01e85fb0897a535f9e5aff91ae7e6d0df84d4d317b748f9a1"
     },
     "client/miniapp.css": {
       "bytes": 40267,
       "sha256": "181a1343eafa7529147298f1d9ec851c4d6e88d3b307d2e536f515d03ddedeb3"
     },
     "client/fulfillment-ui.js": {
-      "bytes": 5911,
-      "sha256": "cc5cc919d7f0985ef5d663992cef9d38cab775c2f4b6d172636b820d6ba10961"
+      "bytes": 6488,
+      "sha256": "c51adb711ac66a2fffdc90fb60c830419fa9e4009ef368dd2792bbace7a519d2"
     },
     "client/cabin-monitor.js": {
       "bytes": 6425,
@@ -89,6 +89,26 @@
       "bytes": 4051,
       "sha256": "b0998d1ee6d26141a0e4c9db6f1979fcd149af2362c7934e32c2b12f7c55b374"
     },
+    "client/material-preview.js": {
+      "bytes": 15992,
+      "sha256": "e39f95fb5e810c4e2a14e7b85daca937fcb934932a6f2a556df284969eab93d7"
+    },
+    "client/material-preview.css": {
+      "bytes": 4275,
+      "sha256": "65180a6233905f62fb94a5672573cd1415b4f78d35f5297988a23f0db39504d5"
+    },
+    "client/service-flow.js": {
+      "bytes": 7584,
+      "sha256": "678041c8eb064c49d11e475c6db937fb437166da36a95ca30d15dabb8f178d40"
+    },
+    "client/service-flow.css": {
+      "bytes": 1791,
+      "sha256": "931736ef2452235a22de82614b1f8b5480b0fb84218185abc0a6b52e673fb498"
+    },
+    "client/shared-demo-ui.js": {
+      "bytes": 1289,
+      "sha256": "de535386f4a2ec3d5746af0f4f9aaa8a815fa904150b4c1022e0cb2e4a00bbd5"
+    },
     "client/product-copy.js": {
       "bytes": 4731,
       "sha256": "b527e136a21f038046452f94d9a19c0d2abbad34ac0e3eb1e4e55b8d102cadf3"
@@ -102,8 +122,8 @@
       "sha256": "1befeb8b3ec77db5924c9e5c4d1fd60c9877a3bd6b7318e9ab232a36cc36585b"
     },
     "client/static-demo.js": {
-      "bytes": 106848,
-      "sha256": "aa5b318b4645ed9c516ba25f1981f56b9d82456a85a4d30c6c4de02e9e531b4b"
+      "bytes": 145586,
+      "sha256": "a5ea3862f76275d559c45b41db6139fc8ea7b69100bf5b0bf352a3fc33e8d45d"
     },
     "client/assets/brand/paichong-logo.png": {
       "bytes": 1107621,
@@ -291,7 +311,7 @@
     },
     "client/index.html": {
       "bytes": 7578,
-      "sha256": "057feeb160326576a08f6705f20d8ae9125c9ec5ee70db69b107f5db5ae45852"
+      "sha256": "b6762a7cfb54ee252a02daa17397c7e8416898cdcffdfb54e1f5f9decba221cd"
     },
     "client/portal-config.js": {
       "bytes": 119,
@@ -299,51 +319,51 @@
     },
     "workbench/login.html": {
       "bytes": 7578,
-      "sha256": "0aa1ef7ab55c02150d809a37e4e22ab22679927232e62f003ba39babdec5e1f5"
+      "sha256": "d66c9c6dc0d3224f58b552c6b19f2d7789cac6eaf04c263d940a81485a85c4ea"
     },
     "workbench/login.css": {
       "bytes": 14135,
       "sha256": "f98bc0f244d686b5edb4701f754982a2c9f8410b3180d752a978cf32f529d7d2"
     },
     "workbench/login.js": {
-      "bytes": 10983,
-      "sha256": "9a34dbe22e20c1975cdb95ec7df46d0e7f0e94f0669e5beacbeb6b94ddba90bd"
+      "bytes": 10998,
+      "sha256": "c0486aeaa3c6bf349b6805376827ec43fc3be8cf5908df943766cf4f955a6777"
     },
     "workbench/miniapp-login.css": {
       "bytes": 7830,
       "sha256": "500deee6efe7cf5dbedc9ccc00688e4e7b4bc12de01cc2ced3318a6d76b4f0d6"
     },
     "workbench/client-review.html": {
-      "bytes": 30165,
-      "sha256": "0820e23b3e1c8e94d5acd370414d716956839c9faf4eb73970f4cec8a68031a6"
+      "bytes": 30627,
+      "sha256": "2975ce8e955ce2a37bba1ce3870ad4b225913151c1cfce82b915bc4372fdce81"
     },
     "workbench/client-review.css": {
       "bytes": 39611,
       "sha256": "52e22fba23eb02f7f737482c4f52d1806b300bee746186daf118a1656468e28b"
     },
     "workbench/client-review.js": {
-      "bytes": 81565,
-      "sha256": "b7679c0d602cca288b111a2140a15954db57913820856a7a49bf7be234b2925d"
+      "bytes": 86314,
+      "sha256": "f0755eb0fc96eac66d8b7a14a747691528c4a177ae7a4575730212bfcb979f92"
     },
     "workbench/ops-workbench.js": {
-      "bytes": 47100,
-      "sha256": "2a5e1b1185f96b1f08244ced6c1fa51bf31ae5622662b0bbcff764fa386dc8b3"
+      "bytes": 47671,
+      "sha256": "6bc42aced726ee958bd95053b2ce16bbfc5e2bb7d6519c82c8a1a1ae0aa22ca6"
     },
     "workbench/ops-workbench.css": {
       "bytes": 28923,
       "sha256": "ee628a08ee282d2e6b232b7ebf7f7e6b6059fc16703101026493fe270a8a141f"
     },
     "workbench/miniapp.js": {
-      "bytes": 24426,
-      "sha256": "f2fecba6e1c6c00a17f26e3bf18f30540c83db09982283667ee503a4b7678097"
+      "bytes": 24441,
+      "sha256": "0fa3ac6e51a3e2d01e85fb0897a535f9e5aff91ae7e6d0df84d4d317b748f9a1"
     },
     "workbench/miniapp.css": {
       "bytes": 40267,
       "sha256": "181a1343eafa7529147298f1d9ec851c4d6e88d3b307d2e536f515d03ddedeb3"
     },
     "workbench/fulfillment-ui.js": {
-      "bytes": 5911,
-      "sha256": "cc5cc919d7f0985ef5d663992cef9d38cab775c2f4b6d172636b820d6ba10961"
+      "bytes": 6488,
+      "sha256": "c51adb711ac66a2fffdc90fb60c830419fa9e4009ef368dd2792bbace7a519d2"
     },
     "workbench/cabin-monitor.js": {
       "bytes": 6425,
@@ -361,6 +381,26 @@
       "bytes": 4051,
       "sha256": "b0998d1ee6d26141a0e4c9db6f1979fcd149af2362c7934e32c2b12f7c55b374"
     },
+    "workbench/material-preview.js": {
+      "bytes": 15992,
+      "sha256": "e39f95fb5e810c4e2a14e7b85daca937fcb934932a6f2a556df284969eab93d7"
+    },
+    "workbench/material-preview.css": {
+      "bytes": 4275,
+      "sha256": "65180a6233905f62fb94a5672573cd1415b4f78d35f5297988a23f0db39504d5"
+    },
+    "workbench/service-flow.js": {
+      "bytes": 7584,
+      "sha256": "678041c8eb064c49d11e475c6db937fb437166da36a95ca30d15dabb8f178d40"
+    },
+    "workbench/service-flow.css": {
+      "bytes": 1791,
+      "sha256": "931736ef2452235a22de82614b1f8b5480b0fb84218185abc0a6b52e673fb498"
+    },
+    "workbench/shared-demo-ui.js": {
+      "bytes": 1289,
+      "sha256": "de535386f4a2ec3d5746af0f4f9aaa8a815fa904150b4c1022e0cb2e4a00bbd5"
+    },
     "workbench/product-copy.js": {
       "bytes": 4731,
       "sha256": "b527e136a21f038046452f94d9a19c0d2abbad34ac0e3eb1e4e55b8d102cadf3"
@@ -374,32 +414,32 @@
       "sha256": "1befeb8b3ec77db5924c9e5c4d1fd60c9877a3bd6b7318e9ab232a36cc36585b"
     },
     "workbench/static-demo.js": {
-      "bytes": 106848,
-      "sha256": "aa5b318b4645ed9c516ba25f1981f56b9d82456a85a4d30c6c4de02e9e531b4b"
+      "bytes": 145586,
+      "sha256": "a5ea3862f76275d559c45b41db6139fc8ea7b69100bf5b0bf352a3fc33e8d45d"
     },
     "workbench/driver.html": {
-      "bytes": 1676,
-      "sha256": "99829adb35ed83f11581bf58c84d46e0f881c349d7d35813d33e2fbb4ad972dd"
+      "bytes": 1873,
+      "sha256": "5b10a6690ec96d86b77414355ea899b6a05b7cf5b2f5b724be355585b97fc356"
     },
     "workbench/driver.js": {
-      "bytes": 15607,
-      "sha256": "fb6fcce508063ecf2d33c9cc1f8ec046a035c1a7952c5c827aea0a7b2b2eb7bc"
+      "bytes": 17002,
+      "sha256": "707bc9b25d12c84fb8bbc03a8927326689eaeaace87bfe00c92887d7454e7bd9"
     },
     "workbench/driver.css": {
       "bytes": 5249,
       "sha256": "2981a4b385b5f08443996000c21b1bb48e8d86e59a0ae7e2d198c94661de1461"
     },
     "workbench/partner.html": {
-      "bytes": 1549,
-      "sha256": "d07e905573cd976c6119bbc336c6fb4e5e43f41d5dc785e33bca00d49e94fa56"
+      "bytes": 1878,
+      "sha256": "abf2400cbf6a5b61626c8e721d5209180f6329e5aa78a80ada594ba503f2f682"
     },
     "workbench/partner.js": {
-      "bytes": 26516,
-      "sha256": "6ab31236efb85fb35a497c23b3f6d40b7c2a876eadfb70dca854a30714d48399"
+      "bytes": 40884,
+      "sha256": "4fc703b75b82018b18993237b0595aceb5c28eb135552b13a4de5bbdf6564b2c"
     },
     "workbench/partner.css": {
-      "bytes": 8235,
-      "sha256": "84b810bc8aa26d9961a5147b7ef7681493001a021181f62aff38ffd03362350b"
+      "bytes": 10675,
+      "sha256": "91accea94bf506c016eab0f9de98a4d855eae08ebb6a372040d54cc17ccff454"
     },
     "workbench/assets/brand/paichong-logo.png": {
       "bytes": 1107621,
@@ -587,15 +627,15 @@
     },
     "workbench/index.html": {
       "bytes": 7578,
-      "sha256": "0aa1ef7ab55c02150d809a37e4e22ab22679927232e62f003ba39babdec5e1f5"
+      "sha256": "d66c9c6dc0d3224f58b552c6b19f2d7789cac6eaf04c263d940a81485a85c4ea"
     },
     "workbench/portal-config.js": {
       "bytes": 122,
       "sha256": "d996f76c5e6646e3a15a7cfe612946114289903afcb0f3f9ef3d5ae51c29e706"
     },
     "index.html": {
-      "bytes": 1435,
-      "sha256": "0ead96f51c0f6aaccfb3d88d4c6d6cca7e90d7d595872d59fefb9dd1494d1f06"
+      "bytes": 1447,
+      "sha256": "6ae14d6dd3f394b85560be80e82e1c465d026cf4bde5da039fdcabeee4ab3cbc"
     },
     ".nojekyll": {
       "bytes": 0,

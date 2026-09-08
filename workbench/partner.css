@@ -73,5 +73,32 @@ button.partner-card { width: 100%; text-align: left; color: inherit; font: inher
 .partner-toast.is-visible { opacity: 1; }
 .partner-skip { position: fixed; z-index: 1000; top: 5px; left: 5px; padding: 10px; transform: translateY(-150%); background: #fff; }
 .partner-skip:focus { transform: none; }
+.partner-pet-row { display: flex; align-items: center; gap: 12px; }
+.partner-pet-row > .pc-avatar { flex: 0 0 54px; width: 54px; height: 54px; border-radius: 18px; }
+.partner-pet-row > div { flex: 1; min-width: 0; }
+.partner-pet-row h2, .partner-pet-row h3 { margin: 0; font-size: 18px; }
+.partner-pet-row p { margin: 3px 0 0; }
+.partner-pet-fallback { flex: 0 0 54px; width: 54px; height: 54px; object-fit: contain; padding: 8px; border-radius: 18px; background: var(--pc-green-soft); }
+.partner-order-route { display: flex; align-items: center; gap: 15px; margin: 18px 0 10px; font-size: 21px; font-weight: 600; }
+.partner-order-route > span { color: #94b4a6; font-size: 18px; font-weight: 400; }
+.partner-order-id { margin: 0 0 15px; color: var(--pc-muted); font-size: 11px; overflow-wrap: anywhere; }
+.partner-details { margin: 0; padding-top: 9px; border-top: 1px solid var(--pc-line); font-size: 13px; }
+.partner-details > div { display: grid; grid-template-columns: 80px minmax(0, 1fr); gap: 12px; padding: 6px 0; }
+.partner-details dt { color: var(--pc-muted); }
+.partner-details dd { margin: 0; text-align: right; overflow-wrap: anywhere; }
+.partner-gates { display: grid; gap: 8px; }
+.partner-gates > span { padding: 9px 12px; border-radius: 10px; background: #f6f8f7; color: var(--pc-muted); font-size: 13px; }
+.partner-gates > .is-done { background: var(--pc-green-soft); color: var(--pc-green); }
+.partner-check { display: flex; align-items: flex-start; gap: 10px; min-height: 48px; padding: 10px 0; font-size: 13px; line-height: 1.7; }
+.partner-check input { flex: 0 0 20px; width: 20px; height: 20px; margin: 2px 0; accent-color: var(--pc-green); }
+.partner-check span { flex: 1; min-width: 0; }
+.partner-field input[type=datetime-local] { max-width: 100%; text-align: left; }
+.partner-handoff-history { margin: 0; padding: 0; list-style: none; }
+.partner-handoff-history li { position: relative; padding: 0 0 18px 19px; border-left: 1px solid #d5e7de; }
+.partner-handoff-history li:last-child { padding-bottom: 0; }
+.partner-handoff-history li::before { content: ''; position: absolute; left: -4px; top: 8px; width: 7px; height: 7px; border-radius: 50%; background: var(--pc-green); }
+.partner-handoff-history strong { font-size: 14px; }
+.partner-handoff-history span, .partner-handoff-history small { display: block; color: var(--pc-muted); font-size: 11px; }
+.partner-handoff-history p { margin: 7px 0; font-size: 13px; }
 @media (max-width: 350px) { .partner-main { padding: 18px 12px; } .partner-card { padding: 15px; } .partner-hero img { flex-basis: 90px; width: 90px; } .partner-hero h1 { font-size: 23px; } }
 @media (prefers-reduced-motion: reduce) { .partner-toast { transition: none; } }

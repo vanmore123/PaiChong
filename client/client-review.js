@@ -20,6 +20,7 @@
     confirm: '用户确认方案', cancel: '用户取消订单', reschedule: '用户改期', refund: '退款处理', refund_succeeded: '退款成功', refund_failed: '退款失败',
     node_check_in: '合作点到点登记', node_check_out: '合作点离点交接', node_checkin: '合作点到点登记', node_checkout: '合作点离点交接',
     route_add: '订单编入线路', route_remove: '订单移出线路', order_added_to_route: '订单编入线路', order_removed_from_route: '订单移出线路', route_assign: '分配司机与车辆', route_assigned: '分配司机与车辆', route_dispatch: '运营派车', route_dispatched: '运营派车'
+    , service_requested: '用户提交行程变更', service_resolved: '总部处理行程变更', service_cancelled: '取消与交接处理完成'
   };
 
   const state = {
@@ -328,12 +329,53 @@
     else if (state.currentOrder) loadUserOrders();
   }
 
+  const materialVersions = new Map();
+  const materialReads = new Map();
+  const draftPet = () => ({ name: formValue('pet-name') || '毛孩子', type: formValue('pet-type'), breed: formValue('pet-breed') });
+  function syncMaterialBusy() {
+    ['materials-form', 'supplement-form'].forEach((id) => {
+      const form = byId(id), busy = [...materialReads.keys()].some(key => (key === 'standingPhoto') === (id === 'supplement-form'));
+      form?.querySelectorAll('button[type="submit"]').forEach(button => { button.disabled = busy; });
+    });
+  }
   function setUpload(key, filename) {
+    materialVersions.set(key, (materialVersions.get(key) || 0) + 1);
+    materialReads.delete(key);
     state.materials[key] = filename;
     const box = document.querySelector(`[data-upload="${key}"]`);
-    const result = byId(`${key}-result`);
+    const result = byId(key === 'standingPhoto' ? 'standing-file-result' : `${key}-result`);
     if (box) box.classList.toggle('has-file', Boolean(filename));
-    if (result) result.textContent = filename || '尚未添加';
+    if (result) result.textContent = filename ? (window.PaichongMaterials?.enabled() ? window.PaichongMaterials.label(filename) : filename) : '尚未添加';
+    if (result && window.PaichongMaterials?.enabled()) {
+      let preview = byId(`preview-${key}`);
+      if (!preview) {
+        preview = document.createElement('button'); preview.id = `preview-${key}`; preview.className = 'mp-draft-preview'; preview.type = 'button'; preview.textContent = '预览材料';
+        result.after(preview);
+        preview.addEventListener('click', () => window.PaichongMaterials.openDraft(state.materials[key], { kind: key, pet: key === 'standingPhoto' ? getOrderPet(state.currentOrder || {}) : draftPet(), trigger: preview }));
+      }
+      preview.hidden = !filename;
+    }
+    syncMaterialBusy();
+  }
+  async function chooseMaterialFile(key, file) {
+    const enhanced = window.PaichongMaterials?.enabled();
+    if (!enhanced) { setUpload(key, file?.name || ''); return; }
+    const errorId = key === 'standingPhoto' ? 'supplement-error' : 'materials-error';
+    setUpload(key, ''); setMessage(errorId);
+    if (!file) return;
+    const version = materialVersions.get(key);
+    materialReads.set(key, version); syncMaterialBusy();
+    const result = byId(key === 'standingPhoto' ? 'standing-file-result' : `${key}-result`);
+    if (result) result.textContent = '正在保存到当前浏览器…';
+    try {
+      const ref = await window.PaichongMaterials.saveFile(file, { kind: key, account: currentUserAccount() });
+      if (materialVersions.get(key) === version) setUpload(key, ref);
+    } catch (error) {
+      if (materialVersions.get(key) === version) { setUpload(key, ''); setMessage(errorId, error.message); }
+    } finally {
+      if (materialReads.get(key) === version) materialReads.delete(key);
+      syncMaterialBusy();
+    }
   }
 
   async function handleQuoteSubmit(event) {
@@ -601,6 +643,7 @@
     return Boolean(order.deposit?.paidAt || ['paid', 'refunding', 'refunded', 'refund_failed'].includes(order.deposit?.status) || ['已支付', '已支付（模拟）', '退款中', '已退款'].includes(order.depositStatus));
   }
   function pricingMarkup(order) {
+    if (order.fulfillment?.stage === 'terminated') return `<p class="price-explanation">本单已结束，无需再支付。原验宠费用保留供核对，保证金与尾款的退还进度见退款记录。</p>`;
     if (order.fulfillment) return `<p class="price-explanation">初始预估 ${formatMoney(order.quote?.basePrice ?? order.priceEstimate)} · 运营建议价 ${formatMoney(proposedPrice(order))}。本次应付以“验宠与费用确认”中的锁定总价为准，保证金只抵扣一次。</p>`;
     const paid = depositWasPaid(order) ? depositAmount(order) : 0;
     const closed = ['cancelled', 'rejected'].includes(reviewStatus(order));
@@ -629,7 +672,7 @@
   function refundMarkup(order, ops = false) {
     const refund = order.refund;
     if (!refund) return ['cancelled', 'rejected'].includes(reviewStatus(order)) ? `<div class="refund-message">${icon('info')}<div><strong>本单无需退款</strong><br>未收取保证金，无需退还费用。</div></div>` : '';
-    const labels = { pending: ['退款处理中', '运营正在核对退款结果，请稍后查看。'], succeeded: ['退款已完成', '保证金已退回，预约容量已释放。'], failed: ['退款失败', '运营可重试退款，用户无需再次支付。'] };
+    const labels = { pending: ['退款处理中', '运营正在核对退款结果，请稍后查看。'], succeeded: ['退款已完成', refund.balanceAmount ? '已付保证金与尾款已退还，预约容量已释放。' : '保证金已退回，预约容量已释放。'], failed: ['退款失败', '运营可重试退款，用户无需再次支付。'] };
     const [title, detail] = labels[refund.status] || ['退款状态更新中', '请刷新查看最新结果。'];
     const canProcess = ops && ['pending', 'failed'].includes(refund.status);
     return `<div class="refund-message" data-refund-status="${escapeHtml(refund.status)}">${icon(refund.status === 'succeeded' ? 'check-circle' : 'refresh')}<div><strong>${title} · ${formatMoney(refund.amount)}</strong><br>${detail}${refund.completedAt ? `<br>${escapeHtml(formatDateTime(refund.completedAt))}` : ''}</div></div>${canProcess ? `<div class="refund-actions"><button class="primary-button" id="refund-success" type="button">${icon('check-circle')}<span>${refund.status === 'failed' ? '重试退款' : '退款成功'}</span></button><button class="outline-button" id="refund-failed" type="button">${icon('alert')}<span>退款失败</span></button><div class="form-message" id="refund-error" role="alert" hidden></div></div>` : ''}`;
@@ -691,33 +734,36 @@
     const stateArtwork = stateIllustration ? `<img class="status-illustration" src="./assets/v5/illustrations/${stateIllustration}.png" width="1536" height="1024" alt="" />` : '';
     const supplement = current === 'info_required' ? `<form class="supplement-form" id="supplement-form">
       <strong>补充宠物站立全身照</strong><small>运营要求：${escapeHtml(copy(reviewNote || '请补充一张近期、光线清晰的站立全身照。'))}</small>
-      <input class="sr-file" id="standing-photo" type="file" accept="image/*" />
+      <input class="sr-file" id="standing-photo" type="file" accept="${window.PaichongMaterials?.enabled() ? 'image/jpeg,image/png,image/webp' : 'image/*'}" />
       <div class="upload-actions"><label class="outline-button" for="standing-photo">${icon('upload')}<span>选择文件</span></label><button class="text-button" id="sample-standing-photo" type="button">${icon('sparkles')}<span>使用示例</span></button></div>
-      <span class="file-result" id="standing-file-result">${state.materials.standingPhoto ? escapeHtml(state.materials.standingPhoto) : '尚未添加'}</span>
+      <span class="file-result" id="standing-file-result">${state.materials.standingPhoto ? escapeHtml(window.PaichongMaterials?.enabled() ? window.PaichongMaterials.label(state.materials.standingPhoto) : state.materials.standingPhoto) : '尚未添加'}</span>
       <label class="field-label" for="supplement-note">补充说明<textarea id="supplement-note" rows="2" maxlength="120" placeholder="可说明照片拍摄时间或其他情况"></textarea></label>
       <button class="primary-button" type="submit">${icon('upload')}<span>提交补充材料</span></button>
       <div class="form-message" id="supplement-error" role="alert" hidden></div>
     </form>` : '';
     const confirm = current === 'approved' ? `<button class="primary-button" id="confirm-plan" type="button">${icon('check-circle')}<span>确认 ${formatMoney(proposedPrice(order))} 建议方案</span></button>` : '';
-    const canReschedule = !order.routeId && ['not_submitted', 'pending', 'info_required', 'resubmitted'].includes(current);
-    const canCancel = !order.routeId && !['arrived', 'departed'].includes(order.nodeReservation?.status) && !['cancelled', 'rejected'].includes(current) && !['已完成', '已签收', '已取消', '已驳回'].includes(order.status);
+    const canReschedule = window.PAICHONG_DEMO_MODE !== true && !order.routeId && ['not_submitted', 'pending', 'info_required', 'resubmitted'].includes(current);
+    const canCancel = window.PAICHONG_DEMO_MODE !== true && !order.routeId && !['arrived', 'departed'].includes(order.nodeReservation?.status) && !['cancelled', 'rejected'].includes(current) && !['已完成', '已签收', '已取消', '已驳回'].includes(order.status);
     container.innerHTML = `<article class="order-detail-card">
       <div class="status-hero" data-tone="${escapeHtml(tone)}">${stateArtwork}<div><span class="order-number">订单 ${escapeHtml(order.id)}</span><h3>${escapeHtml(label)}</h3><p>${escapeHtml(description)}</p></div><span class="status-badge" data-tone="${escapeHtml(tone)}">${icon(statusIcon)}<span>${escapeHtml(order.status || label)}</span></span></div>
       ${window.PaichongProfiles?.petCard(order) || ''}
       <div class="order-route-line"><span><small>起运</small><br><strong>${escapeHtml(order.fromCity)}</strong></span><i aria-hidden="true">${icon('arrow-right')}</i><span><small>送达</small><br><strong>${escapeHtml(order.toCity)}</strong></span></div>
       <dl class="cost-breakdown"><div><dt>宠物</dt><dd>${escapeHtml(pet.name)} · ${escapeHtml(pet.type)} · ${escapeHtml(pet.weight)}kg</dd></div><div><dt>预订保证金</dt><dd>${formatMoney(depositAmount(order))}</dd></div><div><dt>保证金状态</dt><dd>${escapeHtml(userDepositStatus(order))}</dd></div><div><dt>预约时段</dt><dd>${escapeHtml(order.pickup?.date || '')} ${escapeHtml(order.pickup?.timeSlot || order.pickupTime || '')}</dd></div></dl>
+      ${window.PaichongMaterials?.markup(order) || ''}
       ${window.PaichongCabinMonitor?.markup(order) || ''}${window.PaichongFulfillment?.markup(order, 'user') || ''}${journeyMarkup(order)}${pricingMarkup(order)}${contactsMarkup(order)}
       ${node ? `<div class="node-result">${icon('map-pin')}<div><strong>已分配合作交接点</strong><br>${escapeHtml(node.city)} · ${escapeHtml(node.name)} · 营业 ${escapeHtml(node.open || '以预约为准')}</div></div>` : ''}
       ${reviewNote && current !== 'info_required' ? `<div class="review-message">${icon('clipboard-check')}<div><strong>运营说明</strong><br>${escapeHtml(copy(reviewNote))}</div></div>` : ''}
-      ${refundMarkup(order)}
+      ${refundMarkup(order)}${window.PaichongServiceFlow?.markup(order, 'user') || ''}
       <ol class="timeline-list">${orderTimeline(order)}</ol>
       ${supplement}<div class="order-followup-actions">${confirm}${current === 'not_submitted' ? `<button class="pay-button" id="resume-payment" type="button">${icon('credit-card')}<span>继续支付保证金</span></button>` : ''}${canReschedule ? `<button class="outline-button" id="reschedule-order" type="button">${icon('calendar-check')}<span>申请改期</span></button>` : ''}${canCancel ? `<button class="danger-button" id="cancel-order" type="button">${icon('x-circle')}<span>取消订单</span></button>` : ''}</div>
       <div id="reschedule-panel" class="reschedule-panel" hidden></div>
       <div class="form-message" id="order-action-error" role="alert" hidden></div>
     </article>`;
     bindUserOrderActions(order);
+    window.PaichongMaterials?.bind(container, order);
     window.PaichongCabinMonitor?.bind(container, order);
     window.PaichongFulfillment?.bind(container, order, { api, toast, reload: loadUserOrders });
+    window.PaichongServiceFlow?.bind(container, order, { api, toast, reload: loadUserOrders });
   }
 
   function bindUserOrderActions(order) {
@@ -745,13 +791,12 @@
     byId('reschedule-order')?.addEventListener('click', () => openReschedule(order));
     const sample = byId('sample-standing-photo');
     if (sample) sample.addEventListener('click', () => {
-      state.materials.standingPhoto = `${getOrderPet(order).name || '毛孩子'}-补充站立全身照.jpg`;
-      byId('standing-file-result').textContent = state.materials.standingPhoto;
+      setUpload('standingPhoto', window.PaichongMaterials?.enabled() ? window.PaichongMaterials.sample('standingPhoto', getOrderPet(order)) : `${getOrderPet(order).name || '毛孩子'}-补充站立全身照.jpg`);
     });
     byId('standing-photo')?.addEventListener('change', (event) => {
-      state.materials.standingPhoto = event.target.files?.[0]?.name || '';
-      byId('standing-file-result').textContent = state.materials.standingPhoto || '尚未添加';
+      chooseMaterialFile('standingPhoto', event.target.files?.[0]);
     });
+    if (byId('standing-file-result')) setUpload('standingPhoto', state.materials.standingPhoto);
     byId('supplement-form')?.addEventListener('submit', async (event) => {
       event.preventDefault();
       setMessage('supplement-error');
@@ -886,12 +931,13 @@
     if (state.opsFilter === 'cancelled') return reviewStatus(order) === 'cancelled';
     if (state.opsFilter === 'rejected') return reviewStatus(order) === 'rejected';
     if (state.opsFilter === 'refund') return Boolean(order.refund);
+    if (state.opsFilter === 'service') return order.serviceRequest?.status === 'pending';
     return order.status === state.opsFilter;
   }
 
   function renderOpsOrderList() {
     const list = byId('ops-order-list');
-    const orders = state.opsOrders.filter(filterOrder);
+    const orders = state.opsOrders.filter(filterOrder).sort((a,b) => Number(b.serviceRequest?.status === 'pending') - Number(a.serviceRequest?.status === 'pending'));
     if (!orders.length) {
       list.innerHTML = `<div class="empty-state"><span class="empty-icon" aria-hidden="true">${icon('clipboard-check')}</span><h3>当前筛选下没有订单</h3><p>可切换“全部”，或等待用户提交新的订单。</p></div>`;
       return;
@@ -901,6 +947,7 @@
       const [label, , tone] = statusMeta(order);
       const statusIcon = statusIconName(reviewStatus(order));
       return `<button class="ops-order-card${state.selectedOpsOrderId === order.id ? ' is-selected' : ''}" type="button" data-order-id="${escapeHtml(order.id)}" aria-pressed="${state.selectedOpsOrderId === order.id}">
+        ${order.serviceRequest?.status === 'pending' ? '<small class="service-list-flag">有行程变更待处理</small>' : ''}
         <span class="card-top"><small>${escapeHtml(order.id)}</small><span class="status-badge" data-tone="${escapeHtml(tone)}">${icon(statusIcon)}<span>${escapeHtml(label)}</span></span></span>
         <h3>${escapeHtml(order.fromCity)} → ${escapeHtml(order.toCity)}</h3>
         <p>${escapeHtml(pet.name)} · ${escapeHtml(pet.type)} · ${escapeHtml(pet.weight)}kg</p>
@@ -922,7 +969,7 @@
   }
 
   function materialName(materials, ...keys) {
-    for (const key of keys) if (materials?.[key]) return materials[key];
+    for (const key of keys) if (materials?.[key]) return window.PaichongMaterials?.enabled() ? window.PaichongMaterials.label(materials[key]) : materials[key];
     return '未提供';
   }
 
@@ -947,11 +994,11 @@
       <div class="order-route-line"><span><small>起运</small><br><strong>${escapeHtml(order.fromCity)}</strong></span><i aria-hidden="true">${icon('arrow-right')}</i><span><small>目的</small><br><strong>${escapeHtml(order.toCity)}</strong></span></div>
       <div class="info-grid"><div><span>宠物</span><strong>${escapeHtml(pet.name)} · ${escapeHtml(pet.type)}</strong></div><div><span>品种 / 体重</span><strong>${escapeHtml(pet.breed || '未填')} · ${escapeHtml(pet.weight)}kg</strong></div><div><span>预约时段</span><strong>${escapeHtml(order.pickup?.date || '')} ${escapeHtml(order.pickup?.timeSlot || '')}</strong></div><div><span>预估基础价</span><strong>${formatMoney(order.quote?.basePrice || order.priceEstimate)}</strong></div><div><span>保证金</span><strong>${formatMoney(order.depositAmount || order.deposit?.amount || order.quote?.depositAmount)}</strong></div><div><span>联系电话</span><strong>${escapeHtml(order.contactPhone || order.userPhone || order.phone || '未填写')}</strong></div></div>
       ${window.PaichongFulfillment?.markup(order, 'ops') || ''}${journeyMarkup(order)}${pricingMarkup(order)}${contactsMarkup(order)}
-      <section class="material-section"><h3>用户材料</h3><div class="material-list"><div class="material-item"><span>${icon('image')}宠物近期照</span><small>${escapeHtml(copy(materialName(materials, 'petPhoto')))}</small></div><div class="material-item"><span>${icon('file-check')}疫苗记录</span><small>${escapeHtml(copy(materialName(materials, 'vaccineCertificate', 'vaccineProof')))}</small></div>${materials.standingPhoto ? `<div class="material-item"><span>${icon('camera')}补充站立照</span><small>${escapeHtml(materials.standingPhoto)}</small></div>` : ''}</div></section>
+      ${window.PaichongMaterials?.markup(order) || `<section class="material-section"><h3>用户材料</h3><div class="material-list"><div class="material-item"><span>${icon('image')}宠物近期照</span><small>${escapeHtml(copy(materialName(materials, 'petPhoto')))}</small></div><div class="material-item"><span>${icon('file-check')}疫苗记录</span><small>${escapeHtml(copy(materialName(materials, 'vaccineCertificate', 'vaccineProof')))}</small></div>${materials.standingPhoto ? `<div class="material-item"><span>${icon('camera')}补充站立照</span><small>${escapeHtml(materialName(materials, 'standingPhoto'))}</small></div>` : ''}</div></section>`}
       <section class="material-section"><h3>健康声明</h3><div class="risk-list">${Object.entries(HEALTH_LABELS).map(([key, text]) => healthDeclarationItems(order.healthDeclaration).includes(key) ? `<span class="risk-tag">${icon('shield-check')}<span>${escapeHtml(text)}</span></span>` : `<span class="risk-tag is-missing">${icon('alert')}<span>未提供：${escapeHtml(text)}</span></span>`).join('')}</div></section>
       ${order.reviewNote ? `<div class="review-message">${icon('clipboard-check')}<div><strong>最近一次运营说明</strong><br>${escapeHtml(copy(order.reviewNote))}</div></div>` : ''}
       ${order.assignedNode ? `<div class="node-result">${icon('map-pin')}<div><strong>已分配：</strong>${escapeHtml(order.assignedNode.city)} · ${escapeHtml(order.assignedNode.name)}</div></div>` : ''}
-      ${refundMarkup(order, true)}${historyMarkup}
+      ${refundMarkup(order, true)}${window.PaichongServiceFlow?.markup(order, 'ops') || ''}${historyMarkup}
       <section class="review-actions"><h3>${canReview ? '本次审核动作' : '当前审核已完成'}</h3>${canReview ? `<div class="review-action-grid">
         <label class="field-label" for="review-note">审核说明<textarea id="review-note" rows="2" maxlength="160" placeholder="补件或拒绝时必填；通过时可填写备注"></textarea></label>
         <button class="quiet-button supplement-action" id="request-supplement" type="button">${icon('camera')}<span>要求补充站立全身照</span></button>
@@ -965,7 +1012,9 @@
       </div>` : `<p class="panel-intro">${current === 'not_submitted' ? '等待用户支付保证金后，可开始运营审核。' : '当前阶段无需重复审核，最新变更会同步到用户订单。'}</p>`}</section>
     </div>`;
     bindOpsReviewActions(order);
+    window.PaichongMaterials?.bind(drawer, order);
     window.PaichongFulfillment?.bind(drawer, order, { api, toast, reload: loadOpsOrders });
+    window.PaichongServiceFlow?.bind(drawer, order, { api, toast, reload: loadOpsOrders });
     if (canReview) {
       ['assign-node', 'node-booking-date', 'node-booking-period'].forEach((id) => byId(id)?.addEventListener('change', () => loadReviewNodeCapacity(order)));
       loadReviewNodeCapacity(order);
@@ -1163,10 +1212,18 @@
     byId('materials-form').addEventListener('input', () => { state.clientRequestId = ''; if (!state.currentOrder) state.maxStep = Math.min(state.maxStep, 2); });
     all('.sample-file').forEach((button) => button.addEventListener('click', () => {
       const suffix = button.dataset.filename.split('-').slice(1).join('-');
-      setUpload(button.dataset.target, `${formValue('pet-name') || '毛孩子'}-${suffix}`);
+      setUpload(button.dataset.target, window.PaichongMaterials?.enabled() ? window.PaichongMaterials.sample(button.dataset.target, draftPet()) : `${formValue('pet-name') || '毛孩子'}-${suffix}`);
     }));
-    byId('pet-photo').addEventListener('change', (event) => setUpload('petPhoto', event.target.files?.[0]?.name || ''));
-    byId('vaccine-proof').addEventListener('change', (event) => setUpload('vaccineProof', event.target.files?.[0]?.name || ''));
+    byId('pet-photo').addEventListener('change', (event) => chooseMaterialFile('petPhoto', event.target.files?.[0]));
+    byId('vaccine-proof').addEventListener('change', (event) => chooseMaterialFile('vaccineProof', event.target.files?.[0]));
+    if (window.PaichongMaterials?.enabled()) {
+      byId('pet-photo').accept = 'image/jpeg,image/png,image/webp';
+      byId('vaccine-proof').accept = 'image/jpeg,image/png,image/webp,application/pdf,.pdf';
+      ['petPhoto', 'vaccineProof'].forEach(key => {
+        const note = document.createElement('small'); note.className = 'mp-upload-note'; note.textContent = '单份不超过 4 MB，仅存当前浏览器，可在同源运营端查看。';
+        byId(`${key}-result`).after(note);
+      });
+    }
     all('.filter-tab').forEach((button) => button.addEventListener('click', () => {
       state.opsFilter = button.dataset.filter;
       all('.filter-tab').forEach((item) => item.classList.toggle('is-active', item === button));

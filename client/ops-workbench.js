@@ -277,18 +277,27 @@
     renderHandoffDetail();
   }
 
+  function staticHandoffBlockReason(order) {
+    if (window.PAICHONG_DEMO_MODE !== true) return '';
+    if (order.serviceRequest?.status === 'pending') return '行程变更待处理，请先由总部完成处理后再交接。';
+    if (['returning', 'terminated'].includes(order.fulfillment?.stage)) return '已进入退运取消流程，不能继续普通到点或离点交接。';
+    return '';
+  }
+
   function renderHandoffDetail() {
     const order = state.orders.find((item) => item.id === state.handoffOrderId), target = byId('node-handoff-detail');
     if (!order?.nodeReservation) { target.innerHTML = empty('选择一笔订单查看交接详情。', 'map-pin'); return; }
     const reservation = order.nodeReservation, route = state.routes.find((item) => item.id === order.routeId);
-    const canCheckIn = reservation.status === 'confirmed' && order.reviewStatus === 'confirmed' && order.deposit?.status === 'paid';
+    const blockedReason = staticHandoffBlockReason(order);
+    const canCheckIn = !blockedReason && reservation.status === 'confirmed' && order.reviewStatus === 'confirmed' && order.deposit?.status === 'paid';
     const paidReady = order.fulfillment?.invoice?.status === 'paid' && order.fulfillment?.stage === 'ready';
-    const canCheckOut = reservation.status === 'arrived' && ['已派车', '运输中'].includes(route?.status) && paidReady;
-    const reason = reservation.status === 'reserved' ? '用户确认方案后，可登记宠物到点。' : reservation.status === 'arrived' && !isDispatched(route) ? '完成线路编单和派车后，由司机验宠。' : reservation.status === 'arrived' && !paidReady ? '等待司机验宠、用户确认尾款；异常须处理后才能离点。' : reservation.status === 'departed' ? '合作点交接已完成，后续出发与签收由司机分别登记。' : '';
+    const canCheckOut = !blockedReason && reservation.status === 'arrived' && ['已派车', '运输中'].includes(route?.status) && paidReady;
+    const reason = blockedReason || (reservation.status === 'reserved' ? '用户确认方案后，可登记宠物到点。' : reservation.status === 'arrived' && !isDispatched(route) ? '完成线路编单和派车后，由司机验宠。' : reservation.status === 'arrived' && !paidReady ? '等待司机验宠、用户确认尾款；异常须处理后才能离点。' : reservation.status === 'departed' ? '合作点交接已完成，后续出发与签收由司机分别登记。' : '');
     target.innerHTML = `<div class="handoff-detail-hero"><span class="handoff-pet-icon">${icon('paw')}</span><h3>${escape(order.petName)}的交接记录</h3><p>${escape(order.fromCity)} → ${escape(order.toCity)}</p>${statusTag(RESERVATION_LABELS[reservation.status] || reservation.status, reservation.status === 'reserved')}</div><dl class="handoff-facts"><div><dt>订单编号</dt><dd>${escape(order.id)}</dd></div><div><dt>合作交接点</dt><dd>${escape(selectedNode()?.name || order.assignedNode?.name || '')}</dd></div><div><dt>预约时间</dt><dd>${escape(reservation.date)}<br>${escape(reservation.timeSlot)}</dd></div><div><dt>寄件联系人</dt><dd>${escape(copy(order.contactName || '未提供'))}<br>${escape(order.contactPhone || order.userPhone || '')}</dd></div><div><dt>照护说明</dt><dd>${escape(copy(order.careNote || '暂无特殊照护说明'))}</dd></div><div><dt>运输线路</dt><dd>${escape(copy(route?.name || '尚未编入线路'))}${route ? `<br><small>${escape(route.status)} · ${escape(route.driverName || '未分配司机')}</small>` : ''}</dd></div></dl><div class="handoff-progress"><h4>交接留痕</h4><div class="handoff-progress-item${reservation.checkedInAt ? ' is-done' : ''}">${icon('map-pin')}<span><strong>合作点到点</strong><small>${reservation.checkedInAt ? escape(dateTimeLabel(reservation.checkedInAt)) + ' · 已登记' : '等待到点登记'}</small></span></div><div class="handoff-progress-item${reservation.checkedOutAt ? ' is-done' : ''}">${icon('truck')}<span><strong>离点交付司机</strong><small>${reservation.checkedOutAt ? escape(dateTimeLabel(reservation.checkedOutAt)) + ' · 已交接' : '等待离点交接'}</small></span></div></div><p class="workbench-helper">核对宠物与交接资料后登记，离点后仍需司机确认出发。</p><div class="handoff-detail-actions">${reservation.status === 'arrived' ? `<button class="primary-button" type="button" data-check-out="${escape(order.id)}"${canCheckOut ? '' : ' disabled'}>${icon('truck')}<span>确认离点交接</span></button>` : reservation.status !== 'departed' ? `<button class="primary-button" type="button" data-check-in="${escape(order.id)}"${canCheckIn ? '' : ' disabled'}>${icon('map-pin')}<span>确认到点登记</span></button>` : ''}${reason ? `<p>${escape(reason)}</p>` : ''}</div>`;
     [['checkIn', 'node-check-in', '到点登记', '按预约起始时间登记到点，保留该时段的笼位。'], ['checkOut', 'node-check-out', '离点交接', '费用已确认。按计划发车时间登记交接，释放节点笼位，等待司机确认出发。']].forEach(([dataKey, endpoint, label, description]) => {
       const selector = dataKey === 'checkIn' ? '[data-check-in]' : '[data-check-out]';
       elements(selector, target).forEach((button) => button.addEventListener('click', () => {
+        if (staticHandoffBlockReason(order)) return;
         const orderId = button.dataset[dataKey];
         confirm(`确认${label}？`, `${orderId}。${description}`, () => mutate(`/api/ops/orders/${encodeURIComponent(orderId)}/${endpoint}`, { note: `经营者登记${label}` }, `已完成${label}`), false, `确认${label}`);
       }));

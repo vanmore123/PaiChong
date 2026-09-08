@@ -227,7 +227,7 @@
   const requestedEntry = new URLSearchParams(window.location.search || '').get('entry');
   selectEntry(allowedRoles.includes(requestedEntry) ? requestedEntry : allowedRoles[0]);
   if (window.PAICHONG_DEMO_MODE) {
-    byId('login-environment').textContent = '操作仅保存在本端浏览器';
+    byId('login-environment').textContent = '同一浏览器双端联动，不跨设备同步';
     document.querySelector('.identity-tip p').textContent = '可使用下方体验账号进入对应角色。';
   }
   showExistingSession();
