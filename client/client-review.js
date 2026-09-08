@@ -704,7 +704,7 @@
       <div class="status-hero" data-tone="${escapeHtml(tone)}">${stateArtwork}<div><span class="order-number">订单 ${escapeHtml(order.id)}</span><h3>${escapeHtml(label)}</h3><p>${escapeHtml(description)}</p></div><span class="status-badge" data-tone="${escapeHtml(tone)}">${icon(statusIcon)}<span>${escapeHtml(order.status || label)}</span></span></div>
       <div class="order-route-line"><span><small>起运</small><br><strong>${escapeHtml(order.fromCity)}</strong></span><i aria-hidden="true">${icon('arrow-right')}</i><span><small>送达</small><br><strong>${escapeHtml(order.toCity)}</strong></span></div>
       <dl class="cost-breakdown"><div><dt>宠物</dt><dd>${escapeHtml(pet.name)} · ${escapeHtml(pet.type)} · ${escapeHtml(pet.weight)}kg</dd></div><div><dt>预订保证金</dt><dd>${formatMoney(depositAmount(order))}</dd></div><div><dt>保证金状态</dt><dd>${escapeHtml(userDepositStatus(order))}</dd></div><div><dt>预约时段</dt><dd>${escapeHtml(order.pickup?.date || '')} ${escapeHtml(order.pickup?.timeSlot || order.pickupTime || '')}</dd></div></dl>
-      ${window.PaichongFulfillment?.markup(order, 'user') || ''}${journeyMarkup(order)}${pricingMarkup(order)}${contactsMarkup(order)}
+      ${window.PaichongCabinMonitor?.markup(order) || ''}${window.PaichongFulfillment?.markup(order, 'user') || ''}${journeyMarkup(order)}${pricingMarkup(order)}${contactsMarkup(order)}
       ${node ? `<div class="node-result">${icon('map-pin')}<div><strong>已分配合作交接点</strong><br>${escapeHtml(node.city)} · ${escapeHtml(node.name)} · 营业 ${escapeHtml(node.open || '以预约为准')}</div></div>` : ''}
       ${reviewNote && current !== 'info_required' ? `<div class="review-message">${icon('clipboard-check')}<div><strong>运营说明</strong><br>${escapeHtml(reviewNote)}</div></div>` : ''}
       ${refundMarkup(order)}
@@ -714,6 +714,7 @@
       <div class="form-message" id="order-action-error" role="alert" hidden></div>
     </article>`;
     bindUserOrderActions(order);
+    window.PaichongCabinMonitor?.bind(container, order);
     window.PaichongFulfillment?.bind(container, order, { api, toast, reload: loadUserOrders });
   }
 

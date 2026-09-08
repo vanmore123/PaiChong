@@ -1,14 +1,14 @@
 {
   "application": "paichong-h5-review",
   "mode": "static-demo",
-  "createdAt": "2026-09-07T09:49:06.879Z",
+  "createdAt": "2026-09-08T01:25:46.413Z",
   "apiBase": "",
   "simulated": true,
   "portals": {
     "client": {
       "directory": "client",
       "entry": "client/index.html",
-      "files": 56,
+      "files": 58,
       "allowedRoles": [
         "user"
       ]
@@ -16,7 +16,7 @@
     "workbench": {
       "directory": "workbench",
       "entry": "workbench/index.html",
-      "files": 62,
+      "files": 64,
       "allowedRoles": [
         "ops",
         "driver",
@@ -42,16 +42,16 @@
       "sha256": "e7bb8f271be2595db50c7d0db2b5e15ff85e83922352e53f8ac60c2c0808bc87"
     },
     "client/client-review.html": {
-      "bytes": 29809,
-      "sha256": "1d8df37959b7adf0a09652f2fe6605cbc72279c71d58a618f295ff2bdd44ef1b"
+      "bytes": 29913,
+      "sha256": "c26998369dce6dcf60344f3a9bee7ded4f3574ebd0059fc04f875f1cb6b40e63"
     },
     "client/client-review.css": {
       "bytes": 39611,
       "sha256": "52e22fba23eb02f7f737482c4f52d1806b300bee746186daf118a1656468e28b"
     },
     "client/client-review.js": {
-      "bytes": 81598,
-      "sha256": "50c10226d90fade5e76e1ecd4a5737ef0c10349f14bc1a3d08a03e9a9bb9e7e8"
+      "bytes": 81706,
+      "sha256": "9059b85b4a43341cd1a31620b85c24a1d5af4b458486606c2bfc3ba6b97d6111"
     },
     "client/ops-workbench.js": {
       "bytes": 47219,
@@ -72,6 +72,14 @@
     "client/fulfillment-ui.js": {
       "bytes": 5917,
       "sha256": "a8ced5e1dcbcd2aa9050be7b6887f637ef45108d0151b02fa2a6e7d7926cdd6a"
+    },
+    "client/cabin-monitor.js": {
+      "bytes": 4639,
+      "sha256": "cb39cc973a284757f03cedb3b1c7c52e1dae1f039f41fae35cad44b3190ea377"
+    },
+    "client/cabin-monitor.css": {
+      "bytes": 3344,
+      "sha256": "b49ead283161295f9bbabba28dbc8485625473b2fbe4679fb3dfa509dbceaf01"
     },
     "client/web-session.js": {
       "bytes": 5445,
@@ -266,16 +274,16 @@
       "sha256": "e7bb8f271be2595db50c7d0db2b5e15ff85e83922352e53f8ac60c2c0808bc87"
     },
     "workbench/client-review.html": {
-      "bytes": 29809,
-      "sha256": "1d8df37959b7adf0a09652f2fe6605cbc72279c71d58a618f295ff2bdd44ef1b"
+      "bytes": 29913,
+      "sha256": "c26998369dce6dcf60344f3a9bee7ded4f3574ebd0059fc04f875f1cb6b40e63"
     },
     "workbench/client-review.css": {
       "bytes": 39611,
       "sha256": "52e22fba23eb02f7f737482c4f52d1806b300bee746186daf118a1656468e28b"
     },
     "workbench/client-review.js": {
-      "bytes": 81598,
-      "sha256": "50c10226d90fade5e76e1ecd4a5737ef0c10349f14bc1a3d08a03e9a9bb9e7e8"
+      "bytes": 81706,
+      "sha256": "9059b85b4a43341cd1a31620b85c24a1d5af4b458486606c2bfc3ba6b97d6111"
     },
     "workbench/ops-workbench.js": {
       "bytes": 47219,
@@ -296,6 +304,14 @@
     "workbench/fulfillment-ui.js": {
       "bytes": 5917,
       "sha256": "a8ced5e1dcbcd2aa9050be7b6887f637ef45108d0151b02fa2a6e7d7926cdd6a"
+    },
+    "workbench/cabin-monitor.js": {
+      "bytes": 4639,
+      "sha256": "cb39cc973a284757f03cedb3b1c7c52e1dae1f039f41fae35cad44b3190ea377"
+    },
+    "workbench/cabin-monitor.css": {
+      "bytes": 3344,
+      "sha256": "b49ead283161295f9bbabba28dbc8485625473b2fbe4679fb3dfa509dbceaf01"
     },
     "workbench/web-session.js": {
       "bytes": 5445,
