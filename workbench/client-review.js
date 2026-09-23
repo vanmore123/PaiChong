@@ -47,11 +47,12 @@
     dialogAction: null
   };
   let authSession = null;
+  let bookingSelection = null;
 
   const byId = (id) => document.getElementById(id);
   const all = (selector, root = document) => Array.from(root.querySelectorAll(selector));
   const icon = (name, extraClass = '') => `<svg class="ui-icon${extraClass ? ` ${extraClass}` : ''}" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-${name}"></use></svg>`;
-  const escapeHtml = (value = '') => String(value)
+  const escapeHtml = (value = '') => String(copy(value))
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;')
@@ -209,6 +210,7 @@
     setUpload('petPhoto', ''); setUpload('vaccineProof', '');
     ['quote-error', 'materials-error', 'slot-error', 'deposit-error'].forEach((id) => setMessage(id));
     invalidateDraft();
+    bookingSelection?.reset();
     persistState();
     renderUserOrderSelector();
     loadBookingDates();
@@ -232,6 +234,7 @@
       applyBookingMeta(payload);
       const selected = formValue('travel-date');
       if (!selected || (payload.minDate && selected < payload.minDate) || (payload.maxDate && selected > payload.maxDate) || (payload.availableDates?.length && !payload.availableDates.includes(selected))) byId('travel-date').value = defaultTravelDate();
+      await bookingSelection?.sync();
     } catch (error) { byId('booking-date-hint').textContent = `日期加载失败：${error.message}`; }
   }
 
@@ -243,7 +246,8 @@
       toCity: formValue('to-city'),
       petType: formValue('pet-type'),
       weight: Number(formValue('pet-weight')),
-      serviceType: formValue('service-type')
+      serviceType: formValue('service-type'),
+      ...(bookingSelection?.input() || {})
     };
   }
 
@@ -276,7 +280,8 @@
     const mobileQuote = byId('mini-quote-summary');
     if (mobileQuote) {
       mobileQuote.hidden = !quote;
-      mobileQuote.innerHTML = quote ? `<div><span>本次预估费用</span><strong>${formatMoney(quote.totalMin || quoteTotal(quote))}–${formatMoney(quote.totalMax || quoteTotal(quote))}</strong></div><p>${escapeHtml(from)} → ${escapeHtml(to)} · 保证金 ${formatMoney(quoteDeposit(quote))}</p><small>按当前宠物信息预估，实际方案仍需审核确认。</small>` : '';
+      mobileQuote.innerHTML = quote ? `<div><span>本次预估费用</span><strong>${formatMoney(quote.totalMin || quoteTotal(quote))}–${formatMoney(quote.totalMax || quoteTotal(quote))}</strong></div><p>${escapeHtml(from)} → ${escapeHtml(to)} · 宠物运输检疫费 ${formatMoney(quoteDeposit(quote))}</p><small>按当前宠物信息预估，实际方案仍需审核确认。</small>` : '';
+      if (quote?.bookingSelection) mobileQuote.innerHTML += window.PaichongBookingSelection.markup({ bookingSelection: quote.bookingSelection });
     }
     const slot = order?.pickup || state.slots.find((item) => item.id === state.selectedSlotId);
     byId('summary-slot').textContent = slot ? `${formatDate(slot.date, { month: 'numeric', day: 'numeric' })} ${slot.timeSlot || order?.pickupTime || ''}` : '待选择';
@@ -383,6 +388,7 @@
     setMessage('quote-error');
     const form = event.currentTarget;
     if (!form.reportValidity()) return;
+    try { bookingSelection?.validate(); } catch (error) { setMessage('quote-error', error.message); return; }
     const input = quoteInput();
     if (input.fromCity === input.toCity) {
       setMessage('quote-error', '起运城市与目的城市不能相同，请选择跨省路线。');
@@ -435,6 +441,7 @@
       if (revision !== state.draftRevision || date !== formValue('travel-date')) return;
       applyBookingMeta(payload);
       state.slots = Array.isArray(payload) ? payload : (payload.items || []);
+      if (bookingSelection) state.slots = bookingSelection.filterSlots(state.slots);
       if (!state.slots.some((slot) => slot.available !== false && Number(slot.remaining) > 0)) {
         state.selectedSlotId = '';
         const nextDate = (payload.availableDates || []).find((item) => item > date) || (payload.nextAvailableDate !== date ? payload.nextAvailableDate : '');
@@ -445,6 +452,7 @@
           byId('travel-date').value = nextDate;
           state.clientRequestId = ''; state.selectedSlotId = ''; state.slots = []; state.quote = null; state.draftRevision += 1;
           try {
+            await bookingSelection?.sync(); bookingSelection?.validate();
             const fresh = await api('/api/user/quote', { method: 'POST', body: quoteInput() });
             state.quote = fresh.quote || fresh;
             updateSummary();
@@ -493,6 +501,7 @@
       recipientName: formValue('recipient-name'), recipientPhone: formValue('recipient-phone'), recipientAddress: formValue('recipient-address'),
       clientRequestId: state.clientRequestId,
       serviceType: formValue('service-type'),
+      ...(bookingSelection?.input() || {}),
       pet: {
         name: formValue('pet-name'),
         type: formValue('pet-type'),
@@ -530,7 +539,7 @@
       renderUserOrderSelector();
       persistState();
       fillDepositPanel();
-      toast(`订单 ${state.currentOrder.id} 已生成，等待支付保证金`);
+      toast(`订单 ${state.currentOrder.id} 已生成，等待支付宠物运输检疫费`);
       unlockStep(4);
     } catch (error) {
       setMessage('slot-error', error.message);
@@ -568,7 +577,7 @@
       const payload = await api(`/api/user/orders/${encodeURIComponent(state.currentOrder.id)}/deposit/pay`, { method: 'POST', body: {} });
       state.currentOrder = payload.order || payload;
       persistState();
-      toast('保证金已确认，订单已进入审核');
+      toast('宠物运输检疫费已确认，订单已进入审核');
       state.maxStep = 5;
       showStep(5, { force: true });
     } catch (error) { setMessage('deposit-error', error.message); }
@@ -578,7 +587,7 @@
   function reviewStatus(order) {
     if (order.reviewStatus) return order.reviewStatus;
     const map = {
-      '待支付保证金': 'not_submitted', '待审核': 'pending', '待补材料': 'info_required', '待补件': 'info_required',
+      '待支付保证金': 'not_submitted', '待支付宠物运输检疫费': 'not_submitted', '待审核': 'pending', '待补材料': 'info_required', '待补件': 'info_required',
       '已补件待复审': 'resubmitted', '待用户确认': 'approved', '已驳回': 'rejected', '待拼单': 'confirmed', '已取消': 'cancelled'
     };
     return map[order.status] || 'pending';
@@ -601,7 +610,7 @@
       if (transportStatuses[order.status]) return transportStatuses[order.status];
     }
     const map = {
-      not_submitted: ['待支付保证金', '确认保证金后将启动订单审核', 'orange'],
+      not_submitted: ['待支付宠物运输检疫费', '确认宠物运输检疫费后将启动订单审核', 'orange'],
       pending: ['运营审核中', '运营正在核验材料、时段与线路能力', 'orange'],
       info_required: ['需要补充材料', '请根据运营说明补件后重新提交', 'orange'],
       resubmitted: ['补件已提交', '运营会重新审核本次补充材料', 'orange'],
@@ -643,18 +652,18 @@
     return Boolean(order.deposit?.paidAt || ['paid', 'refunding', 'refunded', 'refund_failed'].includes(order.deposit?.status) || ['已支付', '已支付（模拟）', '退款中', '已退款'].includes(order.depositStatus));
   }
   function pricingMarkup(order) {
-    if (order.fulfillment?.stage === 'terminated') return `<p class="price-explanation">本单已结束，无需再支付。原验宠费用保留供核对，保证金与尾款的退还进度见退款记录。</p>`;
-    if (order.fulfillment) return `<p class="price-explanation">初始预估 ${formatMoney(order.quote?.basePrice ?? order.priceEstimate)} · 运营建议价 ${formatMoney(proposedPrice(order))}。本次应付以“验宠与费用确认”中的锁定总价为准，保证金只抵扣一次。</p>`;
+    if (order.fulfillment?.stage === 'terminated') return `<p class="price-explanation">本单已结束，无需再支付。原验宠费用保留供核对，宠物运输检疫费与尾款的退还进度见退款记录。</p>`;
+    if (order.fulfillment) return `<p class="price-explanation">初始预估 ${formatMoney(order.quote?.basePrice ?? order.priceEstimate)} · 运营建议价 ${formatMoney(proposedPrice(order))}。本次应付以“验宠与费用确认”中的锁定总价为准，宠物运输检疫费只抵扣一次。</p>`;
     const paid = depositWasPaid(order) ? depositAmount(order) : 0;
     const closed = ['cancelled', 'rejected'].includes(reviewStatus(order));
     const refunded = order.refund?.status === 'succeeded' || order.deposit?.status === 'refunded';
     const refundLine = closed && paid > 0
-      ? `<div><dt>${refunded ? '已退还保证金' : '待退还保证金'}</dt><dd>${formatMoney(order.refund?.amount ?? paid)}${!refunded && order.refund?.status === 'failed' ? ' · 待运营重试' : ''}</dd></div>`
+      ? `<div><dt>${refunded ? '已退还宠物运输检疫费' : '待退还宠物运输检疫费'}</dt><dd>${formatMoney(order.refund?.amount ?? paid)}${!refunded && order.refund?.status === 'failed' ? ' · 待运营重试' : ''}</dd></div>`
       : '';
     const explanation = closed
-      ? `本单已关闭，无需再支付，不会产生后续尾款。原始估价和运营建议价仅保留供核对。${paid > 0 ? (refunded ? '累计已付保证金已退还。' : '已付保证金的退款进度见下方。') : '本单未支付保证金。'}`
+      ? `本单已关闭，无需再支付，不会产生后续尾款。原始估价和运营建议价仅保留供核对。${paid > 0 ? (refunded ? '累计已付宠物运输检疫费已退还。' : '已付宠物运输检疫费的退款进度见下方。') : '本单未支付宠物运输检疫费。'}`
       : '运营建议价用于确认运输方案；预计剩余费用并非最终尾款，最终费用由司机验宠后锁定。';
-    return `<dl class="cost-breakdown price-review"><div><dt>原始预估基础价</dt><dd>${formatMoney(order.quote?.basePrice ?? order.priceEstimate)}</dd></div><div><dt>运营建议价</dt><dd>${order.proposedPrice != null || order.finalPrice != null ? formatMoney(proposedPrice(order)) : (closed ? '未出具' : '待审核')}</dd></div><div><dt>${closed ? '累计已付保证金' : '已付保证金'}</dt><dd>${formatMoney(paid)}</dd></div>${refundLine}<div><dt>预计剩余费用</dt><dd>${closed ? '无需再支付' : formatMoney(Math.max(0, proposedPrice(order) - paid))}</dd></div></dl><p class="price-explanation">${explanation}</p>`;
+    return `<dl class="cost-breakdown price-review"><div><dt>原始预估基础价</dt><dd>${formatMoney(order.quote?.basePrice ?? order.priceEstimate)}</dd></div><div><dt>运营建议价</dt><dd>${order.proposedPrice != null || order.finalPrice != null ? formatMoney(proposedPrice(order)) : (closed ? '未出具' : '待审核')}</dd></div><div><dt>${closed ? '累计已付宠物运输检疫费' : '已付宠物运输检疫费'}</dt><dd>${formatMoney(paid)}</dd></div>${refundLine}<div><dt>预计剩余费用</dt><dd>${closed ? '无需再支付' : formatMoney(Math.max(0, proposedPrice(order) - paid))}</dd></div></dl><p class="price-explanation">${explanation}</p>`;
   }
   function contactsMarkup(order) {
     return `<section class="material-section"><h3>接送与照护信息</h3><div class="contact-summary"><div><small>接宠联系人</small><strong>${escapeHtml(copy(order.contactName || '未提供'))} · ${escapeHtml(order.contactPhone || order.userPhone || order.phone || '未提供')}</strong><p>${escapeHtml(copy(order.pickupAddress || '详细地址未提供'))}</p></div><div><small>送达联系人</small><strong>${escapeHtml(copy(order.recipientName || '未提供'))} · ${escapeHtml(order.recipientPhone || '未提供')}</strong><p>${escapeHtml(copy(order.recipientAddress || '详细地址未提供'))}</p></div><div class="full-width"><small>特殊照护说明</small><p>${escapeHtml(copy(order.careNote || '未填写特殊照护说明'))}</p></div></div></section>`;
@@ -671,8 +680,8 @@
   }
   function refundMarkup(order, ops = false) {
     const refund = order.refund;
-    if (!refund) return ['cancelled', 'rejected'].includes(reviewStatus(order)) ? `<div class="refund-message">${icon('info')}<div><strong>本单无需退款</strong><br>未收取保证金，无需退还费用。</div></div>` : '';
-    const labels = { pending: ['退款处理中', '运营正在核对退款结果，请稍后查看。'], succeeded: ['退款已完成', refund.balanceAmount ? '已付保证金与尾款已退还，预约容量已释放。' : '保证金已退回，预约容量已释放。'], failed: ['退款失败', '运营可重试退款，用户无需再次支付。'] };
+    if (!refund) return ['cancelled', 'rejected'].includes(reviewStatus(order)) ? `<div class="refund-message">${icon('info')}<div><strong>本单无需退款</strong><br>未收取宠物运输检疫费，无需退还费用。</div></div>` : '';
+    const labels = { pending: ['退款处理中', '运营正在核对退款结果，请稍后查看。'], succeeded: ['退款已完成', refund.balanceAmount ? '已付宠物运输检疫费与尾款已退还，预约容量已释放。' : '宠物运输检疫费已退回，预约容量已释放。'], failed: ['退款失败', '运营可重试退款，用户无需再次支付。'] };
     const [title, detail] = labels[refund.status] || ['退款状态更新中', '请刷新查看最新结果。'];
     const canProcess = ops && ['pending', 'failed'].includes(refund.status);
     return `<div class="refund-message" data-refund-status="${escapeHtml(refund.status)}">${icon(refund.status === 'succeeded' ? 'check-circle' : 'refresh')}<div><strong>${title} · ${formatMoney(refund.amount)}</strong><br>${detail}${refund.completedAt ? `<br>${escapeHtml(formatDateTime(refund.completedAt))}` : ''}</div></div>${canProcess ? `<div class="refund-actions"><button class="primary-button" id="refund-success" type="button">${icon('check-circle')}<span>${refund.status === 'failed' ? '重试退款' : '退款成功'}</span></button><button class="outline-button" id="refund-failed" type="button">${icon('alert')}<span>退款失败</span></button><div class="form-message" id="refund-error" role="alert" hidden></div></div>` : ''}`;
@@ -697,7 +706,7 @@
     const current = reviewStatus(order);
     if (['cancelled', 'rejected'].includes(current)) return `<li class="is-done"><span aria-hidden="true"></span><div>${current === 'cancelled' ? '订单已取消' : '运营拒绝承运'} · 预约已释放</div></li>`;
     const stages = [
-      ['保证金已支付', depositWasPaid(order)],
+      ['宠物运输检疫费已支付', depositWasPaid(order)],
       ['运营审核通过', ['approved', 'confirmed'].includes(current)],
       [current === 'info_required' || current === 'resubmitted' ? '补充材料' : '方案与节点确认', ['approved', 'confirmed'].includes(current)],
       ['用户确认方案', current === 'confirmed'],
@@ -748,14 +757,15 @@
       <div class="status-hero" data-tone="${escapeHtml(tone)}">${stateArtwork}<div><span class="order-number">订单 ${escapeHtml(order.id)}</span><h3>${escapeHtml(label)}</h3><p>${escapeHtml(description)}</p></div><span class="status-badge" data-tone="${escapeHtml(tone)}">${icon(statusIcon)}<span>${escapeHtml(order.status || label)}</span></span></div>
       ${window.PaichongProfiles?.petCard(order) || ''}
       <div class="order-route-line"><span><small>起运</small><br><strong>${escapeHtml(order.fromCity)}</strong></span><i aria-hidden="true">${icon('arrow-right')}</i><span><small>送达</small><br><strong>${escapeHtml(order.toCity)}</strong></span></div>
-      <dl class="cost-breakdown"><div><dt>宠物</dt><dd>${escapeHtml(pet.name)} · ${escapeHtml(pet.type)} · ${escapeHtml(pet.weight)}kg</dd></div><div><dt>预订保证金</dt><dd>${formatMoney(depositAmount(order))}</dd></div><div><dt>保证金状态</dt><dd>${escapeHtml(userDepositStatus(order))}</dd></div><div><dt>预约时段</dt><dd>${escapeHtml(order.pickup?.date || '')} ${escapeHtml(order.pickup?.timeSlot || order.pickupTime || '')}</dd></div></dl>
+      <dl class="cost-breakdown"><div><dt>宠物</dt><dd>${escapeHtml(pet.name)} · ${escapeHtml(pet.type)} · ${escapeHtml(pet.weight)}kg</dd></div><div><dt>宠物运输检疫费</dt><dd>${formatMoney(depositAmount(order))}</dd></div><div><dt>宠物运输检疫费状态</dt><dd>${escapeHtml(userDepositStatus(order))}</dd></div><div><dt>预约时段</dt><dd>${escapeHtml(order.pickup?.date || '')} ${escapeHtml(order.pickup?.timeSlot || order.pickupTime || '')}</dd></div></dl>
       ${window.PaichongMaterials?.markup(order) || ''}
+      ${window.PaichongBookingSelection?.markup(order) || ''}
       ${window.PaichongCabinMonitor?.markup(order) || ''}${window.PaichongFulfillment?.markup(order, 'user') || ''}${journeyMarkup(order)}${pricingMarkup(order)}${contactsMarkup(order)}
       ${node ? `<div class="node-result">${icon('map-pin')}<div><strong>已分配合作交接点</strong><br>${escapeHtml(node.city)} · ${escapeHtml(node.name)} · 营业 ${escapeHtml(node.open || '以预约为准')}</div></div>` : ''}
       ${reviewNote && current !== 'info_required' ? `<div class="review-message">${icon('clipboard-check')}<div><strong>运营说明</strong><br>${escapeHtml(copy(reviewNote))}</div></div>` : ''}
       ${refundMarkup(order)}${window.PaichongServiceFlow?.markup(order, 'user') || ''}
       <ol class="timeline-list">${orderTimeline(order)}</ol>
-      ${supplement}<div class="order-followup-actions">${confirm}${current === 'not_submitted' ? `<button class="pay-button" id="resume-payment" type="button">${icon('credit-card')}<span>继续支付保证金</span></button>` : ''}${canReschedule ? `<button class="outline-button" id="reschedule-order" type="button">${icon('calendar-check')}<span>申请改期</span></button>` : ''}${canCancel ? `<button class="danger-button" id="cancel-order" type="button">${icon('x-circle')}<span>取消订单</span></button>` : ''}</div>
+      ${supplement}<div class="order-followup-actions">${confirm}${current === 'not_submitted' ? `<button class="pay-button" id="resume-payment" type="button">${icon('credit-card')}<span>继续支付宠物运输检疫费</span></button>` : ''}${canReschedule ? `<button class="outline-button" id="reschedule-order" type="button">${icon('calendar-check')}<span>申请改期</span></button>` : ''}${canCancel ? `<button class="danger-button" id="cancel-order" type="button">${icon('x-circle')}<span>取消订单</span></button>` : ''}</div>
       <div id="reschedule-panel" class="reschedule-panel" hidden></div>
       <div class="form-message" id="order-action-error" role="alert" hidden></div>
     </article>`;
@@ -776,7 +786,7 @@
     });
     byId('cancel-order')?.addEventListener('click', (event) => {
       const button = event.currentTarget;
-      openDialog('确认取消这笔订单？', `${order.id} 的预约将释放。${depositWasPaid(order) ? '已付保证金将进入退款流程，由运营处理结果。' : '本单尚未支付保证金，无需退款。'}`, async () => {
+      openDialog('确认取消这笔订单？', `${order.id} 的预约将释放。${depositWasPaid(order) ? '已付宠物运输检疫费将进入退款流程，由运营处理结果。' : '本单尚未支付宠物运输检疫费，无需退款。'}`, async () => {
         const reason = formValue('dialog-reason') || '用户取消出行计划';
         setBusy(button, true, '取消中…');
         try {
@@ -992,11 +1002,12 @@
     drawer.innerHTML = `<div class="review-detail">
       <div class="review-title"><div><p class="eyebrow">订单审核</p><h2>${escapeHtml(order.id)}</h2><p>支付状态：${escapeHtml(userDepositStatus(order))}</p></div><span class="status-badge" data-tone="${escapeHtml(tone)}">${icon(statusIcon)}<span>${escapeHtml(label)}</span></span></div>
       <div class="order-route-line"><span><small>起运</small><br><strong>${escapeHtml(order.fromCity)}</strong></span><i aria-hidden="true">${icon('arrow-right')}</i><span><small>目的</small><br><strong>${escapeHtml(order.toCity)}</strong></span></div>
-      <div class="info-grid"><div><span>宠物</span><strong>${escapeHtml(pet.name)} · ${escapeHtml(pet.type)}</strong></div><div><span>品种 / 体重</span><strong>${escapeHtml(pet.breed || '未填')} · ${escapeHtml(pet.weight)}kg</strong></div><div><span>预约时段</span><strong>${escapeHtml(order.pickup?.date || '')} ${escapeHtml(order.pickup?.timeSlot || '')}</strong></div><div><span>预估基础价</span><strong>${formatMoney(order.quote?.basePrice || order.priceEstimate)}</strong></div><div><span>保证金</span><strong>${formatMoney(order.depositAmount || order.deposit?.amount || order.quote?.depositAmount)}</strong></div><div><span>联系电话</span><strong>${escapeHtml(order.contactPhone || order.userPhone || order.phone || '未填写')}</strong></div></div>
+      <div class="info-grid"><div><span>宠物</span><strong>${escapeHtml(pet.name)} · ${escapeHtml(pet.type)}</strong></div><div><span>品种 / 体重</span><strong>${escapeHtml(pet.breed || '未填')} · ${escapeHtml(pet.weight)}kg</strong></div><div><span>预约时段</span><strong>${escapeHtml(order.pickup?.date || '')} ${escapeHtml(order.pickup?.timeSlot || '')}</strong></div><div><span>预估基础价</span><strong>${formatMoney(order.quote?.basePrice || order.priceEstimate)}</strong></div><div><span>宠物运输检疫费</span><strong>${formatMoney(order.depositAmount || order.deposit?.amount || order.quote?.depositAmount)}</strong></div><div><span>联系电话</span><strong>${escapeHtml(order.contactPhone || order.userPhone || order.phone || '未填写')}</strong></div></div>
       ${window.PaichongFulfillment?.markup(order, 'ops') || ''}${journeyMarkup(order)}${pricingMarkup(order)}${contactsMarkup(order)}
       ${window.PaichongMaterials?.markup(order) || `<section class="material-section"><h3>用户材料</h3><div class="material-list"><div class="material-item"><span>${icon('image')}宠物近期照</span><small>${escapeHtml(copy(materialName(materials, 'petPhoto')))}</small></div><div class="material-item"><span>${icon('file-check')}疫苗记录</span><small>${escapeHtml(copy(materialName(materials, 'vaccineCertificate', 'vaccineProof')))}</small></div>${materials.standingPhoto ? `<div class="material-item"><span>${icon('camera')}补充站立照</span><small>${escapeHtml(materialName(materials, 'standingPhoto'))}</small></div>` : ''}</div></section>`}
       <section class="material-section"><h3>健康声明</h3><div class="risk-list">${Object.entries(HEALTH_LABELS).map(([key, text]) => healthDeclarationItems(order.healthDeclaration).includes(key) ? `<span class="risk-tag">${icon('shield-check')}<span>${escapeHtml(text)}</span></span>` : `<span class="risk-tag is-missing">${icon('alert')}<span>未提供：${escapeHtml(text)}</span></span>`).join('')}</div></section>
       ${order.reviewNote ? `<div class="review-message">${icon('clipboard-check')}<div><strong>最近一次运营说明</strong><br>${escapeHtml(copy(order.reviewNote))}</div></div>` : ''}
+      ${window.PaichongBookingSelection?.markup(order) || ''}
       ${order.assignedNode ? `<div class="node-result">${icon('map-pin')}<div><strong>已分配：</strong>${escapeHtml(order.assignedNode.city)} · ${escapeHtml(order.assignedNode.name)}</div></div>` : ''}
       ${refundMarkup(order, true)}${window.PaichongServiceFlow?.markup(order, 'ops') || ''}${historyMarkup}
       <section class="review-actions"><h3>${canReview ? '本次审核动作' : '当前审核已完成'}</h3>${canReview ? `<div class="review-action-grid">
@@ -1006,10 +1017,10 @@
         <label class="field-label" for="node-booking-date">合作点预约日期<input id="node-booking-date" type="date" value="${escapeHtml(order.pickup?.date || '')}" readonly /><small>本轮节点与接宠预约使用同一日期时段，笼位独立计量。如需改期，请先由用户修改接宠预约。</small></label>
         <label class="field-label" for="node-booking-period">合作点预约时段<select id="node-booking-period" disabled><option value="AM" ${String(order.pickup?.timeSlot || '').startsWith('09') ? 'selected' : ''}>上午 09:00–12:00</option><option value="PM" ${String(order.pickup?.timeSlot || '').startsWith('13') ? 'selected' : ''}>下午 13:00–16:00</option></select><small>审核通过后预占，用户确认后转为已确认。</small></label>
         <p class="node-capacity-hint" id="review-node-capacity" role="status">正在核对节点容量…</p>
-        <label class="field-label" for="final-price">运营建议价（元）<input id="final-price" type="number" min="${Math.max(0.01, depositAmount(order))}" step="0.01" value="${escapeHtml(proposedPrice(order))}" /><small>不得低于保证金；司机验宠后再确认最终费用</small></label>
+        <label class="field-label" for="final-price">运营建议价（元）<input id="final-price" type="number" min="${Math.max(0.01, depositAmount(order))}" step="0.01" value="${escapeHtml(proposedPrice(order))}" /><small>不得低于宠物运输检疫费；司机验宠后再确认最终费用</small></label>
         <button class="primary-button" id="approve-order" type="button" ${nodes.length ? '' : 'disabled'}>${icon('check-circle')}<span>审核通过并分配</span></button><button class="danger-button" id="reject-order" type="button">${icon('x-circle')}<span>拒绝承运</span></button>
         <div class="form-message" id="review-action-error" role="alert" hidden></div>
-      </div>` : `<p class="panel-intro">${current === 'not_submitted' ? '等待用户支付保证金后，可开始运营审核。' : '当前阶段无需重复审核，最新变更会同步到用户订单。'}</p>`}</section>
+      </div>` : `<p class="panel-intro">${current === 'not_submitted' ? '等待用户支付宠物运输检疫费后，可开始运营审核。' : '当前阶段无需重复审核，最新变更会同步到用户订单。'}</p>`}</section>
     </div>`;
     bindOpsReviewActions(order);
     window.PaichongMaterials?.bind(drawer, order);
@@ -1070,7 +1081,7 @@
       const nodeId = formValue('assign-node');
       if (!nodeId) { setMessage('review-action-error', '请先选择可用合作交接点。'); return; }
       const price = Number(formValue('final-price'));
-      if (!Number.isFinite(price) || price <= 0 || price < depositAmount(order)) { setMessage('review-action-error', '运营建议价必须是有效正数，且不能低于已收保证金。'); byId('final-price').focus(); return; }
+      if (!Number.isFinite(price) || price <= 0 || price < depositAmount(order)) { setMessage('review-action-error', '运营建议价必须是有效正数，且不能低于已收宠物运输检疫费。'); byId('final-price').focus(); return; }
       submitReview(order, 'approve', {
         nodeId,
         nodeDate: formValue('node-booking-date'), nodePeriod: formValue('node-booking-period'),
@@ -1082,7 +1093,7 @@
       const button = event.currentTarget;
       const note = reviewNoteValue();
       if (!note) { setMessage('review-action-error', '拒绝承运前请填写具体原因。'); byId('review-note').focus(); return; }
-      openDialog('确认拒绝这笔订单？', '用户端会立即看到“暂无法承运”及运营说明。已付保证金将进入退款流程。', () => submitReview(order, 'reject', { note }, button), { danger: true, iconName: 'x-circle', confirmLabel: '确认拒绝承运' });
+      openDialog('确认拒绝这笔订单？', '用户端会立即看到“暂无法承运”及运营说明。已付宠物运输检疫费将进入退款流程。', () => submitReview(order, 'reject', { note }, button), { danger: true, iconName: 'x-circle', confirmLabel: '确认拒绝承运' });
     });
     [['refund-success', 'succeeded'], ['refund-failed', 'failed']].forEach(([id, outcome]) => byId(id)?.addEventListener('click', (event) => {
       const button = event.currentTarget;
@@ -1186,6 +1197,7 @@
       byId('pickup-address').value = `${formValue('from-city')}市安心路 18 号宠友小区 1 栋 101（示例）`;
       byId('recipient-name').value = '陈小橘'; byId('recipient-phone').value = '13900139000';
       byId('recipient-address').value = `${formValue('to-city')}市暖阳路 26 号花园小区 2 栋 202（示例）`;
+      bookingSelection?.applyContacts();
       state.clientRequestId = '';
       toast('已填入示例收寄信息');
     });
@@ -1206,9 +1218,9 @@
     byId('confirm-dialog').addEventListener('click', (event) => { if (event.target === event.currentTarget) closeDialog(); });
     document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !byId('confirm-dialog').hidden) closeDialog(); });
     byId('swap-route').addEventListener('click', () => {
-      const from = byId('from-city').value; byId('from-city').value = byId('to-city').value; byId('to-city').value = from; invalidateDraft(); loadBookingDates();
+      const from = byId('from-city').value; byId('from-city').value = byId('to-city').value; byId('to-city').value = from; invalidateDraft(); bookingSelection?.sync(); loadBookingDates();
     });
-    ['from-city', 'to-city', 'pet-name', 'pet-type', 'pet-breed', 'pet-weight', 'service-type', 'travel-date'].forEach((id) => byId(id).addEventListener('input', () => { invalidateDraft(); if (id === 'from-city') loadBookingDates(); }));
+    ['from-city', 'to-city', 'pet-name', 'pet-type', 'pet-breed', 'pet-weight', 'service-type', 'travel-date'].forEach((id) => byId(id).addEventListener('input', () => { invalidateDraft(); if (['from-city', 'to-city', 'service-type', 'travel-date'].includes(id)) bookingSelection?.sync(); if (id === 'from-city') loadBookingDates(); }));
     byId('materials-form').addEventListener('input', () => { state.clientRequestId = ''; if (!state.currentOrder) state.maxStep = Math.min(state.maxStep, 2); });
     all('.sample-file').forEach((button) => button.addEventListener('click', () => {
       const suffix = button.dataset.filename.split('-').slice(1).join('-');
@@ -1264,6 +1276,7 @@
       ? `${account.slice(0, 3)} ${account.slice(3, 7)} ${account.slice(7)}`
       : account;
     configurePortalChrome();
+    if (authSession.role === 'user') bookingSelection = window.PaichongBookingSelection?.mount({ api, onChange: invalidateDraft, session: () => readAuthSession()?.token || '', editable: () => !state.currentOrder && !state.pendingMutations });
     bindEvents();
     updateSummary();
     if (authSession.role === 'user') {
@@ -1280,6 +1293,15 @@
 
   window.PaichongReview = {
     api, toast, openDialog, loadOpsOrders, logout: logoutPortal, startNewOrder,
+    supportContext: () => {
+      const order = document.body.dataset.miniPage === 'detail' ? state.currentOrder : null;
+      return {
+        name: order?.contactName || formValue('contact-name'), phone: order?.contactPhone || formValue('contact-phone') || currentUserAccount(),
+        fromCity: order?.fromCity || formValue('mini-from-city') || formValue('from-city'), toCity: order?.toCity || formValue('mini-to-city') || formValue('to-city'),
+        petName: order?.petName || formValue('pet-name'), petType: order?.petType || formValue('pet-type'),
+        travelDate: order?.pickup?.date || formValue('travel-date'), serviceType: order?.serviceType || formValue('service-type')
+      };
+    },
     step: (step) => showStep(step, { force: true }),
     openUserOrder: async (id, shouldApply = () => true) => {
       const payload = await api(`/api/user/orders/${encodeURIComponent(id)}`);

@@ -7,7 +7,7 @@
   const state = { ready: false, activeTab: 'review', nodeScreen: 'overview', nodeTab: 'calendar', handoffOrderId: '', routeScreen: 'list', pendingOpen: '', nodes: [], orders: [], routes: [], resources: { drivers: [], vehicles: [] }, calendar: [], date: '', nodeId: '', routeId: '', creatingRoute: false, loading: false, busy: false, requestId: 0, dataReady: false };
   const byId = (id) => document.getElementById(id);
   const elements = (selector, root = document) => Array.from(root.querySelectorAll(selector));
-  const escape = (value = '') => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
+  const escape = (value = '') => String(copy(value)).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
   const icon = (name) => `<svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-${name}"></use></svg>`;
   const api = (...args) => window.PaichongReview.api(...args);
   const today = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Shanghai' }).format(new Date());
@@ -339,7 +339,7 @@
   }
 
   function routeCandidateReason(order, route) {
-    if (order.reviewStatus !== 'confirmed' || order.deposit?.status !== 'paid') return '尚未确认方案或支付保证金';
+    if (order.reviewStatus !== 'confirmed' || order.deposit?.status !== 'paid') return '尚未确认方案或支付宠物运输检疫费';
     if (order.routeId) return '已编入线路';
     if (!order.assignedNode || !order.nodeReservation || !['confirmed', 'arrived'].includes(order.nodeReservation.status)) return '尚未预留有效合作点';
     if (!['待拼单', '已到交接点'].includes(order.status)) return '订单当前状态不能编线';

@@ -1,4 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" color="#173E39">
+  <symbol id="icon-message-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5.3 18.2 3 21l.9-5A8.5 8.5 0 1 1 8 20" fill="#E7F5ED"/>
+    <path d="M7.5 10h9M7.5 14h5"/><circle cx="17.8" cy="17.7" r="3" fill="#FF985C" stroke="none"/>
+  </symbol>
+  <symbol id="icon-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="10.5" cy="10.5" r="6.8" fill="#E7F5ED"/><path d="m16 16 5 5"/>
+  </symbol>
   <symbol id="icon-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
     <path fill="#E7F5ED" d="M5 10v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-9L12 4Z"/>
     <path d="m2.8 10.8 7.8-7.1a2 2 0 0 1 2.8 0l7.8 7.1"/>

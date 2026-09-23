@@ -178,8 +178,7 @@
 ]);
   function text(value = '') {
     if (window.PAICHONG_DEMO_MODE !== true || typeof value !== 'string') return value;
-    return legacy.get(value) ?? value;
+    return (legacy.get(value) ?? value).replaceAll('预订保证金', '宠物运输检疫费').replaceAll('保证金', '宠物运输检疫费').replaceAll('猫狗专车', '宠物专车');
   }
   window.PaichongProductCopy = Object.freeze({ text });
 })();
-

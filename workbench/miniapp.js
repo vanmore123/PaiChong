@@ -3,7 +3,7 @@
   const app = window.PaichongReview;
   const state = { role: '', page: 'home', step: 1, orders: [], filter: 'all', request: 0, opsDetail: false, opsCanBack: false, homeRoute: { fromCity: '合肥', toCity: '武汉' } };
   const byId = (id) => document.getElementById(id);
-  const escape = (value = '') => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
+  const escape = (value = '') => String(window.PaichongProductCopy?.text(value) ?? value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
   const icon = (name) => `<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-${name}"></use></svg>`;
   const closed = (order) => ['cancelled', 'rejected'].includes(order.reviewStatus);
   const completed = (order) => order.fulfillment?.stage === 'delivered';
@@ -11,7 +11,7 @@
   const prioritizeOrders = (orders = []) => [...orders].sort((a,b) => hefeiRank(a)-hefeiRank(b));
   const unpaid = (order) => order.reviewStatus === 'not_submitted' || order.fulfillment?.stage === 'awaiting_payment';
   const money = (value) => new Intl.NumberFormat('zh-CN', { style: 'currency', currency: 'CNY', maximumFractionDigits: 2 }).format(Number(value || 0));
-  const labels = ['确认出行路线', '接送资料与材料', '选择接宠时段', '支付预订保证金', '订单详情'];
+  const labels = ['确认出行路线', '接送资料与材料', '选择接宠时段', '支付宠物运输检疫费', '订单详情'];
 
   function setup() {
     if (byId('mini-nav')) return;
@@ -20,6 +20,7 @@
     shell.insertAdjacentHTML('afterbegin', `<header class="mini-nav" id="mini-nav"><button class="mini-back" id="mini-back" type="button" aria-label="返回">${icon('chevron-left')}</button><strong id="mini-title">派宠一号</strong><div class="mini-capsule"><button id="mini-menu" type="button" aria-label="账户与说明">•••</button><span></span><button id="mini-home-button" type="button" aria-label="返回首页">${icon('paw')}</button></div></header>`);
     byId('review-main').insertAdjacentHTML('afterbegin', '<section id="mini-page" class="mini-page"></section><div id="mini-progress" class="mini-progress" hidden></div>');
     shell.insertAdjacentHTML('beforeend', '<nav id="mini-tabs" class="mini-tabs" aria-label="小程序主导航"></nav>');
+    if (window.PaichongCare && app.session()?.role === 'user') shell.insertAdjacentHTML('beforeend', `<button class="care-floating" type="button" data-customer-care>${icon('message-circle')}客服</button>`);
     byId('mini-back').addEventListener('click', goBack);
     byId('mini-menu').addEventListener('click', () => navigate('profile'));
     byId('mini-home-button').addEventListener('click', () => navigate('home'));
@@ -30,7 +31,7 @@
       ? [['home', '工作台', 'workbench'], ['ops-orders', '订单', 'order'], ['nodes', '节点', 'node'], ['routes', '线路', 'route'], ['profile', '我的', 'dog']]
       : [['home', '首页', 'home'], ['orders', '订单', 'order'], ['profile', '我的', 'dog']];
     byId('mini-tabs').innerHTML = choices.map(([page, text, art]) => `<button type="button" data-mini-tab="${page}" class="${state.page === page ? 'is-active' : ''}" ${state.page === page ? 'aria-current="page"' : ''}><span class="mini-tab-icon">${icon(art)}</span><span>${text}</span></button>`).join('');
-    byId('mini-tabs').hidden = ['create', 'detail', 'guide'].includes(state.page) || state.opsDetail || state.opsCanBack;
+    byId('mini-tabs').hidden = ['create', 'detail', 'guide', 'leads'].includes(state.page) || state.opsDetail || state.opsCanBack;
     byId('mini-tabs').querySelectorAll('[data-mini-tab]').forEach((button) => button.addEventListener('click', () => navigate(button.dataset.miniTab)));
   }
 
@@ -49,6 +50,7 @@
     if (state.mutating) { app.toast('正在提交，请稍候再切换页面。'); return; }
     try { window.PaichongSession?.assertCurrent(app.session()?.token || ''); } catch { return; }
     if (page === 'partner') { if (state.role === 'ops') window.location.assign('./partner.html'); return; }
+    if (page === 'leads' && (state.role !== 'ops' || !window.PaichongCare)) return;
     const request = ++state.request;
     state.page = page; state.opsDetail = false; state.opsCanBack = false;
     document.body.dataset.miniPage = page;
@@ -76,6 +78,7 @@
     }
     if (page === 'profile') { renderProfile(); return; }
     if (page === 'guide') { renderGuide(); return; }
+    if (page === 'leads') { title('意向客户回访', true); await window.PaichongCare.renderLeads({ root: byId('mini-page'), api: app.api, toast: app.toast, isCurrent: () => request === state.request && state.page === 'leads' }); return; }
     if (page === 'orders') { title('我的订单'); await loadOrderList(request); return; }
     title(state.role === 'ops' ? '派宠一号 · 经营者' : '派宠一号');
     await renderHome(request);
@@ -113,7 +116,7 @@
 
   function bookingCard() {
     const cityOptions = (selected) => Array.from(byId('from-city').options).map((option) => `<option value="${escape(option.value)}" ${option.value === selected ? 'selected' : ''}>${escape(option.textContent)}</option>`).join('');
-    return `<form class="mini-booking-card" id="mini-home-booking" aria-label="预约宠物出行"><h2>预约宠物出行</h2><p>先看预估费用，再安心安排</p><div class="mini-home-route"><label for="mini-from-city">出发城市<select id="mini-from-city">${cityOptions(state.homeRoute.fromCity)}</select></label><button type="button" class="mini-home-swap" id="mini-home-swap" aria-label="交换出发与到达城市">${icon('swap')}</button><label for="mini-to-city">到达城市<select id="mini-to-city">${cityOptions(state.homeRoute.toCity)}</select></label></div><div class="form-message" id="mini-home-error" role="alert" hidden></div><button class="primary-button mini-quote-button" type="submit">${icon('price-tag')}<span>查看预估费用</span>${icon('arrow-right')}</button><p class="mini-booking-note">下一步填写宠物信息，费用确认后再付保证金</p></form>`;
+    return `<form class="mini-booking-card" id="mini-home-booking" aria-label="预约宠物出行"><h2>预约宠物出行</h2><p>先看预估费用，再安心安排</p><div class="mini-home-route"><label for="mini-from-city">出发城市<select id="mini-from-city">${cityOptions(state.homeRoute.fromCity)}</select></label><button type="button" class="mini-home-swap" id="mini-home-swap" aria-label="交换出发与到达城市">${icon('swap')}</button><label for="mini-to-city">到达城市<select id="mini-to-city">${cityOptions(state.homeRoute.toCity)}</select></label></div><div class="form-message" id="mini-home-error" role="alert" hidden></div><button class="primary-button mini-quote-button" type="submit">${icon('price-tag')}<span>查看预估费用</span>${icon('arrow-right')}</button><p class="mini-booking-note">下一步填写宠物信息，费用确认后再付宠物运输检疫费</p></form>`;
   }
 
   function bindHomeBooking() {
@@ -137,8 +140,12 @@
 
   async function renderHome(request) {
     const ops = state.role === 'ops';
-    byId('mini-page').innerHTML = `${hero(ops)}<div class="mini-home-content">${ops ? `<div class="mini-section-title"><h2>今日工作</h2><span>待办概览</span></div><div class="mini-metrics" id="mini-home-metrics"><span>正在同步…</span></div><div class="mini-shortcuts"><button data-go="ops-orders">${icon('file-check')}<strong>订单审核</strong><small>材料、补件与确认</small></button><button data-go="nodes">${icon('node')}<strong>合作点容量</strong><small>笼位预约与交接</small></button><button data-go="routes">${icon('van')}<strong>线路与派车</strong><small>编线与资源安排</small></button><button data-go="guide">${icon('info')}<strong>操作须知</strong><small>流程与注意事项</small></button></div>` : `${bookingCard()}<div class="mini-section-title"><h2>我的行程</h2><button data-go="orders">全部订单 ${icon('chevron-right')}</button></div><div id="mini-recent-orders"><div class="mini-empty" role="status">正在同步行程…</div></div><button class="mini-guide-card" data-go="guide">${icon('file-check')}<span><strong>第一次托运？看看出行须知</strong><small>适运材料、保证金与交接说明</small></span>${icon('chevron-right')}</button>`}<p class="mini-demo-note">派宠一号 · 一路被好好照顾</p></div>`;
+    byId('mini-page').innerHTML = `${hero(ops)}<div class="mini-home-content">${ops ? `<div class="mini-section-title"><h2>今日工作</h2><span>待办概览</span></div><div class="mini-metrics" id="mini-home-metrics"><span>正在同步…</span></div><div class="mini-shortcuts"><button data-go="ops-orders">${icon('file-check')}<strong>订单审核</strong><small>材料、补件与确认</small></button><button data-go="nodes">${icon('node')}<strong>合作点容量</strong><small>笼位预约与交接</small></button><button data-go="routes">${icon('van')}<strong>线路与派车</strong><small>编线与资源安排</small></button><button data-go="guide">${icon('info')}<strong>操作须知</strong><small>流程与注意事项</small></button></div>` : `${bookingCard()}<div class="mini-section-title"><h2>我的行程</h2><button data-go="orders">全部订单 ${icon('chevron-right')}</button></div><div id="mini-recent-orders"><div class="mini-empty" role="status">正在同步行程…</div></div><button class="mini-guide-card" data-go="guide">${icon('file-check')}<span><strong>第一次托运？看看出行须知</strong><small>适运材料、宠物运输检疫费与交接说明</small></span>${icon('chevron-right')}</button>`}<p class="mini-demo-note">派宠一号 · 一路被好好照顾</p></div>`;
     if (ops) byId('mini-page').querySelector('.mini-shortcuts').insertAdjacentHTML('beforeend', `<button data-go="partner">${icon('clipboard-check')}<strong>机构余量审批</strong><small>查看申报与生效结果</small></button>`);
+    if (window.PaichongCare) {
+      if (ops) byId('mini-page').querySelector('.mini-shortcuts').insertAdjacentHTML('afterbegin', `<button data-go="leads">${icon('message-circle')}<strong>意向客户回访</strong><small>咨询线索、跟进与转单</small></button>`);
+      else byId('mini-page').querySelector('.mini-home-content').insertAdjacentHTML('afterbegin', `<button class="care-entry" type="button" data-customer-care>${icon('message-circle')}<span><strong>想问问这趟怎么安排？</strong><small>联系固定微信客服 · 留下出行咨询</small></span>›</button>`);
+    }
     bindLinks(); bindHomeBooking();
     try {
       if (ops) {
@@ -199,6 +206,7 @@
       const pets=profiles.featuredPets(state.orders,state.orders.length);
       const active=state.orders.filter(order=>!closed(order)&&!completed(order)).length;
       byId('mini-page').innerHTML=`<div class="mini-profile"><section class="pc-profile-hero"><div class="pc-profile-top">${profiles.avatar(profile,'large')}<div><h1>${escape(profile.name)}</h1><p>${escape(masked)}</p><small>合肥 · 宠物主人</small></div></div><p class="pc-profile-quote">${escape(profile.intro)}</p></section><div class="pc-profile-stats"><div><strong>${pets.length}</strong><span>毛孩子</span></div><div><strong>${active}</strong><span>进行中的订单</span></div><div><strong>${state.orders.filter(completed).length}</strong><span>已完成行程</span></div></div><section class="pc-pets-section"><div class="pc-pets-heading"><h2>我的毛孩子</h2><button type="button" data-go="orders">查看行程${icon('chevron-right')}</button></div>${pets.length?`<div class="pc-pet-grid">${pets.slice(0,3).map(order=>`<button type="button" data-mini-order="${escape(order.id)}">${profiles.petAvatar(order)}<strong>${escape(profiles.pet(order).name)}</strong><small>${escape(profiles.pet(order).type || '宠物')} · ${escape(profiles.pet(order).weight || '—')} kg</small></button>`).join('')}</div>`:'<p class="pc-profile-empty">预约第一段旅程后，毛孩子的资料会出现在这里。</p>'}</section><div class="mini-menu-card"><button data-go="orders">${icon('order')}<span>我的订单</span>${icon('chevron-right')}</button><button data-go="guide">${icon('info')}<span>出行须知</span>${icon('chevron-right')}</button><div class="mini-version">常用出发城市<span>安徽 · 合肥</span></div><div class="mini-version">登录方式<span>账号密码</span></div></div><button id="mini-logout" class="outline-button mini-full-button">退出当前账号</button><p class="mini-demo-note">资料与照片为体验样例，操作仅保存在本端浏览器。</p></div>`;
+      if (window.PaichongCare) byId('mini-page').querySelector('.mini-menu-card').insertAdjacentHTML('beforeend', `<button type="button" data-customer-care>${icon('message-circle')}<span>联系出行客服</span>${icon('chevron-right')}</button>`);
       bindOrderCards();bindLinks();byId('mini-logout').addEventListener('click',app.logout);return;
     }
     byId('mini-page').innerHTML = `<div class="mini-profile"><div class="mini-profile-card"><span>${icon(state.role === 'ops' ? 'workbench' : 'dog')}</span><div><h1>${state.role === 'ops' ? '派宠经营者' : '宠物主人'}</h1><p>${escape(masked)}</p><small>${state.role === 'ops' ? '运营权限' : '用户权限'}</small></div></div><div class="mini-menu-card"><button data-go="${state.role === 'ops' ? 'ops-orders' : 'orders'}">${icon('clipboard-check')}<span>${state.role === 'ops' ? '订单管理' : '我的订单'}</span>${icon('arrow-right')}</button><button data-go="guide">${icon('info')}<span>使用说明</span>${icon('arrow-right')}</button><div class="mini-version">总部所在地<span>安徽 · 合肥</span></div><div class="mini-version">当前版本<span>体验版</span></div></div><div class="mini-security-note">${icon('shield-check')}身份由账号密码决定，退出后才能切换账号。</div><button id="mini-logout" class="outline-button mini-full-button">退出当前账号</button><p class="mini-demo-note">体验说明：同一浏览器内双端联动，不跨设备同步。</p></div>`;
@@ -215,9 +223,9 @@
       ['04 · 履约与异常', '到点和派车后由司机验宠，用户确认总价并付清尾款后才能离点。司机更新运输与签收；异常在订单详情中由经营者处理后恢复原流程，不自动签收。']
     ] : [
       ['01 · 提前准备材料', '准备清晰的宠物近期全身照和有效免疫记录，如实填写健康声明及晕车、用药等照护说明。体验版仅保留文件名称，请勿上传真实证件。'],
-      ['02 · 费用需要确认', '系统先提供估价，预订保证金为基础价的20%。运营建议价用于方案确认；司机验宠后再出具总价，由你确认抵扣保证金后的尾款，体验版不扣款。'],
-      ['03 · 节点由运营安排', '无需自行选择合作点，运营根据预约时间和同城笼位安排合作点；订单详情可查看方案及交接进度。'],
-      ['04 · 改期与取消', '审核通过前可以改期；未编线、未到点的订单可取消。体验版按全额退还保证金展示，不代表正式收费政策。']
+      ['02 · 费用需要确认', '系统先提供估价，宠物运输检疫费为基础价的20%。运营建议价用于方案确认；司机验宠后再出具总价，由你确认抵扣宠物运输检疫费后的尾款，体验版不扣款。'],
+      ['03 · 按接送方式交接', '上门服务填写详细地址；合作点服务可在地图选城市后选择网点，系统自动带入网点信息。运营结合两端时段及笼位确认最终交接安排。'],
+      ['04 · 改期与取消', '审核通过前可以改期；未编线、未到点的订单可取消。体验版按全额退还宠物运输检疫费展示，不代表正式收费政策。']
     ];
     byId('mini-page').innerHTML = `<div class="mini-guide"><p class="mini-guide-intro">先把每一步看清楚，再放心出发。</p>${sections.map(([heading, text]) => `<section><h2>${heading}</h2><p>${text}</p></section>`).join('')}<p class="mini-demo-note">体验说明：不产生实际扣款、运输或通知；同一浏览器内双端共享假数据。</p></div>`;
   }

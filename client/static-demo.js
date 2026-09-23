@@ -102,6 +102,7 @@ function shanghaiDate() {
 function addDays(date, days) { return new Date(Date.parse(`${date}T00:00:00Z`) + days * 86400000).toISOString().slice(0, 10); }
 function bookingWindow() { const today = shanghaiDate(); return { today, minDate: addDays(today, 1), maxDate: addDays(today, 14) }; }
 const operations = require('./operations')({ StoreError, shanghaiDate, addDays, log });
+const bookingOptions = require('./booking-options')({ StoreError, calendar: operations.nodeCalendar });
 const partners = require('./partners')({ StoreError, operations, shanghaiDate, addDays, log });
 const fulfillment = require('./fulfillment')({ StoreError, moneyValue, log });
 function hydrate(data) {
@@ -147,7 +148,8 @@ function petTypeOf(value) {
   const valueLower = String(value || '').trim().toLowerCase();
   if (['猫', '猫咪', 'cat'].includes(valueLower)) return '猫';
   if (['犬', '狗', '狗狗', 'dog'].includes(valueLower)) return '犬';
-  throw new StoreError('宠物类型仅支持猫或犬');
+  if (bookingOptions.pets.some(item => item.name === valueLower && item.manual)) throw new StoreError('此类宠物需要运营单独确认适运条件，暂不自动报价或收取保证金。请联系运营咨询。', 400, 'PET_MANUAL_REVIEW');
+  throw new StoreError('请选择有效的宠物类型');
 }
 function findOrder(data, id) { const order = data.orders.find((item) => item.id === id); if (!order) throw new StoreError('未找到订单', 404, 'ORDER_NOT_FOUND'); return order; }
 function accountValue(account) { return required(typeof account === 'object' ? account?.account : account, '登录账号'); }
@@ -190,12 +192,14 @@ function createQuote(input = {}) {
   if (!Number.isFinite(weight) || weight <= 0 || weight > 80) throw new StoreError('宠物体重需在 0-80kg 之间');
   const route = ROUTE_PRICES[`${fromCity}|${toCity}`] || ROUTE_PRICES[`${toCity}|${fromCity}`] || [1480, '3-5天'];
   const basePrice = route[0] + (weight > 10 ? Math.ceil((weight - 10) / 5) * 100 : 0);
+  const bookingSelection = input.bookingVersion === 1 ? bookingOptions.selection(read(), { ...input, fromCity, toCity }) : null;
   return {
     id: `Q-${Date.now()}-${Math.random().toString(16).slice(2, 6).toUpperCase()}`, fromCity, toCity, petType, weight,
     serviceType: input.serviceType || '专车门到门', basePrice, extraFeeMin: 0, extraFeeMax: 200,
     totalMin: basePrice, totalMax: basePrice + 200, depositRate: 0.2, depositAmount: Math.round(basePrice * 0.2), estimatedDays: route[1],
     priceNote: '模拟预估价格；运营建议价经用户确认后用于方案确认，后续司机验宠锁价另行确认。',
-    validUntil: new Date(Date.now() + 86400000).toISOString(), simulated: true
+    validUntil: new Date(Date.now() + 86400000).toISOString(), simulated: true,
+    ...(bookingSelection ? { bookingSelection, cageFeeIncluded: false } : {})
   };
 }
 
@@ -237,6 +241,9 @@ function createOrder(input = {}, account) {
   const fromCity = required(input.fromCity || input.origin || quoteInput.fromCity, '出发城市');
   const toCity = required(input.toCity || input.destination || quoteInput.toCity, '目的城市');
   const quote = createQuote({ fromCity, toCity, petType, weight, serviceType: quoteInput.serviceType || input.serviceType });
+  const bookingInput = { ...input, fromCity, toCity };
+  const bookingSelection = input.bookingVersion === 1 ? bookingOptions.selection(data, bookingInput, { checkAvailability: false }) : null;
+  if (bookingSelection) quote.serviceType = bookingSelection.serviceType;
   const materials = normalizeMaterials(input);
   if (!materials.vaccineCertificate || !materials.petPhoto) throw new StoreError('请提交免疫证明和宠物近照文件名');
   const healthInput = input.healthDeclaration || input.health || {};
@@ -251,11 +258,13 @@ function createOrder(input = {}, account) {
     recipientAddress: String(input.recipientAddress || input.recipient?.address || '').trim(),
     careNote: String(input.careNote || pet.careNote || '').trim()
   };
+  if (bookingSelection?.originNode) details.pickupAddress = bookingSelection.originNode.address;
+  if (bookingSelection?.destinationNode) details.recipientAddress = bookingSelection.destinationNode.address;
   if (details.recipientPhone && !/^1\d{10}$/.test(details.recipientPhone)) throw new StoreError('请填写正确的 11 位收宠手机号');
   const breed = String(input.breed || pet.breed || '未填写').trim();
   const clientRequestId = String(input.clientRequestId || '').trim();
   if (clientRequestId.length > 100) throw new StoreError('提交标识过长');
-  const requestFingerprint = JSON.stringify({ petName, petType, weight, breed, fromCity, toCity, serviceType: quote.serviceType, slotId, materials, healthDeclaration: healthKeys, ...details });
+  const requestFingerprint = JSON.stringify({ petName, petType, weight, breed, fromCity, toCity, serviceType: quote.serviceType, slotId, materials, healthDeclaration: healthKeys, ...details, ...(bookingSelection ? { cageId: bookingSelection.cage.id, originNodeId: bookingSelection.originNode?.id || '', destinationNodeId: bookingSelection.destinationNode?.id || '' } : {}) });
   if (clientRequestId) {
     const previous = data.orders.find((order) => ownerOf(order) === ownerAccount && order.clientRequestId === clientRequestId);
     if (previous) {
@@ -264,12 +273,17 @@ function createOrder(input = {}, account) {
     }
   }
   const slot = validateSlot(data, slotId, fromCity);
+  if (bookingSelection) {
+    Object.assign(bookingSelection, bookingOptions.selection(data, bookingInput, { date: slot.date, period: slot.timeSlot === '09:00-12:00' ? 'AM' : 'PM' }));
+    quote.bookingSelection = bookingSelection;
+    quote.cageFeeIncluded = false;
+  }
   const day = shanghaiDate().replaceAll('-', ''), prefix = `PC${day}`;
   const next = data.orders.filter((order) => order.id.startsWith(prefix)).reduce((max, order) => Math.max(max, Number(order.id.slice(prefix.length)) || 0), 0) + 1;
   const now = new Date().toISOString();
   const order = {
     id: `${prefix}${String(next).padStart(3, '0')}`, ownerAccount, userPhone, clientRequestId, requestFingerprint, ...details,
-    petName, petType, breed, weight, fromCity, toCity, serviceType: quote.serviceType,
+    petName, petType, breed, weight, fromCity, toCity, serviceType: quote.serviceType, ...(bookingSelection ? { bookingSelection } : {}),
     status: '待支付保证金', reviewStatus: 'not_submitted', reviewNote: '', depositStatus: '待支付',
     deposit: { amount: quote.depositAmount, rate: 0.2, status: 'unpaid', paidAt: null, method: '模拟微信支付' },
     quote, priceEstimate: quote.basePrice, materials, healthDeclaration: healthKeys,
@@ -434,6 +448,7 @@ function listOrders(query = {}) {
   return prioritizeHefei(orders);
 }
 function listCityNodes() { const data = read(); return data.cityNodes.map((node) => operations.summaryNode(data, node)).sort((a, b) => Number(b.city === '合肥') - Number(a.city === '合肥')); }
+function listBookingOptions(query = {}) { return bookingOptions.catalog(read(), query); }
 function nodeCalendar(query = {}) { return operations.nodeCalendar(read(), query); }
 function updateCityNode(id, input = {}) { const data = read(), result = operations.updateCityNode(data, id, input); write(data); return result; }
 function partnerNode(identity, query = {}) { return partners.node(read(), identity, query); }
@@ -474,6 +489,7 @@ function fulfillmentAction(action, id, input = {}) {
 module.exports = { StoreError, read, write, dashboard, listOrders, addOrderToRoute, updateOrderStatus, createQuote, listAvailability, availabilityMeta, createOrder, listUserOrders, getUserOrder, getOrder, payDeposit, supplementOrder, reviewOrder, confirmOrder, cancelOrder, rescheduleOrder, processRefund, resetDemo, demoData, listCityNodes, nodeCalendar, updateCityNode, nodeCheckIn, nodeCheckOut, listRoutes, getRoute, createRoute, removeOrderFromRoute, assignRoute, dispatchRoute, listTransportResources };
 Object.assign(module.exports, { listDriverOrders, getDriverOrder, fulfillmentAction });
 Object.assign(module.exports, { partnerNode, listCapacityRequests, submitCapacityRequest, reviewCapacityRequest });
+Object.assign(module.exports, { listBookingOptions });
 
 },
 "./operations": function(module, exports, require) {
@@ -1008,6 +1024,62 @@ module.exports = function fulfillment({ StoreError, moneyValue, log }) {
   return { allowed, inspect, payBalance, depart, checkpoint, reportException, resolveException, receive };
 };
 
+},
+"./booking-options": function(module, exports, require) {
+'use strict';
+
+// Public booking catalogue. A selected station is an intention, not a reservation.
+module.exports = function bookingOptions({ StoreError, calendar }) {
+  const services = [
+    { id: 'door-to-door', label: '上门接宠 + 上门送达', pickupMode: 'door', deliveryMode: 'door' },
+    { id: 'node-to-node', label: '自行送至合作点 + 派送至合作点', pickupMode: 'node', deliveryMode: 'node' },
+    { id: 'door-to-node', label: '上门接宠 + 派送至合作点', pickupMode: 'door', deliveryMode: 'node' },
+    { id: 'node-to-door', label: '自行送至合作点 + 上门送达', pickupMode: 'node', deliveryMode: 'door' }
+  ];
+  const pets = ['猫', '犬', '兔', '仓鼠', '豚鼠', '鸟类', '其他'].map(name => ({ name, manual: !['猫', '犬'].includes(name) }));
+  const cages = [1, 2, 3, 4, 5].map(number => ({ id: `cage-${number}`, label: `${number}号笼`, number, dimensions: '', specificationStatus: '待核实尺寸', feeStatus: '提供方式与费用待确认' }));
+  cages.push({ id: 'own', label: '自备笼', number: 0, dimensions: '', specificationStatus: '接宠时核对尺寸与状态', feeStatus: '自备笼具，不计入平台笼具费用' });
+  const demoAreas = { 'NODE-HF-SS': '蜀山区', 'NODE-HF-BH': '包河区', 'NODE-GZ-TH': '天河区', 'NODE-GZ-BY': '白云区', 'NODE-WH-HK': '汉口片区', 'NODE-ZZ-JS': '金水区', 'NODE-BJ-CY': '朝阳区' };
+  const clean = (value, max = 160) => typeof value === 'string' ? value.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, max) : '';
+  const fail = (message, code) => { throw new StoreError(message, 409, code); };
+  function nodeView(data, node, date, period) {
+    const demoAddress = data.demo?.enabled === true && Object.hasOwn(demoAreas, node.id) && node.address === undefined;
+    const address = demoAddress ? `${node.city}市${demoAreas[node.id]} · 合作点示例地址（非导航地址）` : clean(node.address);
+    const windows = date ? calendar(data, { nodeId: node.id, date, days: 1 }).items.filter(item => !period || item.period === period).map(item => ({ timeSlot: item.timeSlot, remaining: item.remaining, available: item.available, blockedReason: item.blockedReason })) : [];
+    const configured = node.status === '正常' && Boolean(address);
+    const available = configured && (!date || windows.some(item => item.available));
+    return { id: node.id, city: node.city, name: clean(node.name, 80), address, open: clean(node.open, 30), publicPhone: clean(node.publicPhone, 30), sampleAddress: demoAddress, windows,
+      available, unavailableReason: node.status !== '正常' ? '合作点暂停服务' : !address ? '详细地址尚未配置' : !available ? '所选日期或时段暂无可用笼位' : '',
+      capacityStatus: date ? 'reference_only' : 'arrival_time_pending' };
+  }
+  function catalog(data, query = {}) {
+    const originNodes = data.cityNodes.filter(node => node.city === query.fromCity).map(node => nodeView(data, node, query.travelDate));
+    const destinationNodes = data.cityNodes.filter(node => node.city === query.toCity).map(node => nodeView(data, node));
+    const sort = nodes => nodes.sort((a, b) => Number(b.available) - Number(a.available) || a.name.localeCompare(b.name, 'zh-CN'));
+    return { services, pets, cages, originNodes: sort(originNodes), destinationNodes: sort(destinationNodes), selectionOnly: true, simulated: true };
+  }
+  function selection(data, input, { date = input.travelDate, period, checkAvailability = true } = {}) {
+    const service = services.find(item => item.id === input.serviceType);
+    if (!service) fail('请选择有效的接送方式', 'INVALID_SERVICE_TYPE');
+    const cage = cages.find(item => item.id === input.cageId);
+    if (!cage) fail('请选择笼型或自备笼', 'CAGE_REQUIRED');
+    const node = (mode, id, city, isOrigin) => {
+      if (mode !== 'node') return null;
+      const found = data.cityNodes.find(item => item.id === id && item.city === city);
+      if (!found) fail(`请选择${city}的${isOrigin ? '送宠' : '取宠'}合作点`, 'BOOKING_NODE_MISMATCH');
+      const value = nodeView(data, found, checkAvailability && isOrigin ? date : undefined, period);
+      if (checkAvailability && !value.available) fail(value.unavailableReason + '，请重新选择合作点', 'BOOKING_NODE_UNAVAILABLE');
+      // Never copy internal capacity orders, account identities, or supplied addresses.
+      const { windows, available, unavailableReason, ...snapshot } = value;
+      return snapshot;
+    };
+    return { version: 1, serviceType: service.id, serviceLabel: service.label, pickupMode: service.pickupMode, deliveryMode: service.deliveryMode,
+      cage: { ...cage }, originNode: node(service.pickupMode, input.originNodeId, input.fromCity, true), destinationNode: node(service.deliveryMode, input.destinationNodeId, input.toCity, false),
+      confirmationStatus: 'pending_review', cageFeeIncluded: false };
+  }
+  return { catalog, selection, pets };
+};
+
 } };
   const cache = new Map();
   function requireModule(name) {
@@ -1113,7 +1185,7 @@ module.exports = function fulfillment({ StoreError, moneyValue, log }) {
     ['花卷', 'inspection'], ['糯米', 'balance'], ['年糕', 'ready'], ['团子', 'transit'],
     ['橘子', 'arrived'], ['丸子', 'exception'], ['幸运', 'delivered']
   ].map(([name, stage]) => ({ order: make(name, 'arrived'), stage }));
-  const route = store.createRoute({ ...ops, name: '猫狗专车 · 合肥—广州线', cities: ['合肥', '武汉', '广州'],
+  const route = store.createRoute({ ...ops, name: '宠物专车 · 合肥—广州线', cities: ['合肥', '武汉', '广州'],
     departureAt: slot.date + 'T17:00:00+08:00', arrivalAt: addDays(slot.date, 1) + 'T18:00:00+08:00', capacity: 8, minOrders: 1 }).route;
   scenarios.forEach(({ order }) => store.addOrderToRoute(route.id, order.id, ops));
   if (freeSlot) {
@@ -1147,7 +1219,7 @@ module.exports = function fulfillment({ StoreError, moneyValue, log }) {
   store.write(complete);
 }
 
-  // Browser-only institution handoff adapter. The existing business rules remain
+  // Institution handoff adapter. The existing business rules remain
 // authoritative; this module only scopes access and collects on-site checks.
 function partnerFrontendAction({ store, session, resource, id, action = '', method, body = {}, query = {} }) {
   if (session?.role !== 'partner' || resource !== 'orders') return undefined;
@@ -1216,10 +1288,13 @@ function partnerFrontendAction({ store, session, resource, id, action = '', meth
   const result = action === 'node-check-in' ? store.nodeCheckIn(id, input) : store.nodeCheckOut(id, input);
   return { order: project(store.getOrder(id)), idempotent: !!result.idempotent, simulated: true };
 }
+if (typeof module !== 'undefined' && module.exports) module.exports = { partnerFrontendAction };
 
-// Browser-only review extensions. This file is never loaded by the API server.
+// Shared review-flow extensions. The API loads these only in isolated native-v2
+// mode; the browser still uses the same rules without any server dependency.
 function frontendAction(context) {
   const { store, session, role, resource, id, action, method, body, query, actor } = context;
+  const uuid = context.randomUUID || (() => window.crypto.randomUUID());
   const fail = (message, code = 'FRONTEND_FLOW_CONFLICT', status = 409) => { throw new store.StoreError(message, status, code); };
   const now = () => new Date().toISOString();
   const note = value => {
@@ -1233,7 +1308,7 @@ function frontendAction(context) {
     order.updatedAt = now(); order.reviewHistory ||= [];
     order.reviewHistory.push({ action: event, note: text, at: order.updatedAt, operator: session.account, simulated: true });
     data.auditLogs ||= [];
-    data.auditLogs.unshift({ id: `LOG-FE-${window.crypto.randomUUID()}`, action: event, operator: session.account, payload: { orderId: order.id, note: text }, createdAt: order.updatedAt, simulated: true });
+    data.auditLogs.unshift({ id: `LOG-FE-${uuid()}`, action: event, operator: session.account, payload: { orderId: order.id, note: text }, createdAt: order.updatedAt, simulated: true });
   };
   function availability(filter = {}) {
     const data = store.read(), cache = new Map();
@@ -1324,7 +1399,7 @@ function frontendAction(context) {
       if (kind === 'return' ? !moving(visible) : moving(visible)) fail('运输中请申请退运，发车前可申请取消。');
       if (kind === 'reschedule' && (visible.fulfillment || ['arrived', 'departed'].includes(visible.nodeReservation?.status))) fail('已交接宠物不能直接改期，请申请取消并安排交回。');
       const data = store.read(), order = data.orders.find(o => o.id === id);
-      const request = { id: `SR-${window.crypto.randomUUID()}`, requestId: body.requestId, kind, note: reason, status: 'pending', requestedAt: now(), requestedBy: session.account };
+      const request = { id: `SR-${uuid()}`, requestId: body.requestId, kind, note: reason, status: 'pending', requestedAt: now(), requestedBy: session.account };
       order.serviceRequests ||= []; order.serviceRequests.push(request); order.serviceRequest = request;
       audit(data, order, 'service_requested', reason); store.write(data); return { order: store.getUserOrder(id, session.account), idempotent: false };
     }
@@ -1344,7 +1419,7 @@ function frontendAction(context) {
         const price = Number(body.price), f = order.fulfillment;
         if (!f || f.invoice.status === 'paid' || moving(order) || !Number.isFinite(price) || price < order.deposit.amount || price > 100000 || Math.round(price * 100) / 100 !== price) fail('请填写不低于保证金、最多两位小数的总价。', 'INVALID_PRICE', 400);
         f.priceRevisions ||= []; f.priceRevisions.push({ invoice: { ...f.invoice }, inspection: { ...f.inspection }, revisedAt: now(), note: resolution });
-        f.invoice = { ...f.invoice, id: `INV-${window.crypto.randomUUID()}`, total: price, amount: Math.round((price - order.deposit.amount) * 100) / 100, status: 'unpaid', paidAmount: 0, paidAt: null, paymentId: null };
+        f.invoice = { ...f.invoice, id: `INV-${uuid()}`, total: price, amount: Math.round((price - order.deposit.amount) * 100) / 100, status: 'unpaid', paidAmount: 0, paidAt: null, paymentId: null };
         f.inspection.lockedPrice = price; f.inspection.note = resolution;
         f.stage = 'awaiting_payment'; order.status = '待尾款确认'; order.lockedPrice = price;
       } else if (decision === 'cancel') {
@@ -1400,11 +1475,117 @@ function frontendAction(context) {
     if ((route?.orderIds || []).concat(body.orderId || []).some(value => data.orders.find(o => o.id === value)?.serviceRequest?.status === 'pending')) fail('线路内有待处理变更申请，请先核实后再调度。', 'SERVICE_REQUEST_PENDING');
   }
   if (role === 'partner' && resource === 'orders' && method !== 'GET') {
-    const order = store.getOrder(id);
-    if (order.nodeReservation?.nodeId !== session.nodeId) fail('未找到本机构的交接订单。', 'ORDER_NOT_FOUND', 404);
+    const order = store.listOrders().find(o => o.id === id && o.nodeReservation?.nodeId === session.nodeId && (!o.assignedNode?.id || o.assignedNode.id === session.nodeId));
+    if (!order) fail('未找到本机构的交接订单。', 'ORDER_NOT_FOUND', 404);
     if (order.serviceRequest?.status === 'pending' || ['returning', 'terminated'].includes(order.fulfillment?.stage)) fail('本单正在处理变更，请等待总部确认。', 'SERVICE_REQUEST_PENDING');
   }
+  if (context.partnerAction) return context.partnerAction(context);
   if (typeof partnerFrontendAction === 'function') return partnerFrontendAction(context);
+}
+if (typeof module !== 'undefined' && module.exports) module.exports = { frontendAction };
+
+// Browser-only consultation and follow-up records. Never loaded by the live API.
+function seedLeads() {
+  const data = store.read();
+  if (data.leadDemoVersion === 1) return;
+  data.leads ||= [];
+  const now = new Date().toISOString();
+  const samples = [
+    ['LEAD-SAMPLE-01', '林女士', '13800138101', '合肥', '武汉', '布丁', '猫', 'new', '微信咨询', 2, '第一次托运，想了解合作点交接和笼具要求。'],
+    ['LEAD-SAMPLE-02', '周先生', '13800138102', '合肥', '广州', '可乐', '犬', 'following', '电话咨询', -2, '计划下周出行，请下午回访确认接宠时间。'],
+    ['LEAD-SAMPLE-03', '许女士', '13800138103', '武汉', '合肥', '小豆', '兔', 'quoted', '合作点推荐', 24, '需要先确认兔子的适运条件，再核对费用。']
+  ];
+  for (const [id, name, phone, fromCity, toCity, petName, petType, status, source, hours, message] of samples) {
+    if (data.leads.some(lead => lead.id === id)) continue;
+    data.leads.push({ id, name, phone, fromCity, toCity, petName, petType, status, source, ownerAccount: '', assignee: 'ops001', intention: 'warm', travelDate: '', serviceType: 'door-to-door', nextFollowUpAt: new Date(Date.now() + hours * 3600000).toISOString(), linkedOrderId: '', createdAt: now, updatedAt: now, version: 1, requestIds: [], messages: [{ text: message, at: now }], history: [], simulated: true });
+  }
+  data.leadDemoVersion = 1; store.write(data);
+}
+
+function leadAction({ store, session, role, resource, id, action, method, body }) {
+  if (resource !== 'leads') return undefined;
+  const fail = (text, status = 400, code = 'LEAD_INVALID') => { throw new store.StoreError(text, status, code); };
+  if (!['ops', 'user'].includes(role)) fail('仅客户本人和总部运营可查看咨询记录。', 403, 'FORBIDDEN');
+  const data = store.read(), leads = data.leads || [];
+  const statuses = ['new', 'following', 'quoted', 'converted', 'lost'];
+  const text = (value, max, label, required = true) => {
+    if (typeof value !== 'string' || value.trim().length > max || (required && !value.trim())) fail(`请填写${label}，最多 ${max} 字。`);
+    return value.trim();
+  };
+  const visible = lead => role === 'ops' || lead.ownerAccount === session.account;
+  const publicView = lead => role === 'ops' ? lead : {
+    id: lead.id, name: lead.name, phone: lead.phone, fromCity: lead.fromCity, toCity: lead.toCity,
+    petName: lead.petName, petType: lead.petType, travelDate: lead.travelDate, serviceType: lead.serviceType,
+    status: lead.status, messages: lead.messages, createdAt: lead.createdAt, updatedAt: lead.updatedAt,
+    linkedOrderId: lead.linkedOrderId, simulated: true
+  };
+  if (method === 'GET' && !action) {
+    if (id) { const lead = leads.find(item => item.id === id && visible(item)); if (!lead) fail('咨询记录不存在或不可访问。', 404); return { lead: publicView(lead) }; }
+    const items = leads.filter(visible).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    return { items: items.map(publicView) };
+  }
+  if (method === 'POST' && !id) {
+    const requestId = text(body.requestId, 100, '提交标识');
+    const prior = leads.find(lead => lead.requestIds?.some(request => request.id === requestId && request.account === session.account));
+    if (prior) return { lead: publicView(prior), idempotent: true };
+    const input = {
+      name: text(body.name, 30, '联系人'), phone: text(body.phone, 11, '联系电话'),
+      fromCity: text(body.fromCity, 30, '出发城市'), toCity: text(body.toCity, 30, '到达城市'),
+      petName: text(body.petName || '', 30, '宠物昵称', false), petType: text(body.petType || '', 20, '宠物类型', false),
+      travelDate: text(body.travelDate || '', 10, '意向出发日期', false), serviceType: body.serviceType || 'door-to-door'
+    };
+    if (!/^1\d{10}$/.test(input.phone)) fail('请填写 11 位联系电话。');
+    if (input.fromCity === input.toCity) fail('出发和到达城市不能相同。');
+    if (input.travelDate && !/^\d{4}-\d{2}-\d{2}$/.test(input.travelDate)) fail('请选择有效的出发日期。');
+    if (!['door-to-door', 'door-to-node', 'node-to-door', 'node-to-node'].includes(input.serviceType)) fail('请选择有效的接送方式。');
+    if (role === 'user' && body.consent !== true) fail('请确认允许使用本次填写的测试信息联系你。');
+    const message = text(body.message, 500, '咨询内容');
+    const now = new Date().toISOString();
+    // Repeated questions about the same active trip become one lead, not duplicates.
+    let lead = role === 'user' ? leads.find(item => item.ownerAccount === session.account && item.fromCity === input.fromCity && item.toCity === input.toCity && !['converted', 'lost'].includes(item.status)) : null;
+    if (!lead) {
+      const source = role === 'user' ? '用户咨询' : text(body.source || '微信咨询', 20, '咨询来源');
+      if (!['用户咨询', '微信咨询', '电话咨询', '合作点推荐'].includes(source)) fail('请选择有效的咨询来源。');
+      lead = { ...input, id: 'LEAD-' + browserCrypto.randomUUID(), ownerAccount: role === 'user' ? session.account : '', status: 'new', intention: 'warm', assignee: 'ops001', source, createdAt: now, updatedAt: now, nextFollowUpAt: '', linkedOrderId: '', version: 0, messages: [], history: [], requestIds: [], simulated: true };
+      leads.unshift(lead);
+    }
+    Object.assign(lead, input, { updatedAt: now, version: lead.version + 1 });
+    if (lead.messages.length >= 200) fail('该咨询的记录已达上限，请由运营归档后重新咨询。');
+    lead.messages.push({ text: message, at: now }); lead.requestIds.push({ id: requestId, account: session.account });
+    data.leads = leads; store.write(data); return { lead: publicView(lead) };
+  }
+  const lead = leads.find(item => item.id === id && visible(item));
+  if (!lead) fail('咨询记录不存在或不可访问。', 404);
+  if (role !== 'ops') fail('仅总部运营可处理回访。', 403, 'FORBIDDEN');
+  if (method !== 'POST' || action !== 'follow-ups') fail('未找到回访操作。', 404);
+  const requestId = text(body.requestId, 100, '提交标识');
+  if (lead.history.some(item => item.requestId === requestId && item.operator === session.account)) return { lead, idempotent: true };
+  if (body.version !== lead.version) fail('该客户资料已更新，请刷新后再保存回访。', 409, 'LEAD_CONFLICT');
+  if (['converted', 'lost'].includes(lead.status)) fail('该客户已结束跟进，不能重复提交。', 409);
+  const note = text(body.note, 500, '回访记录');
+  const status = body.status;
+  if (!statuses.includes(status)) fail('请选择有效的跟进阶段。');
+  if (!['hot', 'warm', 'cold'].includes(body.intention)) fail('请选择意向程度。');
+  if (!['微信', '电话', '其他'].includes(body.method)) fail('请选择回访方式。');
+  const finished = ['converted', 'lost'].includes(status);
+  let nextFollowUpAt = '';
+  if (!finished) {
+    const time = Date.parse(body.nextFollowUpAt);
+    if (!Number.isFinite(time) || time <= Date.now()) fail('请设置未来的下次回访时间。');
+    nextFollowUpAt = new Date(time).toISOString();
+  }
+  let linkedOrderId = '';
+  if (status === 'converted') {
+    const order = data.orders.find(item => item.id === body.orderId);
+    if (!order || ['cancelled', 'rejected'].includes(order.reviewStatus)) fail('请关联一笔有效的现有订单，不能只标记为已转单。');
+    if (lead.ownerAccount ? (order.ownerAccount || order.userPhone) !== lead.ownerAccount : ![order.contactPhone, order.userPhone, order.ownerAccount].includes(lead.phone)) fail('这笔订单不属于当前意向客户。');
+    if (leads.some(item => item.id !== lead.id && item.linkedOrderId === order.id)) fail('这笔订单已关联其他意向记录。');
+    linkedOrderId = order.id;
+  }
+  const at = new Date().toISOString();
+  lead.history.push({ id: 'FOLLOW-' + browserCrypto.randomUUID(), requestId, operator: session.account, method: body.method, note, status, nextFollowUpAt, at });
+  Object.assign(lead, { status, intention: body.intention, nextFollowUpAt, linkedOrderId, updatedAt: at, version: lead.version + 1 });
+  store.write(data); return { lead };
 }
 
   function prepareDemo(preserveExisting = false) {
@@ -1425,6 +1606,7 @@ function frontendAction(context) {
       complete.historyArchive = oldMetadata.historyArchive || complete.historyArchive || [];
       complete.shared = oldMetadata.shared || complete.shared || {};
       stagedData = JSON.stringify(complete);
+      seedLeads();
   }
   function validateSaved(raw) {
     const data = JSON.parse(raw);
@@ -1488,6 +1670,7 @@ function frontendAction(context) {
       const saved = local.getItem(dataKey);
       if (!saved) migrateLegacy();
       else if (validateSaved(saved).demo?.hefeiVersion !== 1) prepareDemo(true);
+      seedLeads();
     }, assertLock);
   }
   let pendingWrite = Promise.resolve();
@@ -1564,6 +1747,8 @@ function frontendAction(context) {
     const extensionMatch = pathname.match(/^\/api\/(user|ops|driver|partner)\/([^/]+)(?:\/([^/]+))?(?:\/(.*))?$/);
     if (typeof frontendAction === 'function' && extensionMatch) {
       const [, , resource, id = '', action = ''] = extensionMatch;
+      const leadValue = leadAction({ store, session, role, resource, id, action, method, body });
+      if (leadValue !== undefined) return result(leadValue, method === 'POST' && !id ? 201 : 200);
       if (resource === 'orders' && id && role === 'user') store.getUserOrder(id, session.account);
       if (resource === 'orders' && id && role === 'driver') store.getDriverOrder(id, session.driverId);
       const value = frontendAction({ store, session, role, resource, id, action, method, body, query, actor });
@@ -1572,6 +1757,7 @@ function frontendAction(context) {
     const route = `${method} ${pathname}`;
     const table = {
       'POST /api/user/quote': () => ({ quote: store.createQuote(body) }),
+      'GET /api/user/booking-options': () => store.listBookingOptions(query),
       'GET /api/user/availability': () => ({ items: store.listAvailability(query), ...store.availabilityMeta(query) }),
       'GET /api/user/orders': () => items(store.listUserOrders(session.account)),
       'POST /api/user/orders': () => wrapped(store.createOrder(body, session.account)),
@@ -1686,7 +1872,8 @@ function frontendAction(context) {
         if (!archive.items.length) { const empty = document.createElement('p'); empty.textContent = '当前账号没有需要归档的旧记录。'; dialog.append(empty); }
         for (const entry of archive.items) {
           const details = document.createElement('details'), summary = document.createElement('summary'), reason = document.createElement('p'), content = document.createElement('pre');
-          summary.textContent = `${entry.order.petName || '毛孩子'} · ${entry.order.status || entry.order.reviewStatus} · ${entry.order.id}`;
+          const display = value => window.PaichongProductCopy?.text(value) ?? value;
+          summary.textContent = display(`${entry.order.petName || '毛孩子'} · ${entry.order.status || entry.order.reviewStatus} · ${entry.order.id}`);
           reason.textContent = entry.reason;
           const order = entry.order, facts = document.createElement('dl');
           facts.style.cssText = 'display:grid;grid-template-columns:62px minmax(0,1fr);gap:7px 12px;font-size:13px;margin:14px 0;overflow-wrap:anywhere';
@@ -1698,12 +1885,12 @@ function frontendAction(context) {
             ['接宠时间', [order.pickup?.date, order.pickup?.timeSlot].filter(Boolean).join(' ') || '待确认'],
             ['订单状态', order.status || '待确认'],
             ['运输费用', money(order.fulfillment?.invoice?.total ?? order.proposedPrice ?? order.quote?.basePrice)],
-            ['保证金', `${money(order.deposit?.amount)} · ${depositNames[order.deposit?.status] || '待确认'}`],
+            ['宠物运输检疫费', `${money(order.deposit?.amount)} · ${depositNames[order.deposit?.status] || '待确认'}`],
             ['接宠联系', [order.contactName, order.contactPhone || order.userPhone].filter(Boolean).join(' · ') || '未填写'],
             ['交接机构', order.assignedNode?.name || entry.node?.name || '尚未分配'],
             ['记录来源', entry.source === 'client' ? '旧版客户端' : '旧版工作端']
           ];
-          for (const [label, value] of fields) { const term = document.createElement('dt'), description = document.createElement('dd'); term.textContent = label; term.style.color = '#72877b'; description.textContent = value; description.style.margin = '0'; facts.append(term, description); }
+          for (const [label, value] of fields) { const term = document.createElement('dt'), description = document.createElement('dd'); term.textContent = label; term.style.color = '#72877b'; description.textContent = display(value); description.style.margin = '0'; facts.append(term, description); }
           const raw = document.createElement('details'), rawLabel = document.createElement('summary'); rawLabel.textContent = '原始记录';
           content.textContent = JSON.stringify(entry.order, null, 2);
           raw.append(rawLabel, content); details.append(summary, reason, facts, raw); dialog.append(details);
