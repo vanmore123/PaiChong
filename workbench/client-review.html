@@ -3,7 +3,7 @@
   <head>
     <script src="./portal-config.js?v=d996f76c5e66"></script>
     <script src="./h5-api.js?v=1befeb8b3ec7"></script>
-    <script src="./static-demo.js?v=56ea38189305"></script>
+    <script src="./static-demo.js?v=3800cfa6e7d4"></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#F7FBF9" />
@@ -18,6 +18,7 @@
     <link rel="stylesheet" href="./service-flow.css?v=931736ef2452" />
     <link rel="stylesheet" href="./customer-care.css?v=d71e73a6e841" />
     <link rel="stylesheet" href="./demo-map.css?v=90bb7ac6daac" />
+    <link rel="stylesheet" href="./protection-ui.css?v=bf1f4943944e" />
   </head>
   <body>
     <a class="skip-link" href="#review-main">跳到主要内容</a>
@@ -197,7 +198,8 @@
                   <strong>宠物运输检疫费说明</strong>
                   <p>本测试版暂沿用预估基础服务费的 20% 演示金额，并计入运输总费用、后续抵扣一次；不代表官方检疫收费，也不代表已完成检疫或取得证明。正式收费项目、金额与退费规则待确认。</p>
                 </div>
-                <label class="agreement-row"><input id="deposit-agreement" type="checkbox" /> <span>我已核对服务及取消规则，知悉体验版支付不扣款</span></label>
+                <div id="protection-confirmation"></div>
+                <label class="agreement-row"><input id="deposit-agreement" type="checkbox" /> <span>我已核对本次费用，知悉体验版支付不扣款，也不购买保险</span></label>
                 <div class="form-message" id="deposit-error" role="alert" hidden></div>
                 <div class="form-actions"><button class="quiet-button" id="back-to-order" type="button"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-chevron-left"></use></svg><span>返回订单详情</span></button><button class="pay-button" id="pay-deposit" type="button"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-credit-card"></use></svg><span>确认支付宠物运输检疫费</span></button></div>
               </div>
@@ -318,12 +320,14 @@
     <script src="./cabin-monitor.js?v=41760498c8e5"></script>
     <script src="./fulfillment-ui.js?v=46c2513d1c5a"></script>
     <script src="./booking-selection.js?v=3f625615a30a"></script>
-    <script src="./client-review.js?v=e01813bbf0b7"></script>
+    <script src="./protection-content.js?v=078045ebaf2f"></script>
+    <script src="./protection-ui.js?v=4af8cec72d7f"></script>
+    <script src="./client-review.js?v=efe8fe9183e6"></script>
     <script src="./ops-workbench.js?v=5963338c025c"></script>
     <script src="./customer-care-config.js?v=c1aab1221c30"></script>
     <script src="./customer-care.js?v=e9e6dc1dcd76"></script>
     <script src="./demo-map.js?v=898e90cd907d"></script>
-    <script src="./miniapp.js?v=6710ae19f9e9"></script>
+    <script src="./miniapp.js?v=253941ec5443"></script>
     <script src="./shared-demo-ui.js?v=de535386f4a2"></script>
   </body>
 </html>

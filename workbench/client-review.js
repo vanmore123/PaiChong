@@ -501,6 +501,7 @@
       recipientName: formValue('recipient-name'), recipientPhone: formValue('recipient-phone'), recipientAddress: formValue('recipient-address'),
       clientRequestId: state.clientRequestId,
       serviceType: formValue('service-type'),
+      ...(window.PAICHONG_DEMO_MODE === true ? { protectionVersion: 1 } : {}),
       ...(bookingSelection?.input() || {}),
       pet: {
         name: formValue('pet-name'),
@@ -558,6 +559,7 @@
     byId('deposit-estimate').textContent = formatMoney(estimate);
     byId('deposit-line').textContent = formatMoney(deposit);
     byId('deposit-balance').textContent = formatMoney(Math.max(0, estimate - deposit));
+    window.PaichongProtection?.mountPayment(byId('protection-confirmation'), order);
   }
 
   async function payDeposit() {
@@ -572,16 +574,24 @@
       return;
     }
     const button = byId('pay-deposit');
+    let protection;
+    if (window.PAICHONG_DEMO_MODE === true) {
+      try {
+        if (!window.PaichongProtection) throw new Error('协议内容未加载完成，请刷新后重试。');
+        protection = window.PaichongProtection.payload(state.currentOrder);
+      } catch (error) { setMessage('deposit-error', error.message); return; }
+    }
     setBusy(button, true, '正在确认…');
+    window.PaichongProtection?.setBusy(true);
     try {
-      const payload = await api(`/api/user/orders/${encodeURIComponent(state.currentOrder.id)}/deposit/pay`, { method: 'POST', body: {} });
+      const payload = await api(`/api/user/orders/${encodeURIComponent(state.currentOrder.id)}/deposit/pay`, { method: 'POST', body: protection ? { protection } : {} });
       state.currentOrder = payload.order || payload;
       persistState();
       toast('宠物运输检疫费已确认，订单已进入审核');
       state.maxStep = 5;
       showStep(5, { force: true });
     } catch (error) { setMessage('deposit-error', error.message); }
-    finally { setBusy(button, false); }
+    finally { setBusy(button, false); window.PaichongProtection?.setBusy(false); }
   }
 
   function reviewStatus(order) {
@@ -760,6 +770,7 @@
       <dl class="cost-breakdown"><div><dt>宠物</dt><dd>${escapeHtml(pet.name)} · ${escapeHtml(pet.type)} · ${escapeHtml(pet.weight)}kg</dd></div><div><dt>宠物运输检疫费</dt><dd>${formatMoney(depositAmount(order))}</dd></div><div><dt>宠物运输检疫费状态</dt><dd>${escapeHtml(userDepositStatus(order))}</dd></div><div><dt>预约时段</dt><dd>${escapeHtml(order.pickup?.date || '')} ${escapeHtml(order.pickup?.timeSlot || order.pickupTime || '')}</dd></div></dl>
       ${window.PaichongMaterials?.markup(order) || ''}
       ${window.PaichongBookingSelection?.markup(order) || ''}
+      ${window.PaichongProtection?.markup(order, 'user') || ''}
       ${window.PaichongCabinMonitor?.markup(order) || ''}${window.PaichongFulfillment?.markup(order, 'user') || ''}${journeyMarkup(order)}${pricingMarkup(order)}${contactsMarkup(order)}
       ${node ? `<div class="node-result">${icon('map-pin')}<div><strong>已分配合作交接点</strong><br>${escapeHtml(node.city)} · ${escapeHtml(node.name)} · 营业 ${escapeHtml(node.open || '以预约为准')}</div></div>` : ''}
       ${reviewNote && current !== 'info_required' ? `<div class="review-message">${icon('clipboard-check')}<div><strong>运营说明</strong><br>${escapeHtml(copy(reviewNote))}</div></div>` : ''}
@@ -774,6 +785,7 @@
     window.PaichongCabinMonitor?.bind(container, order);
     window.PaichongFulfillment?.bind(container, order, { api, toast, reload: loadUserOrders });
     window.PaichongServiceFlow?.bind(container, order, { api, toast, reload: loadUserOrders });
+    window.PaichongProtection?.bind(container, order);
   }
 
   function bindUserOrderActions(order) {
@@ -1010,6 +1022,7 @@
       ${window.PaichongBookingSelection?.markup(order) || ''}
       ${order.assignedNode ? `<div class="node-result">${icon('map-pin')}<div><strong>已分配：</strong>${escapeHtml(order.assignedNode.city)} · ${escapeHtml(order.assignedNode.name)}</div></div>` : ''}
       ${refundMarkup(order, true)}${window.PaichongServiceFlow?.markup(order, 'ops') || ''}${historyMarkup}
+      ${window.PaichongProtection?.markup(order, 'ops') || ''}
       <section class="review-actions"><h3>${canReview ? '本次审核动作' : '当前审核已完成'}</h3>${canReview ? `<div class="review-action-grid">
         <label class="field-label" for="review-note">审核说明<textarea id="review-note" rows="2" maxlength="160" placeholder="补件或拒绝时必填；通过时可填写备注"></textarea></label>
         <button class="quiet-button supplement-action" id="request-supplement" type="button">${icon('camera')}<span>要求补充站立全身照</span></button>
@@ -1026,6 +1039,7 @@
     window.PaichongMaterials?.bind(drawer, order);
     window.PaichongFulfillment?.bind(drawer, order, { api, toast, reload: loadOpsOrders });
     window.PaichongServiceFlow?.bind(drawer, order, { api, toast, reload: loadOpsOrders });
+    window.PaichongProtection?.bind(drawer, order);
     if (canReview) {
       ['assign-node', 'node-booking-date', 'node-booking-period'].forEach((id) => byId(id)?.addEventListener('change', () => loadReviewNodeCapacity(order)));
       loadReviewNodeCapacity(order);

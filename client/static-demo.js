@@ -1080,6 +1080,62 @@ module.exports = function bookingOptions({ StoreError, calendar }) {
   return { catalog, selection, pets };
 };
 
+},
+"./protection-content": function(module, exports, require) {
+// Reviewed demo copy, shared verbatim by the UI and browser-only order record.
+// Never represent these local confirmations as a certified electronic signature.
+(function (root, factory) {
+  const policy = factory();
+  if (typeof module === 'object' && module.exports) module.exports = policy;
+  else root.PaichongProtectionPolicy = policy;
+})(typeof window === 'undefined' ? globalThis : window, function () {
+  'use strict';
+  const policy = {
+    version: 'PC-REVIEW-20260924-01',
+    label: '2026.09.24 · 评审稿',
+    notice: '本页用于测试流程评审，不产生真实交易。正式服务协议需补齐签约主体、服务标准及收费规则，并经专业法律审核后发布。当前勾选仅形成浏览器内确认记录，未接入实名核验、可信时间戳或电子签约平台。',
+    insurance: {
+      title: '宠物运输保险咨询',
+      status: '方案待确认 · 尚未投保',
+      description: '合作保险机构和具体产品尚未确定。承保范围、除外责任、保额、免赔额、保费与保障起止时间均待确认；本次不收取保费，不生成保单。',
+      choices: { consult: '希望了解保险方案', 'not-now': '暂不考虑保险', undecided: '尚未决定' },
+      boundary: '选择咨询不等于投保，不承诺宠物伤病、死亡或其他风险可以获赔。后续需单独展示正式条款、告知费用并取得确认，核实承保结果与责任起始时间。是否选择保险，不影响承运方依法应承担的责任。'
+    },
+    documents: {
+      service: {
+        title: '宠物运输服务协议',
+        sections: [
+          { title: '一、签约主体与本单信息', text: '托运人以本单实际委托人为准，宠物、路线、接送方式、联系人和预约时段以订单中经双方确认的信息为准。派宠一号为服务品牌，实际承运主体全称、统一社会信用代码、地址及联系方式尚待补齐。本评审稿不代替正式签约文件。' },
+          { title: '二、服务范围与交接', text: '根据本单选择履行上门接宠、上门送达或合作点交接。合作点意向不等于已锁定两端笼位，交接时段及余量需审核。接送时核对宠物身份、健康记录、笼具与接收人，记录宠物状态并保留必要的交接凭据。' },
+          { title: '三、适运与照护', text: '托运人应如实说明既往病史、孕期、过敏、用药、应激和攻击行为。承运方应核验适运材料和笼具，对明显不适运的情形拒绝或暂缓承运。快筛试纸仅作筛查参考，不能代替兽医诊断或依法需要的检疫证明。车厢温度、通风、饮水照护和观察记录等标准须在正式服务中明确并履行。' },
+          { title: '四、时效与过程反馈', text: '预计时效以具体路线和确认方案为准，不作所有订单均在 24 小时内到达的承诺。遇到延误应及时告知原因、处置与新的预计时间，采取合理减损措施。测试版地图、视频窗口和运输节点为演示或人工登记，不是已接入的实时设备服务。' },
+          { title: '五、费用与退改', text: '本测试版“宠物运输检疫费”暂沿用预估基础费用的 20% 作为演示金额，计入运输总费用并抵扣一次；不表示官方检疫收费、已完成检疫或已取得证明。保险及笼具额外费用未计入，后续如发生须单独告知并确认。测试订单取消或退运交接完成后，按现有流程退还已付金额；正式收费、已发生的合理成本及退改规则需另行明确，不能将“发车后一概不退”作为默认规则。' },
+          { title: '六、责任划分与索赔', important: true, text: '宠物存在固有运输风险，但不因此一概免除承运责任。宠物自身原因、隐瞒信息、笼具缺陷与损害之间的因果关系及双方过错，应结合证据具体判断。承运方未尽约定照护、适运核验、设备维护或安全操作义务造成损失的，依法承担相应责任；不以风险确认或未选保险排除客户依法享有的权利，不预设统一免赔或赔偿上限。' },
+          { title: '七、紧急情况与不可抗力', important: true, text: '发现异常应及时联系托运人并留痕，联系不上时仍应采取必要、合理的救助和减损措施，不能单因失联就停止救助。医疗与处置费用结合紧急必要性、实际支出及责任归属结算，不一律转由宠主承担。交通事故、车辆或恒温设备故障不自动认定为不可抗力；相关免责须按事件事实、因果关系及法律条件判断。' },
+          { title: '八、保险与争议解决', text: '保险为另行确认的可选安排，咨询意向不是保险合同，当前没有保险保障生效记录。发生争议时可向客服提出并保留订单、沟通、交接及医疗等证据；协商不成，可依法向有管辖权的人民法院主张权利，不限定只能在承运方所在地起诉。' }
+        ]
+      },
+      risk: {
+        title: '重点风险告知与责任说明',
+        sections: [
+          { title: '1. 活体运输风险与健康告知', important: true, text: '环境变化和旅途可能引起应激、拒食、呕吐等，严重时可能发生伤病或死亡。请如实说明已知疾病、孕期、用药、过敏和应激史；是否适运应审慎核验。风险存在本身不等于承运方免责。' },
+          { title: '2. 快筛、笼具与交接', important: true, text: '快筛不能排除潜伏期疾病，也不是检疫证明。自备或提供的笼具均应安全、通风并便于宠物站立转身；承运方仍应核查明显安全问题。选择合作点后，请按确认时段由实际送宠人、取宠人完成交接。' },
+          { title: '3. 责任不是一概自负', important: true, text: '宠物自身原因或未如实告知导致的损失，应结合因果关系、合理照护及各方过错划分责任。承运方因温控、照护、核验或操作过错造成损害的，依法承担相应责任。普通故障、交通事故、未买保险和客户失联均不能作为当然的全部免责理由。' },
+          { title: '4. 异常救助与费用', important: true, text: '途中异常应及时通知并采取必要救助；请保持联系方式有效。救助费用按必要性、凭据及责任归属处理。测试版支付不扣款，检疫费、退改与保险等正式规则仍待确认，不把本次勾选视作同意未来未知的收费或保险条款。' },
+          { title: '5. 对条款有疑问时', text: '可先联系出行客服要求解释，再决定是否继续。阅读、勾选和确认不会让承运方的不当免责约定自动变得有效，也不剥夺投诉、举证或依法索赔的权利。' }
+        ]
+      }
+    },
+    references: [
+      { title: '民法典：格式条款与免责条款（第496、497、506条等）', url: 'https://www.court.gov.cn/zixun/xiangqing/233181.html' },
+      { title: '保险法：承保、条款说明与保险凭证（第13、17、18条等）', url: 'https://www.samr.gov.cn/zw/zfxxgk/fdzdgknr/bgt/art/2023/art_4c715a53f3d4402c89f62ae77809f638.html' },
+      { title: '电子签名法：可靠电子签名的条件（第13、14条）', url: 'https://www.beijing.gov.cn/zhengce/zhengcefagui/202202/t20220208_2606143.html' }
+    ]
+  };
+  function freeze(value) { if (value && typeof value === 'object') { Object.values(value).forEach(freeze); Object.freeze(value); } return value; }
+  return freeze(policy);
+});
+
 } };
   const cache = new Map();
   function requireModule(name) {
@@ -1588,6 +1644,53 @@ function leadAction({ store, session, role, resource, id, action, method, body }
   store.write(data); return { lead };
 }
 
+// Browser-only demo consent. No premium collection, underwriting or e-sign API.
+const protectionPolicy = requireModule('./protection-content');
+function createProtectedOrder(body, session) {
+  const required = body.protectionVersion === 1;
+  if (body.protectionVersion !== undefined && !required) throw new store.StoreError('保障确认版本不支持，请刷新页面。', 400, 'PROTECTION_VERSION');
+  const previous = body.clientRequestId && store.listUserOrders(session.account).find(order => order.clientRequestId === body.clientRequestId);
+  if (previous && Boolean(previous.protectionRequired) !== required) throw new store.StoreError('此提交已对应另一份订单，请刷新核对。', 409, 'IDEMPOTENCY_CONFLICT');
+  const order = store.createOrder(body, session.account);
+  if (required && !previous) {
+    const data = store.read();
+    data.orders.find(item => item.id === order.id).protectionRequired = true;
+    store.write(data);
+  }
+  return { order: store.getUserOrder(order.id, session.account) };
+}
+function protectionAction({ role, resource, id, action, method, body, session }) {
+  if (resource !== 'orders' || !id || method !== 'POST' || action !== 'deposit/pay' || role !== 'user') return;
+  const order = store.getUserOrder(id, session.account);
+  if (!order.protectionRequired && body.protection === undefined) return; // Old clients retain their existing demo contract; never invent a consent.
+  const input = body.protection;
+  const fail = (message, code = 'PROTECTION_REQUIRED') => { throw new store.StoreError(message, 409, code); };
+  if (!input || typeof input !== 'object' || Array.isArray(input)) fail('请先阅读并主动确认服务协议和重点风险。');
+  if (input.version !== protectionPolicy.version) fail('协议版本已更新，请重新阅读并确认。', 'PROTECTION_VERSION');
+  if (input.reviewedService !== protectionPolicy.version || input.reviewedRisk !== protectionPolicy.version || input.acceptedService !== true || input.acceptedRisk !== true || input.demoAcknowledged !== true) fail('请分别阅读并勾选服务协议、重点风险及测试支付说明。');
+  if (!Object.hasOwn(protectionPolicy.insurance.choices, input.insuranceChoice)) fail('请选择有效的保险咨询意向。', 'INSURANCE_INTENT_INVALID');
+  // Reject fabricated underwriting fields rather than silently saving them as a policy.
+  if (Object.keys(input).some(key => !['version', 'reviewedService', 'reviewedRisk', 'acceptedService', 'acceptedRisk', 'demoAcknowledged', 'insuranceChoice'].includes(key))) fail('这里只记录咨询意向，不支持保险金额、保单或承保状态。', 'INSURANCE_NOT_AVAILABLE');
+  const fingerprint = JSON.stringify([input.version, input.insuranceChoice]);
+  if (order.protectionConfirmation) {
+    if (order.protectionConfirmation.fingerprint !== fingerprint) fail('已确认的记录不能覆盖，请联系运营另行沟通。', 'PROTECTION_LOCKED');
+    return; // Identical retry retains original timestamp and snapshot.
+  }
+  if (order.deposit?.status !== 'unpaid' || order.reviewStatus !== 'not_submitted') fail('当前订单不可补写付款前确认记录。', 'PROTECTION_LOCKED');
+  const confirmedAt = new Date().toISOString();
+  const data = store.read(), target = data.orders.find(item => item.id === id);
+  target.protectionRequired = true;
+  target.protectionConfirmation = {
+    id: 'ACK-' + browserCrypto.randomUUID(), version: protectionPolicy.version,
+    confirmedAt, confirmedBy: session.account, method: 'demo-explicit-checkbox', simulated: true,
+    fingerprint, acceptedService: true, acceptedRisk: true, demoAcknowledged: true,
+    insurance: { choice: input.insuranceChoice, status: 'not_insured', insurer: null, product: null, premium: null, policyNumber: null, effectiveAt: null },
+    documentSnapshot: JSON.parse(JSON.stringify(protectionPolicy)),
+    orderSnapshot: { orderId: id, petName: order.petName, fromCity: order.fromCity, toCity: order.toCity, serviceType: order.serviceType, pickup: order.pickup, depositAmount: order.deposit.amount }
+  };
+  store.write(data); // The enclosing payment transaction commits both or neither.
+}
+
   function prepareDemo(preserveExisting = false) {
     const original = preserveExisting ? stagedData : null;
     const oldMetadata = JSON.parse(stagedData || '{}');
@@ -1753,6 +1856,7 @@ function leadAction({ store, session, role, resource, id, action, method, body }
       if (resource === 'orders' && id && role === 'driver') store.getDriverOrder(id, session.driverId);
       const value = frontendAction({ store, session, role, resource, id, action, method, body, query, actor });
       if (value !== undefined) return result(value, method === 'POST' && resource === 'orders' && !id ? 201 : 200);
+      protectionAction({ role, resource, id, action, method, body, session });
     }
     const route = `${method} ${pathname}`;
     const table = {
@@ -1760,7 +1864,7 @@ function leadAction({ store, session, role, resource, id, action, method, body }
       'GET /api/user/booking-options': () => store.listBookingOptions(query),
       'GET /api/user/availability': () => ({ items: store.listAvailability(query), ...store.availabilityMeta(query) }),
       'GET /api/user/orders': () => items(store.listUserOrders(session.account)),
-      'POST /api/user/orders': () => wrapped(store.createOrder(body, session.account)),
+      'POST /api/user/orders': () => createProtectedOrder(body, session),
       'GET /api/ops/dashboard': () => store.dashboard(),
       'GET /api/ops/orders': () => items(store.listOrders(query)),
       'GET /api/ops/city-nodes': () => items(store.listCityNodes()),
