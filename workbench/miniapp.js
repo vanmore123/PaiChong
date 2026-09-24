@@ -11,7 +11,7 @@
   const prioritizeOrders = (orders = []) => [...orders].sort((a,b) => hefeiRank(a)-hefeiRank(b));
   const unpaid = (order) => order.reviewStatus === 'not_submitted' || order.fulfillment?.stage === 'awaiting_payment';
   const money = (value) => new Intl.NumberFormat('zh-CN', { style: 'currency', currency: 'CNY', maximumFractionDigits: 2 }).format(Number(value || 0));
-  const labels = ['确认出行路线', '接送资料与材料', '选择接宠时段', '支付宠物运输检疫费', '订单详情'];
+  const labels = ['确认出行路线', '接送资料与材料', '选择交接时段', '支付宠物运输检疫费', '订单详情'];
 
   function setup() {
     if (byId('mini-nav')) return;
@@ -88,7 +88,7 @@
     if (state.page !== 'create') return;
     title(labels[state.step - 1], true);
     byId('mini-progress').hidden = state.step > 4;
-    byId('mini-progress').innerHTML = `<div>${[1, 2, 3, 4].map((step) => `<span class="${step <= state.step ? 'is-done' : ''}"></span>`).join('')}</div><small>第 ${Math.min(state.step, 4)} / 4 步 · ${['出行信息', '适运核验', '接宠预约', '支付确认'][Math.min(state.step, 4) - 1]}</small>`;
+    byId('mini-progress').innerHTML = `<div>${[1, 2, 3, 4].map((step) => `<span class="${step <= state.step ? 'is-done' : ''}"></span>`).join('')}</div><small>第 ${Math.min(state.step, 4)} / 4 步 · ${['出行信息', '适运核验', '交接预约', '支付确认'][Math.min(state.step, 4) - 1]}</small>`;
     tabs();
   }
 
@@ -144,7 +144,7 @@
     if (ops) byId('mini-page').querySelector('.mini-shortcuts').insertAdjacentHTML('beforeend', `<button data-go="partner">${icon('clipboard-check')}<strong>机构余量审批</strong><small>查看申报与生效结果</small></button>`);
     if (window.PaichongCare) {
       if (ops) byId('mini-page').querySelector('.mini-shortcuts').insertAdjacentHTML('afterbegin', `<button data-go="leads">${icon('message-circle')}<strong>意向客户回访</strong><small>咨询线索、跟进与转单</small></button>`);
-      else byId('mini-page').querySelector('.mini-home-content').insertAdjacentHTML('afterbegin', `<button class="care-entry" type="button" data-customer-care>${icon('message-circle')}<span><strong>想问问这趟怎么安排？</strong><small>联系固定微信客服 · 留下出行咨询</small></span>›</button>`);
+      else byId('mini-page').querySelector('.mini-home-content').insertAdjacentHTML('afterbegin', `<button class="care-entry" type="button" data-customer-care>${icon('message-circle')}<span><strong>想问问这趟怎么安排？</strong><small>留下出行需求 · 客服跟进回访</small></span>›</button>`);
     }
     bindLinks(); bindHomeBooking();
     try {
@@ -223,10 +223,10 @@
       ['03 · 派车前检查', '检查顺向区段、接宠时间、最少发车单数和司机车辆时间冲突；未派车可移单或取消资源分配。'],
       ['04 · 履约与异常', '到点和派车后由司机验宠，用户确认总价并付清尾款后才能离点。司机更新运输与签收；异常在订单详情中由经营者处理后恢复原流程，不自动签收。']
     ] : [
-      ['01 · 提前准备材料', '准备清晰的宠物近期全身照和有效免疫记录，如实填写健康声明及晕车、用药等照护说明。体验版仅保留文件名称，请勿上传真实证件。'],
-      ['02 · 费用需要确认', '系统先提供估价，宠物运输检疫费为基础价的20%。运营建议价用于方案确认；司机验宠后再出具总价，由你确认抵扣宠物运输检疫费后的尾款，体验版不扣款。'],
-      ['03 · 按接送方式交接', '上门服务填写详细地址；合作点服务可在地图选城市后选择网点，系统自动带入网点信息。运营结合两端时段及笼位确认最终交接安排。'],
-      ['04 · 改期与取消', '审核通过前可以改期；未编线、未到点的订单可取消。体验版按全额退还宠物运输检疫费展示，不代表正式收费政策。']
+      ['01 · 提前准备材料', '准备清晰的宠物近期全身照和有效免疫记录，如实填写健康声明及照护说明。体验版可使用示例或预览本地文件，材料仅保存在当前浏览器；请勿上传真实敏感证件。'],
+      ['02 · 先看费用，再确认', '体验版按预估基础价的20%展示宠物运输检疫费，并计入总价抵扣，不是真实检测报价。接送、笼具与检测包含项待运营核对；运营建议价确认后，司机验宠再锁定总价，经你确认后付尾款。全程不真实扣款。'],
+      ['03 · 按接送方式交接', '上门服务填写家庭地址；合作点服务自动带入所选网点。审核若调整出发点，会说明原因，请核对最终地址和时段再确认。到达合作点的日期、时段及笼位仍需运营另行确认。'],
+      ['04 · 改期、取消与退运', '在订单“行程协助”中查看当前可申请的操作，由总部审核处理。宠物已交接的取消需先完成交回；运输中退运需审批及退回交接。退款进度以订单记录为准，体验版规则不代表正式收费政策。']
     ];
     byId('mini-page').innerHTML = `<div class="mini-guide"><p class="mini-guide-intro">先把每一步看清楚，再放心出发。</p>${sections.map(([heading, text]) => `<section><h2>${heading}</h2><p>${text}</p></section>`).join('')}<p class="mini-demo-note">体验说明：不产生实际扣款、运输或通知；同一浏览器内双端共享假数据。</p></div>`;
   }

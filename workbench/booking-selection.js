@@ -4,8 +4,14 @@
   function markup(order) {
     const b = order?.bookingSelection;
     if (!b) return '';
-    const point = (node, side) => node ? `<div><dt>${side}合作点意向</dt><dd>${escape(node.city)} · ${escape(node.name)}<small>${escape(node.address)} · ${escape(node.open)}</small></dd></div>` : '';
-    return `<section class="booking-order-summary"><h3>接送与笼具</h3><dl><div><dt>接送方式</dt><dd>${escape(b.serviceLabel)}</dd></div><div><dt>笼具选择</dt><dd>${escape(b.cage?.label || '未选择')}<small>${escape(b.cage?.specificationStatus)} · ${escape(b.cage?.feeStatus)}</small></dd></div>${point(b.originNode, '出发')}${point(b.destinationNode, '到达')}</dl>${b.originNode || b.destinationNode ? '<p>所选为交接网点意向，不代表已锁定两端笼位；到达日期、交接时段与余量须由运营另行确认。</p>' : ''}</section>`;
+    const plan = order.handoffPlan;
+    const point = (node, label) => node ? `<div><dt>${label}</dt><dd>${escape(node.city)} · ${escape(node.name)}<small>${escape(node.address)} · ${escape(node.open)}</small></dd></div>` : '';
+    return `<section class="booking-order-summary"><h3>接送与笼具</h3><dl><div><dt>接送方式</dt><dd>${escape(b.serviceLabel)}</dd></div><div><dt>笼具选择</dt><dd>${escape(b.cage?.label || '未选择')}<small>${escape(b.cage?.specificationStatus)} · ${escape(b.cage?.feeStatus)}</small></dd></div>${point(plan?.originNode || b.originNode, plan ? '出发合作点安排' : '出发合作点意向')}${point(b.destinationNode, '到达合作点意向')}</dl>${plan ? `<p>${plan.status === 'confirmed' ? '出发送宠网点与时段已确认。' : plan.legacy ? '出发点为历史分配记录，请核对交接地址；本次未新增确认。' : '出发点已由运营安排，等待用户核对确认。'}${b.destinationNode ? '到达点日期、时段和笼位仍待运营确认。' : ''}</p><details class="booking-original"><summary>查看原选网点意向</summary><p>${escape(b.originNode?.name)} · ${escape(b.originNode?.address)}</p>${plan.changeReason ? `<p>调整原因：${escape(plan.changeReason)}</p>` : ''}</details>` : b.originNode || b.destinationNode ? '<p>所选为交接网点意向，不代表已锁定两端笼位；到达日期、交接时段与余量须由运营另行确认。</p>' : ''}</section>`;
+  }
+  function confirmationMarkup(order) {
+    const plan = order?.handoffPlan;
+    if (!plan || order.reviewStatus !== 'approved') return '';
+    return `<section class="handoff-confirmation" aria-label="待确认交接方案"><span class="handoff-kicker">${plan.changed ? '网点有调整 · 请核对' : '请确认送宠安排'}</span><h3>${escape(plan.originNode.name)}</h3><p>${escape(plan.originNode.address)}</p><strong>${escape(plan.date)} · ${escape(plan.timeSlot)}</strong>${plan.changed ? `<div class="handoff-change"><p>原选：${escape(order.bookingSelection.originNode.name)}</p><p>调整原因：${escape(plan.changeReason)}</p></div>` : ''}<p class="handoff-footnote">确认方案即确认本次出发送宠网点、地址、时段与建议价。${order.bookingSelection?.destinationNode ? '目的地合作点仍待另行确认。' : ''}如不合适，可先联系客服或申请调整。</p></section>`;
   }
   function mount({ api, onChange, session, editable }) {
     const byId = id => document.getElementById(id), value = id => byId(id)?.value || '';
@@ -38,6 +44,8 @@
       applyContacts();
     }
     function applyContacts() {
+      if (byId('booking-slot-title')) byId('booking-slot-title').textContent = usesNode('origin') ? '预约送到合作点时间' : '预约上门接宠时间';
+      if (byId('booking-slot-note')) byId('booking-slot-note').textContent = usesNode('origin') ? `请按所选时段自行送宠到合作点。出发点与时段经运营审核、你确认后生效；${usesNode('destination') ? '到点取宠' : '送宠上门'}时间另行确认。` : '请选择方便上门接宠的时段。具体接送安排由运营审核确认，预计运输时效见预估方案。';
       for (const side of fields) {
         const city = value(side === 'origin' ? 'from-city' : 'to-city'), field = byId(side === 'origin' ? 'pickup-address' : 'recipient-address');
         const changed = state.city[side] && state.city[side] !== city;
@@ -116,5 +124,5 @@
     }
     return { sync, input, validate, applyContacts, filterSlots, reset() { state.cageId = 'cage-1'; state.originNodeId = ''; state.destinationNodeId = ''; state.doors = {}; state.city = {}; fields.forEach(side => { byId(side === 'origin' ? 'pickup-address' : 'recipient-address').readOnly = false; }); return sync(); } };
   }
-  window.PaichongBookingSelection = { mount, markup };
+  window.PaichongBookingSelection = { mount, markup, confirmationMarkup };
 })();

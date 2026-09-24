@@ -14,8 +14,9 @@
     const hub=order.fromCity==='合肥'||order.transport?.cities?.includes('合肥')?'HF':'PC';
     return {terminal:`PC-${hub}-${suffix}`,channel:view==='near'?'02':'01',vehicle:order.transport?.vehiclePlate || '车辆待关联',location:view==='near'?'笼位近景':'宠物舱前侧'};
   }
-  function markup(order) {
+  function markup(order, { compact = false } = {}) {
     if (!available(order)) return '';
+    if (compact) return '<button type="button" class="primary-button travel-monitor-button" data-open-cabin><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-camera"></use></svg>查看车内监控</button>';
     return `<section class="cabin-entry"><div><span class="cabin-eyebrow">陪伴每一程</span><h3>想看看毛孩子？</h3><p>查看车内环境，让等待多一份安心</p></div><button type="button" class="primary-button" data-open-cabin><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-camera"></use></svg>查看车内监控</button></section>`;
   }
   function bind(container, order) {

@@ -3,7 +3,7 @@
   <head>
     <script src="./portal-config.js?v=d996f76c5e66"></script>
     <script src="./h5-api.js?v=1befeb8b3ec7"></script>
-    <script src="./static-demo.js?v=3800cfa6e7d4"></script>
+    <script src="./static-demo.js?v=f7b78ec046f3"></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#F7FBF9" />
@@ -11,7 +11,7 @@
     <link rel="icon" type="image/png" href="./assets/brand/paichong-logo.png" />
     <link rel="stylesheet" href="./client-review.css?v=52e22fba23eb" />
     <link rel="stylesheet" href="./ops-workbench.css?v=ee628a08ee28" />
-    <link rel="stylesheet" href="./miniapp.css?v=181a1343eafa" />
+    <link rel="stylesheet" href="./miniapp.css?v=42f09db3f81d" />
     <link rel="stylesheet" href="./profile-assets.css?v=b0998d1ee6d2" />
     <link rel="stylesheet" href="./booking-selection.css?v=755e50fcf0cf" />
     <link rel="stylesheet" href="./material-preview.css?v=65180a623390" />
@@ -170,10 +170,10 @@
 
               <div class="wizard-pane" data-pane="3">
                 <div class="panel-heading">
-                  <div><p class="eyebrow">Step 03</p><h2>预约接宠时间</h2></div>
+                  <div><p class="eyebrow">Step 03</p><h2 id="booking-slot-title">预约上门接宠时间</h2></div>
                   <span class="soft-badge">可约时段</span>
                 </div>
-                <div class="assignment-note"><span aria-hidden="true"><svg class="ui-icon"><use href="./assets/v5/icons/app-sprite.svg#icon-map-pin"></use></svg></span><p><strong>确认本次接送时段</strong><br />自行送宠按合作点时段交接，上门服务按接宠时段预约。所选网点为交接意向，运营须结合两端时间与容量审核确认。</p></div>
+                <div class="assignment-note"><span aria-hidden="true"><svg class="ui-icon"><use href="./assets/v5/icons/app-sprite.svg#icon-map-pin"></use></svg></span><p><strong>确认本次接送时段</strong><br /><span id="booking-slot-note">自行送宠按合作点时段交接，上门服务按接宠时段预约。所选网点为交接意向，运营须结合两端时间与容量审核确认。</span></p></div>
                 <div class="slot-list" id="availability-list" aria-live="polite">
                   <div class="loading-state"><span class="loader" aria-hidden="true"></span>正在获取可预约时段…</div>
                 </div>
@@ -206,7 +206,7 @@
 
               <div class="wizard-pane" data-pane="5">
                 <div class="panel-heading">
-                  <div><p class="eyebrow">Step 05</p><h2>订单审核进度</h2></div>
+                  <div><p class="eyebrow">Step 05</p><h2 id="order-progress-title">订单进度</h2></div>
                   <button class="outline-button" id="refresh-user-orders" type="button"><svg class="ui-icon" aria-hidden="true"><use href="./assets/v5/icons/app-sprite.svg#icon-refresh"></use></svg><span>刷新状态</span></button>
                 </div>
                 <div class="order-status-area" id="user-order-area" aria-live="polite">
@@ -317,17 +317,17 @@
     <script src="./service-flow.js?v=678041c8eb06"></script>
     <script src="./web-session.js?v=5250f5dd2db2"></script>
     <link rel="stylesheet" href="./cabin-monitor.css?v=8308efacb1d5" />
-    <script src="./cabin-monitor.js?v=41760498c8e5"></script>
+    <script src="./cabin-monitor.js?v=b71491cdc6c6"></script>
     <script src="./fulfillment-ui.js?v=46c2513d1c5a"></script>
-    <script src="./booking-selection.js?v=3f625615a30a"></script>
+    <script src="./booking-selection.js?v=5234966eb20e"></script>
     <script src="./protection-content.js?v=078045ebaf2f"></script>
     <script src="./protection-ui.js?v=4af8cec72d7f"></script>
-    <script src="./client-review.js?v=efe8fe9183e6"></script>
+    <script src="./client-review.js?v=56e19fe7b928"></script>
     <script src="./ops-workbench.js?v=5963338c025c"></script>
     <script src="./customer-care-config.js?v=c1aab1221c30"></script>
     <script src="./customer-care.js?v=e9e6dc1dcd76"></script>
     <script src="./demo-map.js?v=898e90cd907d"></script>
-    <script src="./miniapp.js?v=253941ec5443"></script>
+    <script src="./miniapp.js?v=6771a02d7004"></script>
     <script src="./shared-demo-ui.js?v=de535386f4a2"></script>
   </body>
 </html>

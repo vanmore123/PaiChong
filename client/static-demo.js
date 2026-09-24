@@ -1691,6 +1691,76 @@ function protectionAction({ role, resource, id, action, method, body, session })
   store.write(data); // The enclosing payment transaction commits both or neither.
 }
 
+// Browser-only review corrections. Never imported by the live API server.
+function handoffNode(order, nodeId, required = true) {
+  const node = store.listBookingOptions({ fromCity: order.fromCity, toCity: order.toCity }).originNodes.find(item => item.id === nodeId);
+  if (!node) {
+    if (required) fail('交接网点已变化，请刷新后重新审核。', 409, 'HANDOFF_NODE_CHANGED');
+    return { id: nodeId, city: order.fromCity, name: order.assignedNode?.name || '历史交接点', address: '网点地址待核实，请联系客服', open: '', publicPhone: '' };
+  }
+  const { id, city, name, address, open, publicPhone, sampleAddress } = node;
+  return { id, city, name, address, open, publicPhone, sampleAddress };
+}
+
+function handoffView(order) {
+  if (!order?.bookingSelection || order.bookingSelection.pickupMode !== 'node') return order;
+  const reservation = order.nodeReservation;
+  const active = reservation && ['reserved', 'confirmed', 'arrived', 'departed'].includes(reservation.status) && order.assignedNode?.id === reservation.nodeId;
+  if (!active) return { ...order, handoffPlan: null, pickupAddress: order.bookingSelection.originNode?.address || order.pickupAddress };
+  const saved = order.handoffPlan;
+  const matches = saved?.originNode?.id === reservation.nodeId && saved.date === reservation.date && saved.timeSlot === reservation.timeSlot;
+  // Existing browser records are rendered consistently, never silently re-signed.
+  const plan = matches ? saved : {
+    originNode: handoffNode(order, reservation.nodeId, false), date: reservation.date, timeSlot: reservation.timeSlot,
+    status: 'legacy_record', version: null, changeReason: '', legacy: true
+  };
+  return { ...order, handoffPlan: plan, assignedNode: { ...order.assignedNode, ...plan.originNode }, pickupAddress: plan.originNode.address };
+}
+
+function handoffResponse(body) {
+  return { ...body, ...(body.order ? { order: handoffView(body.order) } : {}), ...(Array.isArray(body.items) ? { items: body.items.map(item => item.bookingSelection ? handoffView(item) : item) } : {}) };
+}
+
+function reviewHandoff(id, actor) {
+  const before = store.getOrder(id), intent = before.bookingSelection?.pickupMode === 'node' ? before.bookingSelection.originNode : null;
+  if (actor.action !== 'approve' || !intent) return store.reviewOrder(id, actor);
+  const nodeId = actor.nodeId || intent.id;
+  if (before.reviewStatus === 'approved') {
+    if (nodeId !== before.assignedNode?.id) fail('该订单已审核，请刷新查看当前交接方案。', 409, 'HANDOFF_REVIEW_FINISHED');
+    return store.reviewOrder(id, { ...actor, nodeId });
+  }
+  const changed = nodeId !== intent.id, reason = String(actor.note || '').trim();
+  if (changed && (!reason || reason.length > 160)) fail('调整客户所选合作点时，请填写变更原因（最多 160 字）。', 409, 'HANDOFF_REASON_REQUIRED');
+  const node = handoffNode(before, nodeId);
+  const reviewed = store.reviewOrder(id, { ...actor, nodeId });
+  const data = store.read(), order = data.orders.find(item => item.id === id);
+  const reservation = order.nodeReservation;
+  order.handoffPlan = {
+    version: browserCrypto.randomUUID(), status: 'awaiting_confirmation', originNode: node,
+    originalOriginNodeId: intent.id, changed, changeReason: changed ? reason : '',
+    date: reservation.date, timeSlot: reservation.timeSlot, reviewedAt: order.updatedAt,
+    reviewedBy: actor.operator, confirmedAt: null, confirmedBy: null
+  };
+  order.assignedNode = { ...order.assignedNode, ...node };
+  order.pickupAddress = node.address;
+  // bookingSelection and agreement snapshots remain the original user intent.
+  store.write(data);
+  return { ...reviewed, order: store.getOrder(id) };
+}
+
+function confirmHandoff(id, body, session) {
+  const before = store.getUserOrder(id, session.account), plan = handoffView(before).handoffPlan;
+  if (plan?.version && (body.acceptedHandoffVersion !== plan.version || body.acceptedNodeId !== plan.originNode.id)) {
+    fail('请刷新并核对本次合作点、地址与时段后确认方案。', 409, 'HANDOFF_CONFIRMATION_REQUIRED');
+  }
+  const result = store.confirmOrder(id, body);
+  if (!plan?.version || result.idempotent) return result;
+  const data = store.read(), order = data.orders.find(item => item.id === id);
+  order.handoffPlan = { ...order.handoffPlan, status: 'confirmed', confirmedAt: order.confirmedAt, confirmedBy: session.account };
+  store.write(data);
+  return { ...result, order: store.getUserOrder(id, session.account) };
+}
+
   function prepareDemo(preserveExisting = false) {
     const original = preserveExisting ? stagedData : null;
     const oldMetadata = JSON.parse(stagedData || '{}');
@@ -1806,7 +1876,7 @@ function protectionAction({ role, resource, id, action, method, body, session })
 
   function sessionRegistry() { return JSON.parse(local.getItem(sessionsKey) || '{}'); }
   function saveSessions(sessions) { local.setItem(sessionsKey, JSON.stringify(sessions)); }
-  function result(body, status = 200) { return new Response(status === 204 ? null : JSON.stringify({ simulated: true, ...body }), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' } }); }
+  function result(body, status = 200) { return new Response(status === 204 ? null : JSON.stringify({ simulated: true, ...handoffResponse(body) }), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' } }); }
   function fail(message, status = 400, code = 'DEMO_ERROR') { throw new store.StoreError(message, status, code); }
   const wrapped = (order) => ({ order });
   const items = (values) => ({ items: values });
@@ -1889,7 +1959,7 @@ function protectionAction({ role, resource, id, action, method, body, session })
       const actions = {
         'deposit/pay': () => store.payDeposit(id),
         'balance/pay': () => store.fulfillmentAction('payBalance', id, { ...actor, ownerAccount: session.account }),
-        supplement: () => wrapped(store.supplementOrder(id, body)), confirm: () => store.confirmOrder(id, body),
+        supplement: () => wrapped(store.supplementOrder(id, body)), confirm: () => confirmHandoff(id, body, session),
         cancel: () => store.cancelOrder(id, body), reschedule: () => store.rescheduleOrder(id, body)
       };
       if (Object.hasOwn(actions, action)) return result(actions[action]());
@@ -1904,7 +1974,7 @@ function protectionAction({ role, resource, id, action, method, body, session })
       if (resource === 'city-nodes' && method === 'PATCH' && !action) return result(store.updateCityNode(id, actor));
       if (resource === 'capacity-requests' && method === 'POST' && action === 'review') return result(store.reviewCapacityRequest(id, session, body));
       if (resource === 'orders') {
-        if (method === 'PATCH' && action === 'review') return result(store.reviewOrder(id, actor));
+        if (method === 'PATCH' && action === 'review') return result(reviewHandoff(id, actor));
         if (method === 'PATCH' && action === 'status') return result(store.updateOrderStatus(id, body.status));
         const actions = { refund: () => store.processRefund(id, actor), 'exception/resolve': () => store.fulfillmentAction('resolveException', id, actor), 'node-check-in': () => store.nodeCheckIn(id, actor), 'node-check-out': () => store.nodeCheckOut(id, actor) };
         if (method === 'POST' && Object.hasOwn(actions, action)) return result(actions[action]());

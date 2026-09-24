@@ -168,6 +168,14 @@
     const previous = readSession();
     setBusy(true);
     try {
+      // An already open offline login can authenticate locally after its
+      // preview server has stopped, but the next HTML page cannot load.
+      if (window.PAICHONG_DEMO_MODE === true && ['127.0.0.1', 'localhost'].includes(window.location.hostname)) {
+        try {
+          const preview = await fetch('./portal-config.js', { method: 'HEAD', cache: 'no-store' });
+          if (!preview.ok) throw new Error('Preview unavailable');
+        } catch { throw new Error('本机预览服务未启动或已停止，请启动预览后刷新页面。手机请使用已发布的测试链接。'); }
+      }
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
@@ -227,7 +235,8 @@
   const requestedEntry = new URLSearchParams(window.location.search || '').get('entry');
   selectEntry(allowedRoles.includes(requestedEntry) ? requestedEntry : allowedRoles[0]);
   if (window.PAICHONG_DEMO_MODE) {
-    byId('login-environment').textContent = '同一浏览器双端联动，不跨设备同步';
+    byId('login-title').textContent = sessions?.kind === 'client' ? '宠物主人登录' : sessions?.kind === 'workbench' ? '工作端登录' : '欢迎回来';
+    byId('login-environment').textContent = window.PAICHONG_DEMO_ISOLATED_PORT ? '独立端口体验 · 本端数据独立，不跨端口或设备同步' : '同一浏览器双端联动，不跨设备同步';
     document.querySelector('.identity-tip p').textContent = '可使用下方体验账号进入对应角色。';
   }
   showExistingSession();

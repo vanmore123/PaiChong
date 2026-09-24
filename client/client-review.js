@@ -280,7 +280,7 @@
     const mobileQuote = byId('mini-quote-summary');
     if (mobileQuote) {
       mobileQuote.hidden = !quote;
-      mobileQuote.innerHTML = quote ? `<div><span>本次预估费用</span><strong>${formatMoney(quote.totalMin || quoteTotal(quote))}–${formatMoney(quote.totalMax || quoteTotal(quote))}</strong></div><p>${escapeHtml(from)} → ${escapeHtml(to)} · 宠物运输检疫费 ${formatMoney(quoteDeposit(quote))}</p><small>按当前宠物信息预估，实际方案仍需审核确认。</small>` : '';
+      mobileQuote.innerHTML = quote ? `<div><span>本次预估费用</span><strong>${formatMoney(quote.totalMin || quoteTotal(quote))}–${formatMoney(quote.totalMax || quoteTotal(quote))}</strong></div><p>${escapeHtml(from)} → ${escapeHtml(to)} · 预计运输 ${escapeHtml(String(quote.estimatedDays || '待确认').replace(/天\s*天$/, '天'))}</p><p>宠物运输检疫费 ${formatMoney(quoteDeposit(quote))} · 计入总价抵扣</p><small>接送、笼具和检测服务的费用明细待运营确认；本次为预估，并非最终应付。</small>` : '';
       if (quote?.bookingSelection) mobileQuote.innerHTML += window.PaichongBookingSelection.markup({ bookingSelection: quote.bookingSelection });
     }
     const slot = order?.pickup || state.slots.find((item) => item.id === state.selectedSlotId);
@@ -482,7 +482,7 @@
       const low = Number(slot.remaining) <= 2;
       return `<button class="slot-card${selected ? ' is-selected' : ''}${low ? ' is-low' : ''}" type="button" data-slot-id="${escapeHtml(slot.id)}" ${available ? '' : 'disabled'} aria-pressed="${selected}">
         <span class="slot-date"><b>${escapeHtml(day)}</b>${escapeHtml(formatDate(date, { month: 'short', weekday: 'short' }))}</span>
-        <span class="slot-detail"><strong>${escapeHtml(slot.timeSlot || slot.label || '白天时段')}</strong><small>${available ? '接宠司机与笼位可协调' : '本时段已约满'}</small></span>
+        <span class="slot-detail"><strong>${escapeHtml(slot.timeSlot || slot.label || '白天时段')}</strong><small>${available ? (formValue('service-type').startsWith('node-') ? '自行送宠 · 合作点有可预约笼位' : '上门接宠 · 时段待审核确认') : '本时段已约满'}</small></span>
         <span class="slot-capacity">${available ? `余 ${Number(slot.remaining)} 个名额` : '已约满'}</span>
       </button>`;
     }).join('');
@@ -676,7 +676,8 @@
     return `<dl class="cost-breakdown price-review"><div><dt>原始预估基础价</dt><dd>${formatMoney(order.quote?.basePrice ?? order.priceEstimate)}</dd></div><div><dt>运营建议价</dt><dd>${order.proposedPrice != null || order.finalPrice != null ? formatMoney(proposedPrice(order)) : (closed ? '未出具' : '待审核')}</dd></div><div><dt>${closed ? '累计已付宠物运输检疫费' : '已付宠物运输检疫费'}</dt><dd>${formatMoney(paid)}</dd></div>${refundLine}<div><dt>预计剩余费用</dt><dd>${closed ? '无需再支付' : formatMoney(Math.max(0, proposedPrice(order) - paid))}</dd></div></dl><p class="price-explanation">${explanation}</p>`;
   }
   function contactsMarkup(order) {
-    return `<section class="material-section"><h3>接送与照护信息</h3><div class="contact-summary"><div><small>接宠联系人</small><strong>${escapeHtml(copy(order.contactName || '未提供'))} · ${escapeHtml(order.contactPhone || order.userPhone || order.phone || '未提供')}</strong><p>${escapeHtml(copy(order.pickupAddress || '详细地址未提供'))}</p></div><div><small>送达联系人</small><strong>${escapeHtml(copy(order.recipientName || '未提供'))} · ${escapeHtml(order.recipientPhone || '未提供')}</strong><p>${escapeHtml(copy(order.recipientAddress || '详细地址未提供'))}</p></div><div class="full-width"><small>特殊照护说明</small><p>${escapeHtml(copy(order.careNote || '未填写特殊照护说明'))}</p></div></div></section>`;
+    const booking = order.bookingSelection;
+    return `<section class="material-section"><h3>接送与照护信息</h3><div class="contact-summary"><div><small>${booking?.pickupMode === 'node' ? '自行送宠联系人' : '上门接宠联系人'}</small><strong>${escapeHtml(copy(order.contactName || '未提供'))} · ${escapeHtml(order.contactPhone || order.userPhone || order.phone || '未提供')}</strong><p>${escapeHtml(copy(order.pickupAddress || '详细地址未提供'))}</p></div><div><small>${booking?.deliveryMode === 'node' ? '到点取宠联系人' : '上门送达联系人'}</small><strong>${escapeHtml(copy(order.recipientName || '未提供'))} · ${escapeHtml(order.recipientPhone || '未提供')}</strong><p>${escapeHtml(copy(order.recipientAddress || '详细地址未提供'))}</p></div><div class="full-width"><small>特殊照护说明</small><p>${escapeHtml(copy(order.careNote || '未填写特殊照护说明'))}</p></div></div></section>`;
   }
   function journeyMarkup(order) {
     const reservation = order.nodeReservation;
@@ -748,6 +749,14 @@
     const node = order.assignedNode;
     const reviewNote = order.reviewNote || order.note || order.reviewReason || '';
     const current = reviewStatus(order);
+    const travelFocus = ['in_transit', 'arrived'].includes(order.fulfillment?.stage);
+    const progressTitle = byId('order-progress-title');
+    if (progressTitle) progressTitle.textContent = travelFocus ? '行程动态' : '订单进度';
+    const materials = `${window.PaichongMaterials?.markup(order) || ''}${window.PaichongBookingSelection?.markup(order) || ''}${window.PaichongProtection?.markup(order, 'user') || ''}`;
+    const monitor = window.PaichongCabinMonitor?.markup(order, { compact: travelFocus }) || '';
+    const fulfillment = window.PaichongFulfillment?.markup(order, 'user') || '';
+    const latest = order.fulfillment?.events?.slice().reverse().find(item => item.city);
+    const travelOverview = travelFocus ? `<section class="travel-overview" aria-label="本次行程概览"><div class="travel-overview-title"><h3>${escapeHtml(pet.name)}的旅程</h3><span>${escapeHtml(order.fromCity)} → ${escapeHtml(order.toCity)}</span></div><dl><div><dt>最近登记城市</dt><dd>${escapeHtml(order.fulfillment.currentCity || order.fromCity)}</dd></div><div><dt>计划到达目的城市</dt><dd>${order.transport?.arrivalAt ? escapeHtml(formatDateTime(order.transport.arrivalAt)) : '待运营更新'}</dd></div></dl><p class="travel-driver">${icon('van')}${escapeHtml(order.transport?.driverName || '司机待确认')} · ${escapeHtml(order.transport?.vehiclePlate || '车辆待确认')}</p>${latest?.note ? `<p class="travel-latest">${escapeHtml(copy(latest.note))}</p>` : ''}${monitor}<small>人工登记节点，非实时定位；计划到达不等于已交付宠物。</small></section>` : '';
     const statusIcon = statusIconName(current);
     const stateIllustration = { pending: 'review-pending', resubmitted: 'request-received' }[current];
     const stateArtwork = stateIllustration ? `<img class="status-illustration" src="./assets/v5/illustrations/${stateIllustration}.png" width="1536" height="1024" alt="" />` : '';
@@ -763,20 +772,22 @@
     const confirm = current === 'approved' ? `<button class="primary-button" id="confirm-plan" type="button">${icon('check-circle')}<span>确认 ${formatMoney(proposedPrice(order))} 建议方案</span></button>` : '';
     const canReschedule = window.PAICHONG_DEMO_MODE !== true && !order.routeId && ['not_submitted', 'pending', 'info_required', 'resubmitted'].includes(current);
     const canCancel = window.PAICHONG_DEMO_MODE !== true && !order.routeId && !['arrived', 'departed'].includes(order.nodeReservation?.status) && !['cancelled', 'rejected'].includes(current) && !['已完成', '已签收', '已取消', '已驳回'].includes(order.status);
-    container.innerHTML = `<article class="order-detail-card">
+    container.innerHTML = `<article class="order-detail-card${travelFocus ? ' is-travel' : ''}">
       <div class="status-hero" data-tone="${escapeHtml(tone)}">${stateArtwork}<div><span class="order-number">订单 ${escapeHtml(order.id)}</span><h3>${escapeHtml(label)}</h3><p>${escapeHtml(description)}</p></div><span class="status-badge" data-tone="${escapeHtml(tone)}">${icon(statusIcon)}<span>${escapeHtml(order.status || label)}</span></span></div>
+      ${travelOverview}
+      ${window.PaichongBookingSelection?.confirmationMarkup(order) || ''}
+      ${order.handoffPlan && current === 'approved' ? `<div class="order-followup-actions">${confirm}</div>` : ''}
+      ${travelFocus ? '<details class="order-archive"><summary>宠物、材料与协议档案</summary>' : ''}
       ${window.PaichongProfiles?.petCard(order) || ''}
       <div class="order-route-line"><span><small>起运</small><br><strong>${escapeHtml(order.fromCity)}</strong></span><i aria-hidden="true">${icon('arrow-right')}</i><span><small>送达</small><br><strong>${escapeHtml(order.toCity)}</strong></span></div>
       <dl class="cost-breakdown"><div><dt>宠物</dt><dd>${escapeHtml(pet.name)} · ${escapeHtml(pet.type)} · ${escapeHtml(pet.weight)}kg</dd></div><div><dt>宠物运输检疫费</dt><dd>${formatMoney(depositAmount(order))}</dd></div><div><dt>宠物运输检疫费状态</dt><dd>${escapeHtml(userDepositStatus(order))}</dd></div><div><dt>预约时段</dt><dd>${escapeHtml(order.pickup?.date || '')} ${escapeHtml(order.pickup?.timeSlot || order.pickupTime || '')}</dd></div></dl>
-      ${window.PaichongMaterials?.markup(order) || ''}
-      ${window.PaichongBookingSelection?.markup(order) || ''}
-      ${window.PaichongProtection?.markup(order, 'user') || ''}
-      ${window.PaichongCabinMonitor?.markup(order) || ''}${window.PaichongFulfillment?.markup(order, 'user') || ''}${journeyMarkup(order)}${pricingMarkup(order)}${contactsMarkup(order)}
+      ${materials}${travelFocus ? '</details>' : ''}
+      ${travelFocus ? `<details class="order-archive"><summary>运输记录、交接与已付费用</summary>${fulfillment}${journeyMarkup(order)}${pricingMarkup(order)}</details>` : `${monitor}${fulfillment}${journeyMarkup(order)}${pricingMarkup(order)}`}${contactsMarkup(order)}
       ${node ? `<div class="node-result">${icon('map-pin')}<div><strong>已分配合作交接点</strong><br>${escapeHtml(node.city)} · ${escapeHtml(node.name)} · 营业 ${escapeHtml(node.open || '以预约为准')}</div></div>` : ''}
       ${reviewNote && current !== 'info_required' ? `<div class="review-message">${icon('clipboard-check')}<div><strong>运营说明</strong><br>${escapeHtml(copy(reviewNote))}</div></div>` : ''}
       ${refundMarkup(order)}${window.PaichongServiceFlow?.markup(order, 'user') || ''}
-      <ol class="timeline-list">${orderTimeline(order)}</ol>
-      ${supplement}<div class="order-followup-actions">${confirm}${current === 'not_submitted' ? `<button class="pay-button" id="resume-payment" type="button">${icon('credit-card')}<span>继续支付宠物运输检疫费</span></button>` : ''}${canReschedule ? `<button class="outline-button" id="reschedule-order" type="button">${icon('calendar-check')}<span>申请改期</span></button>` : ''}${canCancel ? `<button class="danger-button" id="cancel-order" type="button">${icon('x-circle')}<span>取消订单</span></button>` : ''}</div>
+      ${travelFocus ? '<details class="order-archive"><summary>查看完整订单进度</summary>' : ''}<ol class="timeline-list">${orderTimeline(order)}</ol>${travelFocus ? '</details>' : ''}
+      ${supplement}<div class="order-followup-actions">${order.handoffPlan ? '' : confirm}${current === 'not_submitted' ? `<button class="pay-button" id="resume-payment" type="button">${icon('credit-card')}<span>继续支付宠物运输检疫费</span></button>` : ''}${canReschedule ? `<button class="outline-button" id="reschedule-order" type="button">${icon('calendar-check')}<span>申请改期</span></button>` : ''}${canCancel ? `<button class="danger-button" id="cancel-order" type="button">${icon('x-circle')}<span>取消订单</span></button>` : ''}</div>
       <div id="reschedule-panel" class="reschedule-panel" hidden></div>
       <div class="form-message" id="order-action-error" role="alert" hidden></div>
     </article>`;
@@ -843,7 +854,7 @@
       const button = event.currentTarget;
       setBusy(button, true, '确认中…');
       try {
-        const payload = await api(`/api/user/orders/${encodeURIComponent(order.id)}/confirm`, { method: 'POST', body: { acceptedPrice: proposedPrice(order) } });
+        const payload = await api(`/api/user/orders/${encodeURIComponent(order.id)}/confirm`, { method: 'POST', body: { acceptedPrice: proposedPrice(order), ...(order.handoffPlan?.version ? { acceptedHandoffVersion: order.handoffPlan.version, acceptedNodeId: order.handoffPlan.originNode.id } : {}) } });
         state.currentOrder = payload.order || payload;
         toast('方案已确认，订单进入拼线准备');
         await loadUserOrders();
@@ -1008,8 +1019,9 @@
     const canReview = ['pending', 'resubmitted', 'info_required'].includes(current);
     const history = Array.isArray(order.reviewHistory) ? order.reviewHistory.slice().reverse().slice(0, 6) : [];
     const historyMarkup = history.length ? `<section class="material-section"><h3>审核与确认记录</h3><div class="audit-list">${history.map((item) => `<div class="audit-item"><div><strong>${escapeHtml(REVIEW_ACTION_LABELS[item.action] || item.action || '状态更新')}</strong><small>${escapeHtml(formatDateTime(item.at))} · ${escapeHtml(copy(item.operator || '工作人员'))}</small></div>${item.note ? `<p>${escapeHtml(copy(item.note))}</p>` : ''}</div>`).join('')}</div></section>` : '';
+    const preferredNode = order.bookingSelection?.originNode?.id || order.assignedNode?.id;
     const nodeOptions = nodes.length
-      ? nodes.map((node) => `<option value="${escapeHtml(node.id)}">${escapeHtml(node.name)} · 营业 ${escapeHtml(node.open)}</option>`).join('')
+      ? `${preferredNode && !nodes.some(node => node.id === preferredNode) ? '<option value="" selected>原选网点不可用，请重新选择</option>' : ''}${nodes.map((node) => `<option value="${escapeHtml(node.id)}" ${node.id === preferredNode ? 'selected' : ''}>${escapeHtml(node.name)} · 营业 ${escapeHtml(node.open)}</option>`).join('')}`
       : '<option value="">当前城市无可用合作点</option>';
     drawer.innerHTML = `<div class="review-detail">
       <div class="review-title"><div><p class="eyebrow">订单审核</p><h2>${escapeHtml(order.id)}</h2><p>支付状态：${escapeHtml(userDepositStatus(order))}</p></div><span class="status-badge" data-tone="${escapeHtml(tone)}">${icon(statusIcon)}<span>${escapeHtml(label)}</span></span></div>
@@ -1024,9 +1036,10 @@
       ${refundMarkup(order, true)}${window.PaichongServiceFlow?.markup(order, 'ops') || ''}${historyMarkup}
       ${window.PaichongProtection?.markup(order, 'ops') || ''}
       <section class="review-actions"><h3>${canReview ? '本次审核动作' : '当前审核已完成'}</h3>${canReview ? `<div class="review-action-grid">
-        <label class="field-label" for="review-note">审核说明<textarea id="review-note" rows="2" maxlength="160" placeholder="补件或拒绝时必填；通过时可填写备注"></textarea></label>
+        <label class="field-label" for="review-note">审核说明<textarea id="review-note" rows="2" maxlength="160" placeholder="补件、拒绝或调整网点时必填；其余可备注"></textarea></label>
         <button class="quiet-button supplement-action" id="request-supplement" type="button">${icon('camera')}<span>要求补充站立全身照</span></button>
         <label class="field-label" for="assign-node">分配合作交接点<select id="assign-node">${nodeOptions}</select></label>
+        ${order.bookingSelection?.originNode ? `<p id="review-node-change" class="node-capacity-hint" role="status">客户原选：${escapeHtml(order.bookingSelection.originNode.name)}。调整网点时须填写审核说明，用户确认后生效。</p>` : ''}
         <label class="field-label" for="node-booking-date">合作点预约日期<input id="node-booking-date" type="date" value="${escapeHtml(order.pickup?.date || '')}" readonly /><small>本轮节点与接宠预约使用同一日期时段，笼位独立计量。如需改期，请先由用户修改接宠预约。</small></label>
         <label class="field-label" for="node-booking-period">合作点预约时段<select id="node-booking-period" disabled><option value="AM" ${String(order.pickup?.timeSlot || '').startsWith('09') ? 'selected' : ''}>上午 09:00–12:00</option><option value="PM" ${String(order.pickup?.timeSlot || '').startsWith('13') ? 'selected' : ''}>下午 13:00–16:00</option></select><small>审核通过后预占，用户确认后转为已确认。</small></label>
         <p class="node-capacity-hint" id="review-node-capacity" role="status">正在核对节点容量…</p>
@@ -1041,6 +1054,10 @@
     window.PaichongServiceFlow?.bind(drawer, order, { api, toast, reload: loadOpsOrders });
     window.PaichongProtection?.bind(drawer, order);
     if (canReview) {
+      byId('assign-node')?.addEventListener('change', () => {
+        const hint = byId('review-node-change'), original = order.bookingSelection?.originNode;
+        if (hint && original) hint.textContent = formValue('assign-node') === original.id ? `与客户原选 ${original.name} 一致。` : `网点有调整（原选：${original.name}），请在审核说明中填写原因；用户须重新核对方案。`;
+      });
       ['assign-node', 'node-booking-date', 'node-booking-period'].forEach((id) => byId(id)?.addEventListener('change', () => loadReviewNodeCapacity(order)));
       loadReviewNodeCapacity(order);
     }
@@ -1094,6 +1111,7 @@
     byId('approve-order')?.addEventListener('click', (event) => {
       const nodeId = formValue('assign-node');
       if (!nodeId) { setMessage('review-action-error', '请先选择可用合作交接点。'); return; }
+      if (order.bookingSelection?.originNode && nodeId !== order.bookingSelection.originNode.id && !formValue('review-note')) { setMessage('review-action-error', '调整客户所选合作点时，请先填写审核说明，告知调整原因。'); byId('review-note').focus(); return; }
       const price = Number(formValue('final-price'));
       if (!Number.isFinite(price) || price <= 0 || price < depositAmount(order)) { setMessage('review-action-error', '运营建议价必须是有效正数，且不能低于已收宠物运输检疫费。'); byId('final-price').focus(); return; }
       submitReview(order, 'approve', {
